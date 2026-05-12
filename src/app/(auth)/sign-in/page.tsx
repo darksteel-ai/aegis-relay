@@ -60,7 +60,6 @@ export default function SignInPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 className="h-11 w-full rounded-md border border-neutral-300 bg-white pl-10 pr-3 text-sm outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-2 focus:ring-neutral-200"
-                placeholder="you@example.com"
               />
             </div>
           </div>

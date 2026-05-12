@@ -110,7 +110,7 @@ export function createAuthOptions(
     providers: [
       EmailProvider({
         server: emailServer,
-        from: authEnv.EMAIL_FROM ?? "Video Scheduler <no-reply@example.com>",
+        from: authEnv.EMAIL_FROM ?? "Video Scheduler <no-reply@localhost>",
       }),
     ],
     pages: {

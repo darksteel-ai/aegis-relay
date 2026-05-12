@@ -44,7 +44,7 @@ export default async function DashboardPage() {
           <div className="space-y-3">
             <p className="text-sm font-medium text-neutral-500">Dashboard</p>
             <h1 className="text-3xl font-semibold tracking-normal">
-              Schedule videos across every channel.
+              Schedule short-form videos for your connected channels.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-neutral-600">
               {membership?.workspace.name

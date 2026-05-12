@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -17,6 +19,21 @@ import {
   metadata as termsMetadata,
   termsTopics,
 } from "@/app/terms/page";
+
+const root = process.cwd();
+const publicReadinessFiles = [
+  ".env.example",
+  "src/app/(auth)/sign-in/page.tsx",
+  "src/app/dashboard/page.tsx",
+  "src/app/privacy/page.tsx",
+  "src/app/terms/page.tsx",
+  "src/app/support/page.tsx",
+  "src/app/reviewer-demo/page.tsx",
+  "src/lib/auth.ts",
+].map((filePath) => ({
+  filePath,
+  contents: readFileSync(path.join(root, filePath), "utf8"),
+}));
 
 describe("public launch readiness page copy", () => {
   test("beta notices are externally coherent", () => {
@@ -48,6 +65,18 @@ describe("public launch readiness page copy", () => {
     expect(copy).not.toMatch(/\b(draft|placeholder|unresolved|TBD|replace)\b/i);
     expect(copy).not.toContain(".example");
     expect(copy).not.toContain("support@");
+  });
+
+  test("public and config files avoid fake public placeholders", () => {
+    const combined = publicReadinessFiles
+      .map(({ contents }) => contents)
+      .join("\n");
+
+    expect(combined).not.toContain(".example");
+    expect(combined).not.toContain("example.com");
+    expect(combined).not.toContain("you@example.com");
+    expect(combined).not.toContain("no-reply@example.com");
+    expect(combined).not.toContain("Schedule videos across every channel");
   });
 
   test("privacy copy lists the beta data categories and token encryption", () => {
