@@ -5,7 +5,10 @@ import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatPlatformLabel } from "@/lib/posts/display";
+import {
+  formatPlatformLabel,
+  selectNewestAccountsByPlatform,
+} from "@/lib/posts/display";
 
 export const dynamic = "force-dynamic";
 
@@ -49,17 +52,22 @@ export default async function ConnectionsPage() {
           name: true,
           connectedAccounts: {
             orderBy: { updatedAt: "desc" },
+            select: {
+              platform: true,
+              status: true,
+              accountName: true,
+              externalId: true,
+              expiresAt: true,
+              updatedAt: true,
+            },
           },
         },
       },
     },
   });
 
-  const accountsByPlatform = new Map(
-    (membership?.workspace.connectedAccounts ?? []).map((account) => [
-      account.platform,
-      account,
-    ]),
+  const accountsByPlatform = selectNewestAccountsByPlatform(
+    membership?.workspace.connectedAccounts ?? [],
   );
 
   return (

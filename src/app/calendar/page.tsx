@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import {
   formatPlatformLabel,
   formatScheduledAtForDashboard,
+  getCalendarPostWindow,
 } from "@/lib/posts/display";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ export default async function CalendarPage() {
     redirect("/sign-in");
   }
 
+  const calendarWindow = getCalendarPostWindow();
   const membership = await db.workspaceMember.findFirst({
     where: { userId: session.user.id },
     select: {
@@ -27,7 +29,14 @@ export default async function CalendarPage() {
         select: {
           name: true,
           posts: {
+            where: {
+              scheduledAt: {
+                gte: calendarWindow.start,
+                lte: calendarWindow.end,
+              },
+            },
             orderBy: { scheduledAt: "asc" },
+            take: calendarWindow.take,
             include: {
               video: true,
               platformPosts: {

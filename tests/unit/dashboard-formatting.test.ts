@@ -1,11 +1,14 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  CALENDAR_POST_LIMIT,
   formatDuration,
   formatFileSize,
   formatPlatformLabel,
   formatScheduledAtForDashboard,
   formatStatusLabel,
+  getCalendarPostWindow,
+  selectNewestAccountsByPlatform,
 } from "@/lib/posts/display";
 
 describe("dashboard post formatting", () => {
@@ -39,5 +42,37 @@ describe("dashboard post formatting", () => {
     expect(formatFileSize(999)).toBe("999 B");
     expect(formatDuration(125)).toBe("2m 5s");
     expect(formatDuration(null)).toBe("Unknown duration");
+  });
+
+  test("keeps the newest connected account per platform", () => {
+    const accounts = selectNewestAccountsByPlatform([
+      {
+        platform: "YOUTUBE",
+        accountName: "New channel",
+        updatedAt: new Date("2026-05-12T15:00:00.000Z"),
+      },
+      {
+        platform: "YOUTUBE",
+        accountName: "Old channel",
+        updatedAt: new Date("2026-05-12T14:00:00.000Z"),
+      },
+      {
+        platform: "TIKTOK",
+        accountName: "TikTok beta",
+        updatedAt: new Date("2026-05-12T13:00:00.000Z"),
+      },
+    ]);
+
+    expect(accounts.get("YOUTUBE")?.accountName).toBe("New channel");
+    expect(accounts.get("TIKTOK")?.accountName).toBe("TikTok beta");
+  });
+
+  test("builds a bounded calendar post window", () => {
+    const window = getCalendarPostWindow(new Date("2026-05-12T12:00:00.000Z"));
+
+    expect(CALENDAR_POST_LIMIT).toBe(100);
+    expect(window.take).toBe(100);
+    expect(window.start.toISOString()).toBe("2026-04-12T12:00:00.000Z");
+    expect(window.end.toISOString()).toBe("2026-11-08T12:00:00.000Z");
   });
 });

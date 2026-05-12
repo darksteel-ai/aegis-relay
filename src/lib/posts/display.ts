@@ -17,6 +17,17 @@ const platformLabels: Record<string, string> = {
   INSTAGRAM: "Instagram",
 };
 
+export const CALENDAR_POST_LIMIT = 100;
+
+const calendarPastWindowDays = 30;
+const calendarFutureWindowDays = 180;
+const millisecondsPerDay = 24 * 60 * 60 * 1000;
+
+type AccountWithPlatformUpdatedAt = {
+  platform: string;
+  updatedAt: Date;
+};
+
 export function formatScheduledAtForDashboard(date: Date, timezone: string) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
@@ -68,6 +79,30 @@ export function formatDuration(durationSec: number | null | undefined) {
   }
 
   return `${minutes}m ${seconds}s`;
+}
+
+export function selectNewestAccountsByPlatform<TAccount extends AccountWithPlatformUpdatedAt>(
+  accounts: TAccount[],
+) {
+  const newestByPlatform = new Map<string, TAccount>();
+
+  for (const account of accounts) {
+    const existing = newestByPlatform.get(account.platform);
+
+    if (!existing || account.updatedAt > existing.updatedAt) {
+      newestByPlatform.set(account.platform, account);
+    }
+  }
+
+  return newestByPlatform;
+}
+
+export function getCalendarPostWindow(now = new Date()) {
+  return {
+    start: new Date(now.getTime() - calendarPastWindowDays * millisecondsPerDay),
+    end: new Date(now.getTime() + calendarFutureWindowDays * millisecondsPerDay),
+    take: CALENDAR_POST_LIMIT,
+  };
 }
 
 function humanizeConstant(value: string) {
