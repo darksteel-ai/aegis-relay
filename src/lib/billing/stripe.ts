@@ -13,6 +13,7 @@ type WorkspaceRecord = {
   name: string;
   plan: string;
   stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
 };
 
 type WorkspaceMembershipDb = {
@@ -234,7 +235,7 @@ async function handleSubscriptionUpdated(payload: unknown, database: WorkspaceUp
   }
 
   await database.workspace.updateMany({
-    where: workspaceId ? { id: workspaceId } : { stripeSubscriptionId: subscriptionId },
+    where: subscriptionWorkspaceWhere(workspaceId, subscriptionId),
     data: { plan },
   });
 }
@@ -249,12 +250,20 @@ async function handleSubscriptionDeleted(payload: unknown, database: WorkspaceUp
   }
 
   await database.workspace.updateMany({
-    where: workspaceId ? { id: workspaceId } : { stripeSubscriptionId: subscriptionId },
+    where: subscriptionWorkspaceWhere(workspaceId, subscriptionId),
     data: {
       stripeSubscriptionId: null,
       plan: "beta",
     },
   });
+}
+
+function subscriptionWorkspaceWhere(workspaceId: string | undefined, subscriptionId: string) {
+  if (workspaceId) {
+    return { id: workspaceId, stripeSubscriptionId: subscriptionId };
+  }
+
+  return { stripeSubscriptionId: subscriptionId };
 }
 
 function stripeId(value: string | { id?: string } | null | undefined) {

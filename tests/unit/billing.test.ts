@@ -18,6 +18,7 @@ describe("billing helpers", () => {
             name: "Creator Studio",
             plan: "beta",
             stripeCustomerId: null,
+            stripeSubscriptionId: null,
           },
         })),
       },
@@ -61,6 +62,7 @@ describe("billing helpers", () => {
             name: "Creator Studio",
             plan: "beta",
             stripeCustomerId: "cus_123",
+            stripeSubscriptionId: null,
           },
         })),
       },
@@ -134,11 +136,92 @@ describe("billing helpers", () => {
     );
 
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: "workspace_1" },
+      where: { id: "workspace_1", stripeSubscriptionId: "sub_123" },
       data: {
         stripeSubscriptionId: null,
         plan: "beta",
       },
+    });
+  });
+
+  test("does not downgrade a newer subscription from a stale deleted event", async () => {
+    const workspaces = new Map([
+      [
+        "workspace_1",
+        {
+          id: "workspace_1",
+          stripeSubscriptionId: "sub_new",
+          plan: "pro",
+        },
+      ],
+    ]);
+    const updateMany = vi.fn(async (args) => {
+      let count = 0;
+
+      for (const workspace of workspaces.values()) {
+        const matchesId = !args.where.id || args.where.id === workspace.id;
+        const matchesSubscription =
+          !args.where.stripeSubscriptionId ||
+          args.where.stripeSubscriptionId === workspace.stripeSubscriptionId;
+
+        if (matchesId && matchesSubscription) {
+          count += 1;
+          Object.assign(workspace, args.data);
+        }
+      }
+
+      return { count };
+    });
+    const { handleStripeEvent } = await import("../../src/lib/billing/stripe");
+
+    await handleStripeEvent(
+      {
+        type: "customer.subscription.deleted",
+        data: {
+          object: {
+            id: "sub_old",
+            metadata: { workspaceId: "workspace_1" },
+          },
+        },
+      },
+      { workspace: { updateMany } },
+    );
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "workspace_1", stripeSubscriptionId: "sub_old" },
+      data: {
+        stripeSubscriptionId: null,
+        plan: "beta",
+      },
+    });
+    expect(workspaces.get("workspace_1")).toEqual({
+      id: "workspace_1",
+      stripeSubscriptionId: "sub_new",
+      plan: "pro",
+    });
+  });
+
+  test("does not mark a newer subscription beta from a stale updated event", async () => {
+    const updateMany = vi.fn(async () => ({ count: 0 }));
+    const { handleStripeEvent } = await import("../../src/lib/billing/stripe");
+
+    await handleStripeEvent(
+      {
+        type: "customer.subscription.updated",
+        data: {
+          object: {
+            id: "sub_old",
+            status: "canceled",
+            metadata: { workspaceId: "workspace_1" },
+          },
+        },
+      },
+      { workspace: { updateMany } },
+    );
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "workspace_1", stripeSubscriptionId: "sub_old" },
+      data: { plan: "beta" },
     });
   });
 });

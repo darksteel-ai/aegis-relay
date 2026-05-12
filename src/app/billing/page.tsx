@@ -30,6 +30,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   }
 
   const isPro = workspace.plan === "pro";
+  const hasActiveSubscription = isPro && Boolean(workspace.stripeSubscriptionId);
   const checkoutState = params?.checkout;
 
   return (
@@ -76,7 +77,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               </p>
             </div>
 
-            {workspace.stripeCustomerId ? (
+            {hasActiveSubscription ? (
               <form action="/api/stripe/portal" method="post">
                 <button
                   type="submit"
