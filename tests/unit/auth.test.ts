@@ -1,130 +1,41 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+const mutation = vi.fn();
+
+vi.mock("@/lib/convex-server", () => ({
+  getConvexClient: () => ({ mutation }),
+}));
+
 describe("auth workspace bootstrap", () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.clearAllMocks();
     vi.unstubAllEnvs();
-    vi.stubEnv("DATABASE_URL", "postgresql://user:password@localhost:5432/video_scheduler");
+    vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://example.convex.cloud");
     vi.stubEnv("NEXTAUTH_URL", "http://localhost:3000");
     vi.stubEnv("NEXTAUTH_SECRET", "replace-with-a-random-secret");
   });
 
-  test("creates a workspace and owner membership when a user has no memberships", async () => {
-    const workspaceUpsert = vi.fn(async () => ({ id: "bootstrap-user_1" }));
-    const memberUpsert = vi.fn(async () => ({}));
-    const transaction = vi.fn(async (callback) =>
-      callback({
-        workspace: { upsert: workspaceUpsert },
-        workspaceMember: { upsert: memberUpsert },
-      }),
-    );
-
+  test("ensures a Convex workspace for an authenticated user", async () => {
     const { ensureWorkspaceForUser } = await import("../../src/lib/auth");
 
-    await ensureWorkspaceForUser(
-      { id: "user_1", email: "owner@example.com", name: "Owner" },
-      {
-        workspaceMember: { findFirst: vi.fn(async () => null) },
-        $transaction: transaction,
-      },
-    );
+    await ensureWorkspaceForUser({ id: "user_1", email: "owner@example.com", name: "Owner" });
 
-    expect(workspaceUpsert).toHaveBeenCalledWith({
-      where: { id: "bootstrap-user_1" },
-      create: { id: "bootstrap-user_1", name: "Owner's Workspace" },
-      update: {},
-      select: { id: true },
-    });
-    expect(memberUpsert).toHaveBeenCalledWith({
-      where: {
-        userId_workspaceId: {
-          userId: "user_1",
-          workspaceId: "bootstrap-user_1",
-        },
-      },
-      create: {
-        userId: "user_1",
-        workspaceId: "bootstrap-user_1",
-        role: "owner",
-      },
-      update: {},
+    expect(mutation).toHaveBeenCalledWith(expect.anything(), {
+      userId: "user_1",
+      email: "owner@example.com",
+      name: "Owner",
+      image: undefined,
     });
   });
 
-  test("does not create a duplicate workspace member when one already exists", async () => {
-    const transaction = vi.fn();
-    const { ensureWorkspaceForUser } = await import("../../src/lib/auth");
+  test("derives stable auth ids from normalized email addresses", async () => {
+    const { authUserIdForEmail } = await import("../../src/lib/auth");
 
-    await ensureWorkspaceForUser(
-      { id: "user_1", email: "owner@example.com", name: null },
-      {
-        workspaceMember: {
-          findFirst: vi.fn(async () => ({
-            id: "member_1",
-            userId: "user_1",
-            workspaceId: "workspace_1",
-          })),
-        },
-        $transaction: transaction,
-      },
+    expect(authUserIdForEmail(" Owner@Example.com ")).toBe(
+      authUserIdForEmail("owner@example.com"),
     );
-
-    expect(transaction).not.toHaveBeenCalled();
-  });
-
-  test("converges simultaneous bootstrap attempts on one workspace and membership", async () => {
-    const workspaces = new Map<string, { id: string; name: string }>();
-    const memberships = new Map<string, { userId: string; workspaceId: string; role: string }>();
-    const findFirst = vi.fn(async () => null);
-    const workspaceUpsert = vi.fn(async (args) => {
-      const existingWorkspace = workspaces.get(args.where.id);
-
-      if (existingWorkspace) {
-        return { id: existingWorkspace.id };
-      }
-
-      workspaces.set(args.create.id, args.create);
-      return { id: args.create.id };
-    });
-    const memberUpsert = vi.fn(async (args) => {
-      const memberKey = `${args.where.userId_workspaceId.userId}:${args.where.userId_workspaceId.workspaceId}`;
-
-      if (!memberships.has(memberKey)) {
-        memberships.set(memberKey, args.create);
-      }
-
-      return memberships.get(memberKey);
-    });
-    const transaction = vi.fn(async (callback) =>
-      callback({
-        workspace: { upsert: workspaceUpsert },
-        workspaceMember: { upsert: memberUpsert },
-      }),
-    );
-    const { ensureWorkspaceForUser } = await import("../../src/lib/auth");
-
-    await Promise.all([
-      ensureWorkspaceForUser(
-        { id: "user_1", email: "owner@example.com", name: "Owner" },
-        {
-          workspaceMember: { findFirst },
-          $transaction: transaction,
-        },
-      ),
-      ensureWorkspaceForUser(
-        { id: "user_1", email: "owner@example.com", name: "Owner" },
-        {
-          workspaceMember: { findFirst },
-          $transaction: transaction,
-        },
-      ),
-    ]);
-
-    expect(findFirst).toHaveBeenCalledTimes(2);
-    expect(workspaceUpsert).toHaveBeenCalledTimes(2);
-    expect(memberUpsert).toHaveBeenCalledTimes(2);
-    expect([...workspaces.keys()]).toEqual(["bootstrap-user_1"]);
-    expect([...memberships.keys()]).toEqual(["user_1:bootstrap-user_1"]);
+    expect(authUserIdForEmail("owner@example.com")).toMatch(/^email-[a-f0-9]{32}$/);
   });
 
   test("adds the database user id to the session", async () => {
@@ -143,7 +54,7 @@ describe("auth workspace bootstrap", () => {
         name: "Owner",
         image: null,
       },
-      token: {},
+      token: { sub: "user_1" },
       newSession: undefined,
       trigger: "update",
     });
@@ -160,26 +71,14 @@ describe("auth workspace bootstrap", () => {
     expect(() => createAuthOptions({})).toThrow("NEXTAUTH_SECRET");
   });
 
-  test("requires email delivery settings in production", async () => {
+  test("uses credentials auth in production without SMTP settings", async () => {
     const { createAuthOptions } = await import("../../src/lib/auth");
 
-    expect(() =>
-      createAuthOptions({
+    const options = createAuthOptions({
         NODE_ENV: "production",
         NEXTAUTH_SECRET: "replace-with-a-random-secret",
-      }),
-    ).toThrow("EMAIL_SERVER");
-  });
+      });
 
-  test("requires an email sender in production even when email server is configured", async () => {
-    const { createAuthOptions } = await import("../../src/lib/auth");
-
-    expect(() =>
-      createAuthOptions({
-        NODE_ENV: "production",
-        NEXTAUTH_SECRET: "replace-with-a-random-secret",
-        EMAIL_SERVER: "smtp://localhost:1025",
-      }),
-    ).toThrow("EMAIL_FROM");
+    expect(options.providers[0]?.type).toBe("credentials");
   });
 });

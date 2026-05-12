@@ -1,25 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const getAuthSession = vi.fn();
-const findFirst = vi.fn();
-const upsert = vi.fn();
+const query = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   getAuthSession,
 }));
 
-vi.mock("@/lib/db", () => ({
-  db: {
-    workspaceMember: { findFirst },
-    connectedAccount: { upsert },
-  },
+vi.mock("@/lib/convex-server", () => ({
+  getConvexClient: () => ({ query }),
 }));
 
 describe("YouTube OAuth routes", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    vi.stubEnv("DATABASE_URL", "postgresql://user:password@localhost:5432/video_scheduler");
+    vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://example.convex.cloud");
     vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
     vi.stubEnv("NEXTAUTH_SECRET", "replace-with-a-random-secret");
     vi.stubEnv("GOOGLE_CLIENT_ID", "client-id.apps.googleusercontent.com");
@@ -29,7 +25,7 @@ describe("YouTube OAuth routes", () => {
     getAuthSession.mockResolvedValue({
       user: { id: "user_1", email: "owner@example.com" },
     });
-    findFirst.mockResolvedValue({ workspaceId: "workspace_1" });
+    query.mockResolvedValue({ id: "workspace_1", name: "Owner's Workspace" });
   });
 
   test("start redirects to Google with signed state and stores a state cookie", async () => {

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { getAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import {
   buildYouTubeOAuthStartUrl,
   createYouTubeOAuthNonce,
@@ -19,12 +20,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  const membership = await db.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    select: { workspaceId: true },
+  const workspace = await getConvexClient().query(convexApi.workspaces.getForUser, {
+    userId: session.user.id,
   });
 
-  if (!membership) {
+  if (!workspace) {
     return redirectToConnections(request, "no-workspace");
   }
 
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   const nonce = createYouTubeOAuthNonce();
   const state = createYouTubeOAuthState({
     userId: session.user.id,
-    workspaceId: membership.workspaceId,
+    workspaceId: workspace.id,
     nonce,
     secret,
   });

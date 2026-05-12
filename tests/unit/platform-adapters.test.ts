@@ -1,6 +1,6 @@
 import { PassThrough } from "node:stream";
 
-import { Platform } from "@prisma/client";
+import { Platform } from "@/lib/domain";
 import { describe, expect, test, vi } from "vitest";
 
 import { createInstagramAdapter } from "@/lib/platforms/instagram";

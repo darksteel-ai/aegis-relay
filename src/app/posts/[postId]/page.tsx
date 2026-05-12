@@ -1,11 +1,13 @@
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { getAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import {
   formatDuration,
   formatFileSize,
@@ -14,6 +16,17 @@ import {
 } from "@/lib/posts/display";
 
 export const dynamic = "force-dynamic";
+
+type PostPlatformPost = {
+  id: string;
+  platform: string;
+  caption: string;
+  privacy?: string | null;
+  status: string;
+  platformPostId?: string | null;
+  platformPostUrl?: string | null;
+  lastError?: string | null;
+};
 
 type PostDetailPageProps = {
   params: Promise<{
@@ -29,33 +42,16 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   }
 
   const { postId } = await params;
-  const membership = await db.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    select: { workspaceId: true },
-  });
-
-  if (!membership) {
-    redirect("/dashboard");
-  }
-
-  const post = await db.scheduledPost.findFirst({
-    where: {
-      id: postId,
-      workspaceId: membership.workspaceId,
-    },
-    include: {
-      video: true,
-      platformPosts: {
-        orderBy: { createdAt: "asc" },
-      },
-    },
+  const post = await getConvexClient().query(convexApi.posts.detail, {
+    userId: session.user.id,
+    postId: postId as Id<"scheduledPosts">,
   });
 
   if (!post) {
     notFound();
   }
 
-  const hasRetryablePost = post.platformPosts.some((platformPost) =>
+  const hasRetryablePost = post.platformPosts.some((platformPost: PostPlatformPost) =>
     ["FAILED", "BLOCKED"].includes(platformPost.status),
   );
 
@@ -78,7 +74,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
             </h1>
             <p className="max-w-2xl text-base leading-7 text-neutral-600">
               Scheduled for{" "}
-              {formatScheduledAtForDashboard(post.scheduledAt, post.timezone)} in{" "}
+              {formatScheduledAtForDashboard(new Date(post.scheduledAt), post.timezone)} in{" "}
               {post.timezone}.
             </p>
           </div>
@@ -135,7 +131,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
               <div>
                 <dt className="text-neutral-500">Scheduled time</dt>
                 <dd className="mt-1 font-medium text-neutral-950">
-                  {formatScheduledAtForDashboard(post.scheduledAt, post.timezone)}
+                  {formatScheduledAtForDashboard(new Date(post.scheduledAt), post.timezone)}
                 </dd>
               </div>
               <div>
@@ -147,7 +143,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
               <div>
                 <dt className="text-neutral-500">Created</dt>
                 <dd className="mt-1 font-medium text-neutral-950">
-                  {formatScheduledAtForDashboard(post.createdAt, post.timezone)}
+                  {formatScheduledAtForDashboard(new Date(post.createdAt), post.timezone)}
                 </dd>
               </div>
             </dl>
@@ -161,7 +157,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
             </h2>
           </div>
           <ul className="divide-y divide-neutral-200">
-            {post.platformPosts.map((platformPost) => (
+            {post.platformPosts.map((platformPost: PostPlatformPost) => (
               <li key={platformPost.id} className="grid gap-4 p-4 lg:grid-cols-[1fr_auto]">
                 <div className="min-w-0 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">

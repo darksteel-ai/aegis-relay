@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { getAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db";
-import {
-  buildPlatformPostCreateInputs,
-  parseCreateScheduledPostInput,
-} from "@/lib/posts/create";
-import {
-  UploadReservationError,
-  consumeIssuedUploadReservation,
-} from "@/lib/uploads/reservations";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
+import { parseCreateScheduledPostInput } from "@/lib/posts/create";
 
 export const runtime = "nodejs";
 
@@ -28,17 +22,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const membership = await db.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    select: { workspaceId: true },
+  const client = getConvexClient();
+  const workspace = await client.query(convexApi.workspaces.getForUser, {
+    userId: session.user.id,
   });
 
-  if (!membership) {
+  if (!workspace) {
     return NextResponse.json({ error: "Workspace not found." }, { status: 404 });
   }
 
   const parsed = parseCreateScheduledPostInput(payload, {
-    workspaceId: membership.workspaceId,
+    workspaceId: workspace.id,
     userId: session.user.id,
   });
 
@@ -53,50 +47,17 @@ export async function POST(request: Request) {
   let post;
 
   try {
-    post = await db.$transaction(async (tx) => {
-      await consumeIssuedUploadReservation(tx, {
-        storageKey: input.video.storageKey,
-        workspaceId: membership.workspaceId,
-        userId: session.user.id,
-      });
-
-      const video = await tx.uploadedVideo.create({
-        data: {
-          workspaceId: membership.workspaceId,
-          storageKey: input.video.storageKey,
-          fileName: input.video.fileName,
-          mimeType: input.video.mimeType,
-          sizeBytes: input.video.sizeBytes,
-          width: input.video.width,
-          height: input.video.height,
-          durationSec:
-            input.video.durationSeconds == null
-              ? undefined
-              : Math.round(input.video.durationSeconds),
-        },
-      });
-
-      return tx.scheduledPost.create({
-        data: {
-          workspaceId: membership.workspaceId,
-          videoId: video.id,
-          baseCaption: input.baseCaption,
-          scheduledAt: input.scheduledAt,
-          timezone: input.timezone,
-          platformPosts: {
-            create: buildPlatformPostCreateInputs(input),
-          },
-        },
-        include: {
-          video: true,
-          platformPosts: {
-            orderBy: { createdAt: "asc" },
-          },
-        },
-      });
+    post = await client.mutation(convexApi.posts.createScheduledPost, {
+      userId: session.user.id,
+      workspaceId: workspace.id,
+      baseCaption: input.baseCaption,
+      scheduledAt: input.scheduledAt.getTime(),
+      timezone: input.timezone,
+      platforms: input.platforms,
+      video: input.video,
     });
   } catch (error) {
-    if (error instanceof UploadReservationError) {
+    if (error instanceof Error && error.message.includes("Upload reservation")) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 

@@ -1,4 +1,4 @@
-import { Platform, PublishStatus } from "@prisma/client";
+import { Platform, PublishStatus } from "@/lib/domain";
 import { describe, expect, test, vi } from "vitest";
 
 import {

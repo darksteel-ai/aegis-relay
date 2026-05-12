@@ -3,43 +3,13 @@ import { z } from "zod";
 type EnvSource = Record<string, string | undefined>;
 
 const coreEnvSchema = z.object({
-  DATABASE_URL: z.string().url(),
   NEXTAUTH_URL: z.string().url(),
   NEXTAUTH_SECRET: z.string().min(24),
-  EMAIL_SERVER: z.string().min(1).optional(),
-  EMAIL_FROM: z.string().min(1).optional(),
 });
 
-const authEnvSchema = coreEnvSchema
-  .pick({
-    NEXTAUTH_SECRET: true,
-    EMAIL_SERVER: true,
-    EMAIL_FROM: true,
-  })
-  .extend({
-    NODE_ENV: z.string().optional(),
-  })
-  .superRefine((value, context) => {
-    if (value.NODE_ENV !== "production") {
-      return;
-    }
-
-    if (!value.EMAIL_SERVER) {
-      context.addIssue({
-        code: "custom",
-        message: "EMAIL_SERVER is required in production.",
-        path: ["EMAIL_SERVER"],
-      });
-    }
-
-    if (!value.EMAIL_FROM) {
-      context.addIssue({
-        code: "custom",
-        message: "EMAIL_FROM is required in production.",
-        path: ["EMAIL_FROM"],
-      });
-    }
-  });
+const authEnvSchema = coreEnvSchema.pick({
+  NEXTAUTH_SECRET: true,
+});
 
 const stripeEnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
@@ -69,12 +39,18 @@ const inngestEnvSchema = z.object({
   INNGEST_EVENT_KEY: z.string().min(1),
 });
 
+const convexEnvSchema = z.object({
+  NEXT_PUBLIC_CONVEX_URL: z.string().url(),
+  CONVEX_DEPLOY_KEY: z.string().min(1).optional(),
+});
+
 const schedulerEnvSchema = coreEnvSchema
   .extend(stripeEnvSchema.shape)
   .extend(storageEnvSchema.shape)
   .extend(googleEnvSchema.shape)
   .extend(platformTokenEnvSchema.shape)
-  .extend(inngestEnvSchema.shape);
+  .extend(inngestEnvSchema.shape)
+  .extend(convexEnvSchema.shape);
 
 export function parseCoreEnv(source: EnvSource = process.env) {
   return coreEnvSchema.parse(source);
@@ -102,6 +78,10 @@ export function getPlatformTokenEnv(source: EnvSource = process.env) {
 
 export function getInngestEnv(source: EnvSource = process.env) {
   return inngestEnvSchema.parse(source);
+}
+
+export function getConvexEnv(source: EnvSource = process.env) {
+  return convexEnvSchema.parse(source);
 }
 
 export function parseSchedulerEnv(source: EnvSource = process.env) {

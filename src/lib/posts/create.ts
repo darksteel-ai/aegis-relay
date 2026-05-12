@@ -1,6 +1,6 @@
-import { Platform, PublishStatus } from "@prisma/client";
 import { z } from "zod";
 
+import { Platform, PublishStatus } from "@/lib/domain";
 import {
   normalizeVideoContentType,
   validateShortFormVideo,

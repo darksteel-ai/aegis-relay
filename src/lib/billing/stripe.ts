@@ -1,6 +1,8 @@
 import Stripe from "stripe";
+import type { Id } from "../../../convex/_generated/dataModel";
 
-import { db as defaultDb } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import { getStripeEnv } from "@/lib/env";
 
 type BillingUser = {
@@ -95,8 +97,15 @@ export function getStripe() {
 
 export async function getWorkspaceForUser(
   userId: string,
-  database: WorkspaceMembershipDb = defaultDb,
+  database?: WorkspaceMembershipDb,
 ) {
+  if (!database) {
+    const workspace = await getConvexClient().query(convexApi.workspaces.getForUser, {
+      userId,
+    });
+    return workspace;
+  }
+
   const membership = await database.workspaceMember.findFirst({
     where: { userId },
     include: { workspace: true },
@@ -107,7 +116,7 @@ export async function getWorkspaceForUser(
 }
 
 export async function createSubscriptionCheckoutSession({
-  db = defaultDb,
+  db,
   stripe = getStripe(),
   user,
   appUrl,
@@ -150,7 +159,7 @@ export async function createSubscriptionCheckoutSession({
 }
 
 export async function createBillingPortalSession({
-  db = defaultDb,
+  db,
   stripe = getStripe(),
   user,
   appUrl,
@@ -178,7 +187,7 @@ export async function createBillingPortalSession({
 
 export async function handleStripeEvent(
   event: StripeEvent,
-  database: WorkspaceUpdateDb = defaultDb,
+  database?: WorkspaceUpdateDb,
 ) {
   if (event.type === "checkout.session.completed") {
     await handleCheckoutSessionCompleted(event.data.object, database);
@@ -197,7 +206,7 @@ export async function handleStripeEvent(
 
 async function handleCheckoutSessionCompleted(
   payload: unknown,
-  database: WorkspaceUpdateDb,
+  database?: WorkspaceUpdateDb,
 ) {
   const session = payload as Stripe.Checkout.Session;
 
@@ -211,6 +220,15 @@ async function handleCheckoutSessionCompleted(
 
   if (!workspaceId || !customerId || !subscriptionId) {
     throw new BillingError("Checkout session is missing workspace billing metadata.", 400);
+  }
+
+  if (!database) {
+    await getConvexClient().mutation(convexApi.billing.checkoutCompleted, {
+      workspaceId: workspaceId as Id<"workspaces">,
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscriptionId,
+    });
+    return;
   }
 
   if (!database.workspace.updateMany) {
@@ -237,13 +255,22 @@ async function handleCheckoutSessionCompleted(
   });
 }
 
-async function handleSubscriptionUpdated(payload: unknown, database: WorkspaceUpdateDb) {
+async function handleSubscriptionUpdated(payload: unknown, database?: WorkspaceUpdateDb) {
   const subscription = payload as Stripe.Subscription;
   const subscriptionId = subscription.id;
   const workspaceId = subscription.metadata?.workspaceId;
   const activeStatuses = new Set(["active", "trialing"]);
   const plan = activeStatuses.has(subscription.status) ? "pro" : "beta";
   const isCanceled = subscription.status === "canceled";
+
+  if (!database) {
+    await getConvexClient().mutation(convexApi.billing.subscriptionChanged, {
+      workspaceId: workspaceId as Id<"workspaces"> | undefined,
+      stripeSubscriptionId: subscriptionId,
+      status: subscription.status,
+    });
+    return;
+  }
 
   if (!database.workspace.updateMany) {
     throw new BillingError("Workspace updateMany operation is unavailable.", 500);
@@ -266,10 +293,19 @@ async function handleSubscriptionUpdated(payload: unknown, database: WorkspaceUp
   });
 }
 
-async function handleSubscriptionDeleted(payload: unknown, database: WorkspaceUpdateDb) {
+async function handleSubscriptionDeleted(payload: unknown, database?: WorkspaceUpdateDb) {
   const subscription = payload as Stripe.Subscription;
   const subscriptionId = subscription.id;
   const workspaceId = subscription.metadata?.workspaceId;
+
+  if (!database) {
+    await getConvexClient().mutation(convexApi.billing.subscriptionChanged, {
+      workspaceId: workspaceId as Id<"workspaces"> | undefined,
+      stripeSubscriptionId: subscriptionId,
+      status: "canceled",
+    });
+    return;
+  }
 
   if (!database.workspace.updateMany) {
     throw new BillingError("Workspace updateMany operation is unavailable.", 500);

@@ -1,9 +1,12 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-import { Platform, PublishStatus } from "@prisma/client";
 import { google } from "googleapis";
 import { ZodError } from "zod";
+import type { Id } from "../../../convex/_generated/dataModel";
 
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
+import { Platform, PublishStatus } from "@/lib/domain";
 import { getGoogleEnv, getPlatformTokenEnv } from "@/lib/env";
 import { encryptConnectedAccountToken } from "@/lib/platforms/token-crypto";
 
@@ -241,7 +244,6 @@ export async function completeYouTubeOAuthCallback({
     throw error;
   }
 
-  const { db: defaultDb } = db ? { db } : await import("@/lib/db");
   const { tokens } = await exchangeCodeForTokens(code);
 
   if (!tokens.access_token) {
@@ -275,25 +277,31 @@ export async function completeYouTubeOAuthCallback({
     scopes: tokens.scope ?? youtubeUploadScope,
     status: PublishStatus.SCHEDULED,
   };
-  const account = await defaultDb.connectedAccount.upsert({
-    where: {
-      workspaceId_platform_externalId: {
-        workspaceId,
-        platform: Platform.YOUTUBE,
-        externalId: channel.id,
-      },
-    },
-    create: accountWrite,
-    update: {
-      accountName: accountWrite.accountName,
-      accessToken: accountWrite.accessToken,
-      expiresAt: accountWrite.expiresAt,
-      scopes: accountWrite.scopes,
-      status: accountWrite.status,
-      ...(accountWrite.refreshToken ? { refreshToken: accountWrite.refreshToken } : {}),
-    },
-    select: { id: true },
-  });
+  const account = db
+    ? await db.connectedAccount.upsert({
+        where: {
+          workspaceId_platform_externalId: {
+            workspaceId,
+            platform: Platform.YOUTUBE,
+            externalId: channel.id,
+          },
+        },
+        create: accountWrite,
+        update: {
+          accountName: accountWrite.accountName,
+          accessToken: accountWrite.accessToken,
+          expiresAt: accountWrite.expiresAt,
+          scopes: accountWrite.scopes,
+          status: accountWrite.status,
+          ...(accountWrite.refreshToken ? { refreshToken: accountWrite.refreshToken } : {}),
+        },
+        select: { id: true },
+      })
+    : await getConvexClient().mutation(convexApi.connections.upsert, {
+        ...accountWrite,
+        workspaceId: workspaceId as Id<"workspaces">,
+        expiresAt: accountWrite.expiresAt?.getTime(),
+      });
 
   return {
     success: true,

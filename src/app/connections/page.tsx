@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { getAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import {
   formatPlatformLabel,
   selectNewestAccountsByPlatform,
@@ -37,6 +38,15 @@ const platformRows = [
   },
 ] as const;
 
+type ConnectedAccountView = {
+  platform: string;
+  status: string;
+  accountName: string;
+  externalId: string;
+  expiresAt: Date | null;
+  updatedAt: Date;
+};
+
 export default async function ConnectionsPage() {
   const session = await getAuthSession();
 
@@ -44,30 +54,28 @@ export default async function ConnectionsPage() {
     redirect("/sign-in");
   }
 
-  const membership = await db.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    select: {
-      workspace: {
-        select: {
-          name: true,
-          connectedAccounts: {
-            orderBy: { updatedAt: "desc" },
-            select: {
-              platform: true,
-              status: true,
-              accountName: true,
-              externalId: true,
-              expiresAt: true,
-              updatedAt: true,
-            },
-          },
-        },
-      },
-    },
+  const client = getConvexClient();
+  const workspace = await client.query(convexApi.workspaces.getForUser, {
+    userId: session.user.id,
   });
+  const connectedAccounts = workspace
+    ? await client.query(convexApi.connections.listForUser, { userId: session.user.id })
+    : [];
 
-  const accountsByPlatform = selectNewestAccountsByPlatform(
-    membership?.workspace.connectedAccounts ?? [],
+  const normalizedAccounts: ConnectedAccountView[] = connectedAccounts.map((account: {
+      platform: string;
+      status: string;
+      accountName: string;
+      externalId: string;
+      expiresAt?: number | null;
+      updatedAt: number;
+    }) => ({
+      ...account,
+      expiresAt: account.expiresAt ? new Date(account.expiresAt) : null,
+      updatedAt: new Date(account.updatedAt),
+    }));
+  const accountsByPlatform = selectNewestAccountsByPlatform<ConnectedAccountView>(
+    normalizedAccounts,
   );
 
   return (
@@ -79,8 +87,8 @@ export default async function ConnectionsPage() {
             Platform connections
           </h1>
           <p className="max-w-2xl text-base leading-7 text-neutral-600">
-            {membership?.workspace.name
-              ? `Manage publishing access for ${membership.workspace.name}.`
+            {workspace?.name
+              ? `Manage publishing access for ${workspace.name}.`
               : "Manage publishing access for the current workspace."}
           </p>
         </div>

@@ -1,6 +1,7 @@
-import { Platform, PublishStatus } from "@prisma/client";
-
-import { db as defaultDb } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
+import { Platform, PublishStatus } from "@/lib/domain";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { instagramAdapter } from "@/lib/platforms/instagram";
 import { tiktokAdapter } from "@/lib/platforms/tiktok";
 import { youtubeAdapter } from "@/lib/platforms/youtube";
@@ -58,11 +59,15 @@ const defaultAdapters: Record<Platform, PlatformAdapter> = {
 
 export async function publishPlatformPost(
   platformPostId: string,
-  {
-    db = defaultDb as unknown as PublishPlatformPostDb,
-    adapters = defaultAdapters,
-  }: PublishPlatformPostOptions = {},
+  options: PublishPlatformPostOptions = {},
 ) {
+  const adapters = options.adapters ?? defaultAdapters;
+
+  if (!options.db) {
+    return publishPlatformPostFromConvex(platformPostId, adapters);
+  }
+
+  const db = options.db;
   const platformPost = await db.platformPost.findFirst({
     where: { id: platformPostId },
     include: {
@@ -173,6 +178,94 @@ export async function publishPlatformPost(
   }
 }
 
+async function publishPlatformPostFromConvex(
+  platformPostId: string,
+  adapters: Partial<Record<Platform, PlatformAdapter>>,
+) {
+  const client = getConvexClient();
+  const platformPost = await client.query(convexApi.publishing.loadForPublish, {
+    platformPostId: platformPostId as Id<"platformPosts">,
+  });
+
+  if (!platformPost) {
+    throw new Error("Platform post not found.");
+  }
+
+  if (platformPost.status !== PublishStatus.SCHEDULED) {
+    return { status: platformPost.status };
+  }
+
+  const connectedAccount =
+    platformPost.scheduledPost.workspace.connectedAccounts.find(
+      (account: { platform: Platform }) => account.platform === platformPost.platform,
+    ) ?? null;
+
+  if (!connectedAccount) {
+    const message = `Connect a ${formatPlatformName(platformPost.platform)} account before publishing.`;
+    await markConvexPublishAttempt(platformPost.id, PublishStatus.BLOCKED, message);
+    return { status: PublishStatus.BLOCKED };
+  }
+
+  const claim = await client.mutation(convexApi.publishing.claim, {
+    platformPostId: platformPostId as Id<"platformPosts">,
+  });
+
+  if (claim.count === 0) {
+    return { status: PublishStatus.PROCESSING };
+  }
+
+  const adapter = adapters[platformPost.platform as Platform];
+
+  if (!adapter) {
+    const message = `${formatPlatformName(platformPost.platform)} publishing is not configured.`;
+    await markConvexPublishAttempt(platformPost.id, PublishStatus.FAILED, message);
+    return { status: PublishStatus.FAILED };
+  }
+
+  let result: PlatformPublishResult;
+
+  try {
+    result = await adapter.publish({
+      connectedAccount: {
+        id: connectedAccount.id,
+        accessToken: connectedAccount.accessToken,
+        refreshToken: connectedAccount.refreshToken,
+        expiresAt: connectedAccount.expiresAt ? new Date(connectedAccount.expiresAt) : null,
+      },
+      platformPost: {
+        title: platformPost.title,
+        caption: platformPost.caption,
+        privacy: platformPost.privacy,
+      },
+      video: {
+        storageKey: platformPost.scheduledPost.video.storageKey,
+        mimeType: platformPost.scheduledPost.video.mimeType,
+      },
+    });
+  } catch (error) {
+    const message = toPublishErrorMessage(error, platformPost.platform);
+    await markConvexPublishAttempt(platformPost.id, PublishStatus.FAILED, message);
+    return { status: PublishStatus.FAILED };
+  }
+
+  try {
+    await markConvexPublishAttempt(platformPost.id, PublishStatus.PUBLISHED, "Published successfully.", {
+      platformPostId: result.platformPostId,
+      platformPostUrl: result.url,
+    });
+    return { status: PublishStatus.PUBLISHED };
+  } catch (error) {
+    const message =
+      `Published on ${formatPlatformName(platformPost.platform)}, but local confirmation failed. ` +
+      "Manual reconciliation required before retrying.";
+    await markConvexPublishAttempt(platformPost.id, PublishStatus.BLOCKED, message, {
+      platformPostId: result.platformPostId,
+      platformPostUrl: result.url,
+    });
+    return { status: PublishStatus.BLOCKED, error };
+  }
+}
+
 export function toPublishErrorMessage(error: unknown, platform: Platform) {
   if (error instanceof PlatformApprovalPendingError) {
     return error.message;
@@ -239,4 +332,19 @@ function formatPlatformName(platform: Platform) {
   };
 
   return labels[platform];
+}
+
+async function markConvexPublishAttempt(
+  platformPostId: string,
+  status: PublishStatus,
+  message: string,
+  published?: { platformPostId: string; platformPostUrl?: string },
+) {
+  await getConvexClient().mutation(convexApi.publishing.mark, {
+    platformPostId: platformPostId as Id<"platformPosts">,
+    status,
+    message,
+    platformPostIdExternal: published?.platformPostId,
+    platformPostUrl: published?.platformPostUrl,
+  });
 }

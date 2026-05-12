@@ -1,12 +1,25 @@
 import { AppShell } from "@/components/app-shell";
 import { getAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import { formatScheduledAtForDashboard } from "@/lib/posts/display";
 import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
+type DashboardPost = {
+  id: string;
+  workspaceId: string;
+  baseCaption: string;
+  scheduledAt: number;
+  timezone: string;
+  createdAt: number;
+  updatedAt: number;
+  video: { fileName: string };
+  platformPosts: Array<{ id: string; platform: string; status: string }>;
+};
 
 export default async function DashboardPage() {
   const session = await getAuthSession();
@@ -15,27 +28,14 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  const membership = await db.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    select: {
-      workspace: {
-        select: {
-          name: true,
-          posts: {
-            orderBy: { scheduledAt: "desc" },
-            take: 6,
-            include: {
-              video: true,
-              platformPosts: {
-                orderBy: { createdAt: "asc" },
-              },
-            },
-          },
-        },
-      },
-    },
+  const data = await getConvexClient().query(convexApi.posts.dashboard, {
+    userId: session.user.id,
+    limit: 6,
   });
-  const posts = membership?.workspace.posts ?? [];
+  const posts: DashboardPost[] = (data?.posts ?? []).filter(
+    (post): post is DashboardPost => post !== null,
+  );
+  const workspace = data?.workspace;
 
   return (
     <AppShell>
@@ -47,8 +47,8 @@ export default async function DashboardPage() {
               Schedule short-form videos for your connected channels.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-neutral-600">
-              {membership?.workspace.name
-                ? `${membership.workspace.name} is ready for scheduler flows.`
+              {workspace?.name
+                ? `${workspace.name} is ready for scheduler flows.`
                 : "This workspace is ready for scheduler flows."}
             </p>
           </div>
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
                       </p>
                       <p className="mt-1 text-sm text-neutral-600">
                         {post.video.fileName} scheduled for{" "}
-                        {formatScheduledAtForDashboard(post.scheduledAt, post.timezone)}
+                        {formatScheduledAtForDashboard(new Date(post.scheduledAt), post.timezone)}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">

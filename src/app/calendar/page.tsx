@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { getAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import {
   formatPlatformLabel,
   formatScheduledAtForDashboard,
@@ -13,6 +14,18 @@ import {
 } from "@/lib/posts/display";
 
 export const dynamic = "force-dynamic";
+
+type CalendarPost = {
+  id: string;
+  workspaceId: string;
+  baseCaption: string;
+  scheduledAt: number;
+  timezone: string;
+  createdAt: number;
+  updatedAt: number;
+  video: { fileName: string };
+  platformPosts: Array<{ id: string; platform: string; status: string }>;
+};
 
 export default async function CalendarPage() {
   const session = await getAuthSession();
@@ -22,34 +35,19 @@ export default async function CalendarPage() {
   }
 
   const calendarWindow = getCalendarPostWindow();
-  const membership = await db.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    select: {
-      workspace: {
-        select: {
-          name: true,
-          posts: {
-            where: {
-              scheduledAt: {
-                gte: calendarWindow.start,
-                lte: calendarWindow.end,
-              },
-            },
-            orderBy: { scheduledAt: "asc" },
-            take: calendarWindow.take,
-            include: {
-              video: true,
-              platformPosts: {
-                orderBy: { createdAt: "asc" },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const posts = membership?.workspace.posts ?? [];
+  const client = getConvexClient();
+  const [workspace, postsResult] = await Promise.all([
+    client.query(convexApi.workspaces.getForUser, { userId: session.user.id }),
+    client.query(convexApi.posts.calendar, {
+      userId: session.user.id,
+      start: calendarWindow.start.getTime(),
+      end: calendarWindow.end.getTime(),
+      limit: calendarWindow.take,
+    }),
+  ]);
+  const posts: CalendarPost[] = (postsResult ?? []).filter(
+    (post): post is CalendarPost => post !== null,
+  );
 
   return (
     <AppShell>
@@ -61,8 +59,8 @@ export default async function CalendarPage() {
               Scheduled posts
             </h1>
             <p className="max-w-2xl text-base leading-7 text-neutral-600">
-              {membership?.workspace.name
-                ? `Upcoming and historical publishing status for ${membership.workspace.name}.`
+              {workspace?.name
+                ? `Upcoming and historical publishing status for ${workspace.name}.`
                 : "Upcoming and historical publishing status for the current workspace."}
             </p>
           </div>
@@ -93,7 +91,7 @@ export default async function CalendarPage() {
                           <span className="inline-flex items-center gap-1.5">
                             <Clock3 className="h-4 w-4" aria-hidden="true" />
                             {formatScheduledAtForDashboard(
-                              post.scheduledAt,
+                              new Date(post.scheduledAt),
                               post.timezone,
                             )}
                           </span>

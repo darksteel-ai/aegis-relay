@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getAuthSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import {
   UPLOAD_URL_TTL_SECONDS,
   createSignedUploadUrl,
@@ -35,12 +36,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const membership = await db.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    select: { workspaceId: true },
+  const client = getConvexClient();
+  const workspace = await client.query(convexApi.workspaces.getForUser, {
+    userId: session.user.id,
   });
 
-  if (!membership) {
+  if (!workspace) {
     return NextResponse.json({ error: "Workspace not found." }, { status: 404 });
   }
 
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
 
   const key = createUploadObjectKey({
     userId: session.user.id,
-    workspaceId: membership.workspaceId,
+    workspaceId: workspace.id,
     fileName: parsed.data.fileName,
     contentType,
   });
@@ -93,16 +94,14 @@ export async function POST(request: Request) {
   });
   const expiresAt = new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * 1000);
 
-  await db.uploadReservation.create({
-    data: {
-      workspaceId: membership.workspaceId,
-      userId: session.user.id,
-      storageKey: key,
-      fileName: parsed.data.fileName,
-      mimeType: contentType,
-      sizeBytes: parsed.data.sizeBytes,
-      expiresAt,
-    },
+  await client.mutation(convexApi.uploads.createReservation, {
+    workspaceId: workspace.id,
+    userId: session.user.id,
+    storageKey: key,
+    fileName: parsed.data.fileName,
+    mimeType: contentType,
+    sizeBytes: parsed.data.sizeBytes,
+    expiresAt: expiresAt.getTime(),
   });
 
   return NextResponse.json({

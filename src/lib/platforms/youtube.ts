@@ -1,6 +1,9 @@
 import { google } from "googleapis";
 import type { Credentials } from "google-auth-library";
+import type { Id } from "../../../convex/_generated/dataModel";
 
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
 import { getGoogleEnv } from "@/lib/env";
 import {
   decryptConnectedAccountToken,
@@ -178,11 +181,10 @@ async function persistRefreshedConnectedAccountTokens({
   expiresAt,
   scopes,
 }: RefreshedTokensInput) {
-  const { db } = await import("@/lib/db");
   const data: {
     accessToken?: string;
     refreshToken?: string;
-    expiresAt?: Date | null;
+    expiresAt?: number;
     scopes?: string;
   } = {};
 
@@ -194,8 +196,8 @@ async function persistRefreshedConnectedAccountTokens({
     data.refreshToken = encryptConnectedAccountToken(refreshToken);
   }
 
-  if (expiresAt !== undefined) {
-    data.expiresAt = expiresAt;
+  if (expiresAt) {
+    data.expiresAt = expiresAt.getTime();
   }
 
   if (scopes) {
@@ -206,8 +208,8 @@ async function persistRefreshedConnectedAccountTokens({
     return;
   }
 
-  await db.connectedAccount.update({
-    where: { id: connectedAccountId },
-    data,
+  await getConvexClient().mutation(convexApi.connections.updateTokens, {
+    id: connectedAccountId as Id<"connectedAccounts">,
+    ...data,
   });
 }

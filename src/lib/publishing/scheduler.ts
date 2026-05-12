@@ -1,7 +1,8 @@
-import { PublishStatus } from "@prisma/client";
-
-import { db as defaultDb } from "@/lib/db";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient } from "@/lib/convex-server";
+import { PublishStatus } from "@/lib/domain";
 import { publishPlatformPost } from "@/lib/publishing/publish-post";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 export type PublishingSchedulerDb = {
   platformPost: {
@@ -18,20 +19,25 @@ type PublishDuePostsOptions = {
 };
 
 export async function publishDuePosts({
-  db = defaultDb as unknown as PublishingSchedulerDb,
+  db,
   now = new Date(),
   batchSize = 25,
   publishOne = publishPlatformPost,
 }: PublishDuePostsOptions = {}) {
-  const duePosts = await db.platformPost.findMany({
-    where: {
-      status: PublishStatus.SCHEDULED,
-      scheduledAt: { lte: now },
-    },
-    select: { id: true },
-    orderBy: [{ scheduledAt: "asc" }, { updatedAt: "asc" }],
-    take: batchSize,
-  });
+  const duePosts = db
+    ? await db.platformPost.findMany({
+        where: {
+          status: PublishStatus.SCHEDULED,
+          scheduledAt: { lte: now },
+        },
+        select: { id: true },
+        orderBy: [{ scheduledAt: "asc" }, { updatedAt: "asc" }],
+        take: batchSize,
+      })
+    : await getConvexClient().query(convexApi.publishing.duePosts, {
+        now: now.getTime(),
+        batchSize,
+      });
 
   for (const post of duePosts) {
     await publishOne(post.id);
@@ -47,10 +53,17 @@ type ResetRetryablePlatformPostsOptions = {
 };
 
 export async function resetRetryablePlatformPosts({
-  db = defaultDb as unknown as PublishingSchedulerDb,
+  db,
   postId,
   userId,
 }: ResetRetryablePlatformPostsOptions) {
+  if (!db) {
+    return getConvexClient().mutation(convexApi.posts.retry, {
+      postId: postId as Id<"scheduledPosts">,
+      userId,
+    });
+  }
+
   const result = await db.platformPost.updateMany({
     where: {
       scheduledPostId: postId,

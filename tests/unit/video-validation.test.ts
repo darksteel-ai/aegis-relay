@@ -159,7 +159,7 @@ describe("upload object keys", () => {
 
   test("does not require storage secrets when the module is imported", async () => {
     vi.unstubAllEnvs();
-    vi.stubEnv("DATABASE_URL", "postgresql://user:password@localhost:5432/video_scheduler");
+    vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://example.convex.cloud");
     vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
     vi.stubEnv("NEXTAUTH_SECRET", "replace-with-a-random-secret");
     vi.stubEnv("S3_ENDPOINT", "");

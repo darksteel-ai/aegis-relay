@@ -1,4 +1,4 @@
-import type { Platform } from "@prisma/client";
+import type { Platform } from "@/lib/domain";
 
 export type PlatformPublishInput = {
   connectedAccount: {

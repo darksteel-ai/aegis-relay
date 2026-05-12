@@ -23,11 +23,11 @@ export default function SignInPage() {
     setIsSubmitting(false);
 
     if (result?.error) {
-      setMessage("We could not send that sign-in link. Check the email address and try again.");
+      setMessage("We could not sign you in. Check the email address and try again.");
       return;
     }
 
-    setMessage("Check your email for a secure sign-in link.");
+    window.location.href = result?.url ?? "/dashboard";
   }
 
   return (
@@ -37,7 +37,7 @@ export default function SignInPage() {
           <p className="text-sm font-medium text-neutral-500">Video Scheduler</p>
           <h1 className="text-2xl font-semibold tracking-normal">Sign in to your workspace</h1>
           <p className="text-sm leading-6 text-neutral-600">
-            Enter your email and we will send a secure link to continue.
+            Enter your email to continue into the beta workspace.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ export default function SignInPage() {
             disabled={isSubmitting}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-neutral-950 px-4 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-400"
           >
-            {isSubmitting ? "Sending link" : "Send sign-in link"}
+            {isSubmitting ? "Signing in" : "Continue"}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
 
