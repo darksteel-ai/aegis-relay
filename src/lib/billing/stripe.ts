@@ -26,19 +26,18 @@ type WorkspaceMembershipDb = {
   };
 };
 
+type WorkspaceUpdateWhere = {
+  id?: string;
+  stripeSubscriptionId?: string;
+  OR?: Array<{ stripeSubscriptionId: string | null }>;
+};
+
 type WorkspaceUpdateDb = {
   workspace: {
-    update?(args: {
-      where: { id: string };
-      data: {
-        stripeCustomerId: string;
-        stripeSubscriptionId: string;
-        plan: "pro";
-      };
-    }): Promise<unknown>;
     updateMany?(args: {
-      where: { id?: string; stripeSubscriptionId?: string };
+      where: WorkspaceUpdateWhere;
       data: {
+        stripeCustomerId?: string;
         stripeSubscriptionId?: string | null;
         plan: "beta" | "pro";
       };
@@ -209,12 +208,15 @@ async function handleCheckoutSessionCompleted(
     throw new BillingError("Checkout session is missing workspace billing metadata.", 400);
   }
 
-  if (!database.workspace.update) {
-    throw new BillingError("Workspace update operation is unavailable.", 500);
+  if (!database.workspace.updateMany) {
+    throw new BillingError("Workspace updateMany operation is unavailable.", 500);
   }
 
-  await database.workspace.update({
-    where: { id: workspaceId },
+  await database.workspace.updateMany({
+    where: {
+      id: workspaceId,
+      OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscriptionId }],
+    },
     data: {
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
