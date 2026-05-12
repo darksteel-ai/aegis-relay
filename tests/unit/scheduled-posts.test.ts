@@ -65,5 +65,9 @@ describe("scheduled post data model", () => {
     for (const name of requiredEnvNames) {
       expect(envHelper).toContain(`${name}:`);
     }
+
+    for (const name of ["STRIPE_PRICE_ID_PRO", "S3_ENDPOINT", "GOOGLE_REDIRECT_URI"]) {
+      expect(envHelper).toContain(`${name}:`);
+    }
   });
 });
