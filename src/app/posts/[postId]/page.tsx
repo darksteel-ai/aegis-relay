@@ -209,19 +209,19 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                 Retry publishing
               </h2>
               <p id="retry-note" className="text-sm leading-6 text-neutral-600">
-                Retry routing arrives in Task 9. Failed or blocked platform posts
-                are shown here so the action has a clear target.
+                Failed or blocked platform posts can be reset to scheduled for
+                the next publishing run.
               </p>
             </div>
             <form action={`/api/posts/${post.id}/retry`} method="post">
               <button
                 type="submit"
-                className="inline-flex h-10 items-center gap-2 rounded-md border border-neutral-300 bg-neutral-100 px-4 text-sm font-medium text-neutral-500"
-                disabled
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-950 hover:bg-neutral-100 disabled:bg-neutral-100 disabled:text-neutral-500"
+                disabled={!hasRetryablePost}
                 aria-describedby="retry-note"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                {hasRetryablePost ? "Retry unavailable" : "No retry needed"}
+                {hasRetryablePost ? "Retry failed posts" : "No retry needed"}
               </button>
             </form>
           </div>

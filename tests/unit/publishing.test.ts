@@ -1,0 +1,285 @@
+import { Platform, PublishStatus } from "@prisma/client";
+import { describe, expect, test, vi } from "vitest";
+
+import {
+  publishPlatformPost,
+  toPublishErrorMessage,
+  type PublishPlatformPostDb,
+} from "@/lib/publishing/publish-post";
+import {
+  publishDuePosts,
+  resetRetryablePlatformPosts,
+  type PublishingSchedulerDb,
+} from "@/lib/publishing/scheduler";
+import {
+  PlatformApprovalPendingError,
+  type PlatformAdapter,
+} from "@/lib/platforms/types";
+
+const platformPost = {
+  id: "platform_post_1",
+  scheduledPostId: "scheduled_post_1",
+  platform: Platform.YOUTUBE,
+  title: "Launch demo",
+  caption: "Demo caption",
+  privacy: "public",
+  status: PublishStatus.SCHEDULED,
+  platformPostId: null,
+  lastError: null,
+  scheduledPost: {
+    id: "scheduled_post_1",
+    workspaceId: "workspace_1",
+    scheduledAt: new Date("2026-05-12T12:00:00.000Z"),
+    video: {
+      storageKey: "uploads/workspace_1/demo.mp4",
+      mimeType: "video/mp4",
+    },
+    workspace: {
+      id: "workspace_1",
+      connectedAccounts: [
+        {
+          id: "connected_account_1",
+          platform: Platform.YOUTUBE,
+          accessToken: "encrypted-access",
+          refreshToken: "encrypted-refresh",
+          expiresAt: new Date("2026-06-01T00:00:00.000Z"),
+        },
+      ],
+    },
+  },
+};
+
+function createPublishDb(row = platformPost): PublishPlatformPostDb {
+  return {
+    platformPost: {
+      findFirst: vi.fn(async () => row),
+      update: vi.fn(async () => ({})),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
+    publishAttempt: {
+      create: vi.fn(async () => ({})),
+    },
+  };
+}
+
+describe("publishPlatformPost", () => {
+  test("marks a platform post blocked and records an attempt when no connected account exists", async () => {
+    const db = createPublishDb({
+      ...platformPost,
+      scheduledPost: {
+        ...platformPost.scheduledPost,
+        workspace: {
+          ...platformPost.scheduledPost.workspace,
+          connectedAccounts: [],
+        },
+      },
+    });
+
+    const result = await publishPlatformPost("platform_post_1", { db });
+
+    expect(result.status).toBe(PublishStatus.BLOCKED);
+    expect(db.platformPost.update).toHaveBeenCalledWith({
+      where: { id: "platform_post_1" },
+      data: {
+        status: PublishStatus.BLOCKED,
+        lastError: "Connect a YouTube account before publishing.",
+      },
+    });
+    expect(db.publishAttempt.create).toHaveBeenCalledWith({
+      data: {
+        platformPostId: "platform_post_1",
+        status: PublishStatus.BLOCKED,
+        message: "Connect a YouTube account before publishing.",
+      },
+    });
+  });
+
+  test("claims, publishes, clears errors, and records a success attempt", async () => {
+    const db = createPublishDb();
+    const adapter: PlatformAdapter = {
+      publish: vi.fn(async () => ({
+        platformPostId: "youtube_123",
+        url: "https://www.youtube.com/watch?v=youtube_123",
+      })),
+    };
+
+    const result = await publishPlatformPost("platform_post_1", {
+      db,
+      adapters: { [Platform.YOUTUBE]: adapter },
+    });
+
+    expect(result.status).toBe(PublishStatus.PUBLISHED);
+    expect(db.platformPost.updateMany).toHaveBeenCalledWith({
+      where: { id: "platform_post_1", status: PublishStatus.SCHEDULED },
+      data: { status: PublishStatus.PROCESSING, lastError: null },
+    });
+    expect(adapter.publish).toHaveBeenCalledWith({
+      connectedAccount: {
+        id: "connected_account_1",
+        accessToken: "encrypted-access",
+        refreshToken: "encrypted-refresh",
+        expiresAt: new Date("2026-06-01T00:00:00.000Z"),
+      },
+      platformPost: {
+        title: "Launch demo",
+        caption: "Demo caption",
+        privacy: "public",
+      },
+      video: {
+        storageKey: "uploads/workspace_1/demo.mp4",
+        mimeType: "video/mp4",
+      },
+    });
+    expect(db.platformPost.update).toHaveBeenCalledWith({
+      where: { id: "platform_post_1" },
+      data: {
+        status: PublishStatus.PUBLISHED,
+        platformPostId: "youtube_123",
+        lastError: null,
+      },
+    });
+    expect(db.publishAttempt.create).toHaveBeenCalledWith({
+      data: {
+        platformPostId: "platform_post_1",
+        status: PublishStatus.PUBLISHED,
+        message: "Published successfully.",
+      },
+    });
+  });
+
+  test("marks adapter failures with a safe message and records a failed attempt", async () => {
+    const db = createPublishDb();
+    const adapter: PlatformAdapter = {
+      publish: vi.fn(async () => {
+        throw new Error("provider token secret_123 failed with raw response body");
+      }),
+    };
+
+    const result = await publishPlatformPost("platform_post_1", {
+      db,
+      adapters: { [Platform.YOUTUBE]: adapter },
+    });
+
+    expect(result.status).toBe(PublishStatus.FAILED);
+    expect(db.platformPost.update).toHaveBeenCalledWith({
+      where: { id: "platform_post_1" },
+      data: {
+        status: PublishStatus.FAILED,
+        lastError: "YouTube publishing failed. Please try again or reconnect the account.",
+      },
+    });
+    expect(db.publishAttempt.create).toHaveBeenCalledWith({
+      data: {
+        platformPostId: "platform_post_1",
+        status: PublishStatus.FAILED,
+        message: "YouTube publishing failed. Please try again or reconnect the account.",
+      },
+    });
+  });
+
+  test("keeps approval pending adapter messages human-readable", () => {
+    const error = new PlatformApprovalPendingError(
+      Platform.TIKTOK,
+      "TikTok publishing is pending platform approval.",
+    );
+    expect(toPublishErrorMessage(error, Platform.TIKTOK)).toBe(
+      "TikTok publishing is pending platform approval.",
+    );
+  });
+});
+
+describe("publishDuePosts", () => {
+  test("selects due scheduled platform posts within the batch limit", async () => {
+    const publishOne = vi.fn(async () => ({ status: PublishStatus.PUBLISHED }));
+    const db: PublishingSchedulerDb = {
+      platformPost: {
+        findMany: vi.fn(async () => [{ id: "platform_post_1" }, { id: "platform_post_2" }]),
+        updateMany: vi.fn(async () => ({ count: 0 })),
+      },
+      scheduledPost: {
+        findFirst: vi.fn(async () => null),
+      },
+    };
+    const now = new Date("2026-05-12T15:00:00.000Z");
+
+    const result = await publishDuePosts({ db, now, batchSize: 2, publishOne });
+
+    expect(result).toEqual({ processed: 2 });
+    expect(db.platformPost.findMany).toHaveBeenCalledWith({
+      where: {
+        status: PublishStatus.SCHEDULED,
+        scheduledPost: { scheduledAt: { lte: now } },
+      },
+      select: { id: true },
+      orderBy: { updatedAt: "asc" },
+      take: 2,
+    });
+    expect(publishOne).toHaveBeenCalledTimes(2);
+    expect(publishOne).toHaveBeenNthCalledWith(1, "platform_post_1");
+    expect(publishOne).toHaveBeenNthCalledWith(2, "platform_post_2");
+  });
+});
+
+describe("resetRetryablePlatformPosts", () => {
+  test("resets only failed and blocked posts for a scheduled post owned by the user workspace", async () => {
+    const db: PublishingSchedulerDb = {
+      platformPost: {
+        findMany: vi.fn(async () => []),
+        updateMany: vi.fn(async () => ({ count: 2 })),
+      },
+      scheduledPost: {
+        findFirst: vi.fn(async () => ({ id: "scheduled_post_1" })),
+      },
+    };
+
+    const result = await resetRetryablePlatformPosts({
+      db,
+      postId: "scheduled_post_1",
+      userId: "user_1",
+    });
+
+    expect(result).toEqual({ found: true, resetCount: 2 });
+    expect(db.scheduledPost.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "scheduled_post_1",
+        workspace: {
+          members: {
+            some: { userId: "user_1" },
+          },
+        },
+      },
+      select: { id: true },
+    });
+    expect(db.platformPost.updateMany).toHaveBeenCalledWith({
+      where: {
+        scheduledPostId: "scheduled_post_1",
+        status: { in: [PublishStatus.FAILED, PublishStatus.BLOCKED] },
+      },
+      data: {
+        status: PublishStatus.SCHEDULED,
+        lastError: null,
+      },
+    });
+  });
+
+  test("does not reset posts when the scheduled post is outside the user workspace", async () => {
+    const db: PublishingSchedulerDb = {
+      platformPost: {
+        findMany: vi.fn(async () => []),
+        updateMany: vi.fn(async () => ({ count: 0 })),
+      },
+      scheduledPost: {
+        findFirst: vi.fn(async () => null),
+      },
+    };
+
+    const result = await resetRetryablePlatformPosts({
+      db,
+      postId: "scheduled_post_1",
+      userId: "user_1",
+    });
+
+    expect(result).toEqual({ found: false, resetCount: 0 });
+    expect(db.platformPost.updateMany).not.toHaveBeenCalled();
+  });
+});
