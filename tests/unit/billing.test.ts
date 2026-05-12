@@ -29,7 +29,7 @@ describe("billing helpers", () => {
       db,
       stripe,
       user: { id: "user_1", email: "owner@example.com" },
-      origin: "http://localhost:3000",
+      appUrl: "http://localhost:3000",
       priceId: "price_pro",
     });
 
@@ -73,7 +73,7 @@ describe("billing helpers", () => {
       db,
       stripe,
       user: { id: "user_1", email: "owner@example.com" },
-      origin: "http://localhost:3000",
+      appUrl: "http://localhost:3000",
       priceId: "price_pro",
     });
 

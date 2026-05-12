@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 
 import { getAuthSession } from "@/lib/auth";
 import { BillingError, createBillingPortalSession } from "@/lib/billing/stripe";
+import { env } from "@/lib/env";
 
-export async function POST(request: Request) {
+export async function POST() {
   const session = await getAuthSession();
 
   if (!session?.user?.id) {
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const portal = await createBillingPortalSession({
       user: session.user,
-      origin: new URL(request.url).origin,
+      appUrl: env.NEXTAUTH_URL,
     });
 
     return NextResponse.redirect(portal.url, { status: 303 });

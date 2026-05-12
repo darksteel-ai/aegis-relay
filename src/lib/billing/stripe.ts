@@ -105,13 +105,13 @@ export async function createSubscriptionCheckoutSession({
   db = defaultDb,
   stripe = getStripe(),
   user,
-  origin,
+  appUrl,
   priceId = getStripeEnv().STRIPE_PRICE_ID_PRO,
 }: {
   db?: WorkspaceMembershipDb;
   stripe?: CheckoutStripe;
   user: BillingUser;
-  origin: string;
+  appUrl: string;
   priceId?: string;
 }) {
   const workspace = await getWorkspaceForUser(user.id, db);
@@ -123,8 +123,8 @@ export async function createSubscriptionCheckoutSession({
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/billing?checkout=success`,
-    cancel_url: `${origin}/billing?checkout=cancelled`,
+    success_url: `${appUrl}/billing?checkout=success`,
+    cancel_url: `${appUrl}/billing?checkout=cancelled`,
     metadata: { workspaceId: workspace.id },
     subscription_data: { metadata: { workspaceId: workspace.id } },
   };
@@ -148,12 +148,12 @@ export async function createBillingPortalSession({
   db = defaultDb,
   stripe = getStripe(),
   user,
-  origin,
+  appUrl,
 }: {
   db?: WorkspaceMembershipDb;
   stripe?: PortalStripe;
   user: BillingUser;
-  origin: string;
+  appUrl: string;
 }) {
   const workspace = await getWorkspaceForUser(user.id, db);
 
@@ -167,7 +167,7 @@ export async function createBillingPortalSession({
 
   return stripe.billingPortal.sessions.create({
     customer: workspace.stripeCustomerId,
-    return_url: `${origin}/billing`,
+    return_url: `${appUrl}/billing`,
   });
 }
 

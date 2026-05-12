@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 
 import { createSubscriptionCheckoutSession, BillingError } from "@/lib/billing/stripe";
 import { getAuthSession } from "@/lib/auth";
+import { env } from "@/lib/env";
 
-export async function POST(request: Request) {
+export async function POST() {
   const session = await getAuthSession();
 
   if (!session?.user?.id) {
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const checkout = await createSubscriptionCheckoutSession({
       user: session.user,
-      origin: new URL(request.url).origin,
+      appUrl: env.NEXTAUTH_URL,
     });
 
     return NextResponse.redirect(checkout.url, { status: 303 });
