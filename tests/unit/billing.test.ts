@@ -19,6 +19,7 @@ describe("billing helpers", () => {
             plan: "beta",
             stripeCustomerId: null,
             stripeSubscriptionId: null,
+            stripeCanceledSubscriptionId: null,
           },
         })),
       },
@@ -63,6 +64,7 @@ describe("billing helpers", () => {
             plan: "beta",
             stripeCustomerId: "cus_123",
             stripeSubscriptionId: null,
+            stripeCanceledSubscriptionId: null,
           },
         })),
       },
@@ -111,11 +113,18 @@ describe("billing helpers", () => {
     expect(updateMany).toHaveBeenCalledWith({
       where: {
         id: "workspace_1",
-        OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: "sub_123" }],
+        OR: [
+          {
+            stripeSubscriptionId: null,
+            NOT: { stripeCanceledSubscriptionId: "sub_123" },
+          },
+          { stripeSubscriptionId: "sub_123" },
+        ],
       },
       data: {
         stripeCustomerId: "cus_123",
         stripeSubscriptionId: "sub_123",
+        stripeCanceledSubscriptionId: null,
         plan: "pro",
       },
     });
@@ -129,6 +138,7 @@ describe("billing helpers", () => {
           id: "workspace_1",
           stripeCustomerId: "cus_new",
           stripeSubscriptionId: "sub_new",
+          stripeCanceledSubscriptionId: null,
           plan: "pro",
         },
       ],
@@ -139,8 +149,21 @@ describe("billing helpers", () => {
       for (const workspace of workspaces.values()) {
         const matchesId = args.where.id === workspace.id;
         const matchesSubscription =
-          args.where.OR?.some((condition: { stripeSubscriptionId: string | null }) =>
-            condition.stripeSubscriptionId === workspace.stripeSubscriptionId,
+          args.where.OR?.some(
+            (condition: {
+              stripeSubscriptionId: string | null;
+              NOT?: { stripeCanceledSubscriptionId: string };
+            }) => {
+              if (condition.stripeSubscriptionId !== workspace.stripeSubscriptionId) {
+                return false;
+              }
+
+              return (
+                !condition.NOT ||
+                condition.NOT.stripeCanceledSubscriptionId !==
+                workspace.stripeCanceledSubscriptionId
+              );
+            },
           ) ?? true;
 
         if (matchesId && matchesSubscription) {
@@ -171,11 +194,18 @@ describe("billing helpers", () => {
     expect(updateMany).toHaveBeenCalledWith({
       where: {
         id: "workspace_1",
-        OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: "sub_old" }],
+        OR: [
+          {
+            stripeSubscriptionId: null,
+            NOT: { stripeCanceledSubscriptionId: "sub_old" },
+          },
+          { stripeSubscriptionId: "sub_old" },
+        ],
       },
       data: {
         stripeCustomerId: "cus_old",
         stripeSubscriptionId: "sub_old",
+        stripeCanceledSubscriptionId: null,
         plan: "pro",
       },
     });
@@ -183,7 +213,83 @@ describe("billing helpers", () => {
       id: "workspace_1",
       stripeCustomerId: "cus_new",
       stripeSubscriptionId: "sub_new",
+      stripeCanceledSubscriptionId: null,
       plan: "pro",
+    });
+  });
+
+  test("does not reactivate a subscription when deletion arrives before checkout completion", async () => {
+    const workspace = {
+      id: "workspace_1",
+      stripeCustomerId: "cus_123",
+      stripeSubscriptionId: "sub_123",
+      stripeCanceledSubscriptionId: null as string | null,
+      plan: "pro",
+    };
+    const updateMany = vi.fn(async (args) => {
+      const matchesId = !args.where.id || args.where.id === workspace.id;
+      const matchesSubscription =
+        args.where.OR?.some(
+          (condition: {
+            stripeSubscriptionId: string | null;
+            NOT?: { stripeCanceledSubscriptionId: string };
+          }) => {
+            if (condition.stripeSubscriptionId !== workspace.stripeSubscriptionId) {
+              return false;
+            }
+
+            return (
+              !condition.NOT ||
+              condition.NOT.stripeCanceledSubscriptionId !==
+              workspace.stripeCanceledSubscriptionId
+            );
+          },
+        ) ??
+        (!args.where.stripeSubscriptionId ||
+          args.where.stripeSubscriptionId === workspace.stripeSubscriptionId);
+
+      if (matchesId && matchesSubscription) {
+        Object.assign(workspace, args.data);
+        return { count: 1 };
+      }
+
+      return { count: 0 };
+    });
+    const { handleStripeEvent } = await import("../../src/lib/billing/stripe");
+
+    await handleStripeEvent(
+      {
+        type: "customer.subscription.deleted",
+        data: {
+          object: {
+            id: "sub_123",
+            metadata: { workspaceId: "workspace_1" },
+          },
+        },
+      },
+      { workspace: { updateMany } },
+    );
+    await handleStripeEvent(
+      {
+        type: "checkout.session.completed",
+        data: {
+          object: {
+            mode: "subscription",
+            customer: "cus_123",
+            subscription: "sub_123",
+            metadata: { workspaceId: "workspace_1" },
+          },
+        },
+      },
+      { workspace: { updateMany } },
+    );
+
+    expect(workspace).toEqual({
+      id: "workspace_1",
+      stripeCustomerId: "cus_123",
+      stripeSubscriptionId: null,
+      stripeCanceledSubscriptionId: "sub_123",
+      plan: "beta",
     });
   });
 
@@ -208,6 +314,7 @@ describe("billing helpers", () => {
       where: { id: "workspace_1", stripeSubscriptionId: "sub_123" },
       data: {
         stripeSubscriptionId: null,
+        stripeCanceledSubscriptionId: "sub_123",
         plan: "beta",
       },
     });
@@ -220,6 +327,7 @@ describe("billing helpers", () => {
         {
           id: "workspace_1",
           stripeSubscriptionId: "sub_new",
+          stripeCanceledSubscriptionId: null,
           plan: "pro",
         },
       ],
@@ -260,12 +368,14 @@ describe("billing helpers", () => {
       where: { id: "workspace_1", stripeSubscriptionId: "sub_old" },
       data: {
         stripeSubscriptionId: null,
+        stripeCanceledSubscriptionId: "sub_old",
         plan: "beta",
       },
     });
     expect(workspaces.get("workspace_1")).toEqual({
       id: "workspace_1",
       stripeSubscriptionId: "sub_new",
+      stripeCanceledSubscriptionId: null,
       plan: "pro",
     });
   });
@@ -290,7 +400,11 @@ describe("billing helpers", () => {
 
     expect(updateMany).toHaveBeenCalledWith({
       where: { id: "workspace_1", stripeSubscriptionId: "sub_old" },
-      data: { plan: "beta" },
+      data: {
+        plan: "beta",
+        stripeSubscriptionId: null,
+        stripeCanceledSubscriptionId: "sub_old",
+      },
     });
   });
 });

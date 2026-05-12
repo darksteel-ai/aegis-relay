@@ -14,6 +14,7 @@ type WorkspaceRecord = {
   plan: string;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
+  stripeCanceledSubscriptionId: string | null;
 };
 
 type WorkspaceMembershipDb = {
@@ -29,7 +30,10 @@ type WorkspaceMembershipDb = {
 type WorkspaceUpdateWhere = {
   id?: string;
   stripeSubscriptionId?: string;
-  OR?: Array<{ stripeSubscriptionId: string | null }>;
+  OR?: Array<{
+    stripeSubscriptionId: string | null;
+    NOT?: { stripeCanceledSubscriptionId: string };
+  }>;
 };
 
 type WorkspaceUpdateDb = {
@@ -39,6 +43,7 @@ type WorkspaceUpdateDb = {
       data: {
         stripeCustomerId?: string;
         stripeSubscriptionId?: string | null;
+        stripeCanceledSubscriptionId?: string | null;
         plan: "beta" | "pro";
       };
     }): Promise<unknown>;
@@ -215,11 +220,18 @@ async function handleCheckoutSessionCompleted(
   await database.workspace.updateMany({
     where: {
       id: workspaceId,
-      OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscriptionId }],
+      OR: [
+        {
+          stripeSubscriptionId: null,
+          NOT: { stripeCanceledSubscriptionId: subscriptionId },
+        },
+        { stripeSubscriptionId: subscriptionId },
+      ],
     },
     data: {
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
+      stripeCanceledSubscriptionId: null,
       plan: "pro",
     },
   });
@@ -231,6 +243,7 @@ async function handleSubscriptionUpdated(payload: unknown, database: WorkspaceUp
   const workspaceId = subscription.metadata?.workspaceId;
   const activeStatuses = new Set(["active", "trialing"]);
   const plan = activeStatuses.has(subscription.status) ? "pro" : "beta";
+  const isCanceled = subscription.status === "canceled";
 
   if (!database.workspace.updateMany) {
     throw new BillingError("Workspace updateMany operation is unavailable.", 500);
@@ -238,7 +251,16 @@ async function handleSubscriptionUpdated(payload: unknown, database: WorkspaceUp
 
   await database.workspace.updateMany({
     where: subscriptionWorkspaceWhere(workspaceId, subscriptionId),
-    data: { plan },
+    data: {
+      plan,
+      ...(plan === "pro" ? { stripeCanceledSubscriptionId: null } : {}),
+      ...(isCanceled
+        ? {
+          stripeSubscriptionId: null,
+          stripeCanceledSubscriptionId: subscriptionId,
+        }
+        : {}),
+    },
   });
 }
 
@@ -255,6 +277,7 @@ async function handleSubscriptionDeleted(payload: unknown, database: WorkspaceUp
     where: subscriptionWorkspaceWhere(workspaceId, subscriptionId),
     data: {
       stripeSubscriptionId: null,
+      stripeCanceledSubscriptionId: subscriptionId,
       plan: "beta",
     },
   });

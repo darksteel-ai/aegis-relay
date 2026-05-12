@@ -38,17 +38,18 @@ model User {
 }
 
 model Workspace {
-  id                   String             @id @default(cuid())
-  name                 String
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  plan                 String             @default("beta")
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  members              WorkspaceMember[]
-  connectedAccounts    ConnectedAccount[]
-  videos               UploadedVideo[]
-  posts                ScheduledPost[]
+  id                           String             @id @default(cuid())
+  name                         String
+  stripeCustomerId             String?
+  stripeSubscriptionId         String?
+  stripeCanceledSubscriptionId String?
+  plan                         String             @default("beta")
+  createdAt                    DateTime           @default(now())
+  updatedAt                    DateTime           @updatedAt
+  members                      WorkspaceMember[]
+  connectedAccounts            ConnectedAccount[]
+  videos                       UploadedVideo[]
+  posts                        ScheduledPost[]
 }
 
 model WorkspaceMember {
