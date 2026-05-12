@@ -1,17 +1,22 @@
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { buildYouTubeOAuthStartUrl } from "@/lib/platforms/youtube-oauth";
+import {
+  buildYouTubeOAuthStartUrl,
+  createYouTubeOAuthNonce,
+  createYouTubeOAuthState,
+  youtubeOAuthStateCookieName,
+} from "@/lib/platforms/youtube-oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getAuthSession();
 
   if (!session?.user?.id) {
-    redirect("/sign-in");
+    return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
   const membership = await db.workspaceMember.findFirst({
@@ -20,10 +25,23 @@ export async function GET() {
   });
 
   if (!membership) {
-    redirect("/connections?youtube=no-workspace");
+    return redirectToConnections(request, "no-workspace");
   }
 
-  const oauthUrl = buildYouTubeOAuthStartUrl();
+  const secret = process.env.NEXTAUTH_SECRET;
+
+  if (!secret) {
+    return new Response("OAuth state signing is not configured.", { status: 503 });
+  }
+
+  const nonce = createYouTubeOAuthNonce();
+  const state = createYouTubeOAuthState({
+    userId: session.user.id,
+    workspaceId: membership.workspaceId,
+    nonce,
+    secret,
+  });
+  const oauthUrl = buildYouTubeOAuthStartUrl(process.env, { state });
 
   if (!oauthUrl.success) {
     return new Response(
@@ -32,5 +50,18 @@ export async function GET() {
     );
   }
 
-  redirect(oauthUrl.url);
+  const response = NextResponse.redirect(oauthUrl.url);
+  response.cookies.set(youtubeOAuthStateCookieName, nonce, {
+    httpOnly: true,
+    maxAge: 10 * 60,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  return response;
+}
+
+function redirectToConnections(request: Request, youtubeStatus: string) {
+  return NextResponse.redirect(new URL(`/connections?youtube=${youtubeStatus}`, request.url));
 }
