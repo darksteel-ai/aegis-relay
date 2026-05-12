@@ -1,6 +1,14 @@
 import { AppShell } from "@/components/app-shell";
+import { getAuthSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await getAuthSession();
+
+  if (!session?.user) {
+    redirect("/sign-in");
+  }
+
   return (
     <AppShell>
       <div className="space-y-3">
@@ -9,8 +17,9 @@ export default function DashboardPage() {
           Schedule videos across every channel.
         </h1>
         <p className="max-w-2xl text-base leading-7 text-neutral-600">
-          This workspace is ready for the scheduler flows, platform
-          connections, billing, and automation work planned in later tasks.
+          {session.user.email
+            ? `${session.user.email} is signed in and ready for scheduler flows.`
+            : "This workspace is ready for scheduler flows."}
         </p>
       </div>
     </AppShell>
