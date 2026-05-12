@@ -9,7 +9,7 @@ import {
   type SupportedShortFormVideoType,
 } from "@/lib/validation/video";
 
-const UPLOAD_URL_TTL_SECONDS = 15 * 60;
+export const UPLOAD_URL_TTL_SECONDS = 15 * 60;
 
 const EXTENSIONS_BY_CONTENT_TYPE: Record<SupportedShortFormVideoType, "mp4" | "mov"> = {
   "video/mp4": "mp4",
@@ -45,17 +45,27 @@ export function createUploadObjectKey({
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   const day = String(now.getUTCDate()).padStart(2, "0");
-  const workspacePrefix = createWorkspaceUploadPrefix(workspaceId);
-  const safeUserId = sanitizeKeySegment(userId) || "unknown-user";
+  const uploadPrefix = createUserWorkspaceUploadPrefix({ workspaceId, userId });
   const baseName = sanitizeFileBaseName(fileName);
   const extension = EXTENSIONS_BY_CONTENT_TYPE[contentType];
 
-  return `${workspacePrefix}users/${safeUserId}/${year}/${month}/${day}/${createId()}-${baseName}.${extension}`;
+  return `${uploadPrefix}${year}/${month}/${day}/${createId()}-${baseName}.${extension}`;
 }
 
 export function createWorkspaceUploadPrefix(workspaceId: string) {
   const safeWorkspaceId = sanitizeKeySegment(workspaceId) || "unknown-workspace";
   return `uploads/workspaces/${safeWorkspaceId}/`;
+}
+
+export function createUserWorkspaceUploadPrefix({
+  workspaceId,
+  userId,
+}: {
+  workspaceId: string;
+  userId: string;
+}) {
+  const safeUserId = sanitizeKeySegment(userId) || "unknown-user";
+  return `${createWorkspaceUploadPrefix(workspaceId)}users/${safeUserId}/`;
 }
 
 export async function createSignedUploadUrl({

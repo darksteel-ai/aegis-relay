@@ -25,6 +25,7 @@ describe("scheduled post creation rules", () => {
   test("normalizes a valid create post payload", () => {
     const result = parseCreateScheduledPostInput(validPayload, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -56,6 +57,7 @@ describe("scheduled post creation rules", () => {
       },
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -75,6 +77,7 @@ describe("scheduled post creation rules", () => {
       platforms: [],
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -100,6 +103,7 @@ describe("scheduled post creation rules", () => {
       platforms: ["YOUTUBE", "MASTODON"],
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -126,6 +130,7 @@ describe("scheduled post creation rules", () => {
       },
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -143,6 +148,7 @@ describe("scheduled post creation rules", () => {
       platforms: ["YOUTUBE", "TIKTOK", "INSTAGRAM"],
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -179,6 +185,7 @@ describe("scheduled post creation rules", () => {
       },
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -188,6 +195,27 @@ describe("scheduled post creation rules", () => {
     }
 
     expect(result.errors).toContain("Video upload does not belong to this workspace.");
+  });
+
+  test("rejects storage keys from another user in the same workspace", () => {
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      video: {
+        ...validPayload.video,
+        storageKey: "uploads/workspaces/workspace_123/users/other_user/clip.mp4",
+      },
+    }, {
+      workspaceId: "workspace_123",
+      userId: "user_123",
+      now: new Date("2026-05-12T12:00:00.000Z"),
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+
+    expect(result.errors).toContain("Video upload does not belong to this user.");
   });
 
   test("requires dimensions and duration for scheduled videos", () => {
@@ -201,6 +229,7 @@ describe("scheduled post creation rules", () => {
       },
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -224,6 +253,7 @@ describe("scheduled post creation rules", () => {
       timezone: "Mars/Olympus_Mons",
     }, {
       workspaceId: "workspace_123",
+      userId: "user_123",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 

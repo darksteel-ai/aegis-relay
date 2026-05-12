@@ -6,6 +6,10 @@ import {
   buildPlatformPostCreateInputs,
   parseCreateScheduledPostInput,
 } from "@/lib/posts/create";
+import {
+  UploadReservationError,
+  consumeIssuedUploadReservation,
+} from "@/lib/uploads/reservations";
 
 export const runtime = "nodejs";
 
@@ -35,6 +39,7 @@ export async function POST(request: Request) {
 
   const parsed = parseCreateScheduledPostInput(payload, {
     workspaceId: membership.workspaceId,
+    userId: session.user.id,
   });
 
   if (!parsed.success) {
@@ -45,42 +50,58 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
-  const post = await db.$transaction(async (tx) => {
-    const video = await tx.uploadedVideo.create({
-      data: {
-        workspaceId: membership.workspaceId,
-        storageKey: input.video.storageKey,
-        fileName: input.video.fileName,
-        mimeType: input.video.mimeType,
-        sizeBytes: input.video.sizeBytes,
-        width: input.video.width,
-        height: input.video.height,
-        durationSec:
-          input.video.durationSeconds == null
-            ? undefined
-            : Math.round(input.video.durationSeconds),
-      },
-    });
+  let post;
 
-    return tx.scheduledPost.create({
-      data: {
+  try {
+    post = await db.$transaction(async (tx) => {
+      await consumeIssuedUploadReservation(tx, {
+        storageKey: input.video.storageKey,
         workspaceId: membership.workspaceId,
-        videoId: video.id,
-        baseCaption: input.baseCaption,
-        scheduledAt: input.scheduledAt,
-        timezone: input.timezone,
-        platformPosts: {
-          create: buildPlatformPostCreateInputs(input),
+        userId: session.user.id,
+      });
+
+      const video = await tx.uploadedVideo.create({
+        data: {
+          workspaceId: membership.workspaceId,
+          storageKey: input.video.storageKey,
+          fileName: input.video.fileName,
+          mimeType: input.video.mimeType,
+          sizeBytes: input.video.sizeBytes,
+          width: input.video.width,
+          height: input.video.height,
+          durationSec:
+            input.video.durationSeconds == null
+              ? undefined
+              : Math.round(input.video.durationSeconds),
         },
-      },
-      include: {
-        video: true,
-        platformPosts: {
-          orderBy: { createdAt: "asc" },
+      });
+
+      return tx.scheduledPost.create({
+        data: {
+          workspaceId: membership.workspaceId,
+          videoId: video.id,
+          baseCaption: input.baseCaption,
+          scheduledAt: input.scheduledAt,
+          timezone: input.timezone,
+          platformPosts: {
+            create: buildPlatformPostCreateInputs(input),
+          },
         },
-      },
+        include: {
+          video: true,
+          platformPosts: {
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      });
     });
-  });
+  } catch (error) {
+    if (error instanceof UploadReservationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    throw error;
+  }
 
   return NextResponse.json({ post }, { status: 201 });
 }

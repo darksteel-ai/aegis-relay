@@ -3,7 +3,11 @@ import { z } from "zod";
 
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { createSignedUploadUrl, createUploadObjectKey } from "@/lib/storage";
+import {
+  UPLOAD_URL_TTL_SECONDS,
+  createSignedUploadUrl,
+  createUploadObjectKey,
+} from "@/lib/storage";
 import {
   isSupportedShortFormVideoType,
   normalizeVideoContentType,
@@ -86,6 +90,19 @@ export async function POST(request: Request) {
     key,
     contentType,
     sizeBytes: parsed.data.sizeBytes,
+  });
+  const expiresAt = new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * 1000);
+
+  await db.uploadReservation.create({
+    data: {
+      workspaceId: membership.workspaceId,
+      userId: session.user.id,
+      storageKey: key,
+      fileName: parsed.data.fileName,
+      mimeType: contentType,
+      sizeBytes: parsed.data.sizeBytes,
+      expiresAt,
+    },
   });
 
   return NextResponse.json({

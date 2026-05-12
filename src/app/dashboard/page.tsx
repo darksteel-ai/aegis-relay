@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isValidTimeZone } from "@/lib/posts/create";
+import { formatScheduledAtForDashboard } from "@/lib/posts/display";
 import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
                       </p>
                       <p className="mt-1 text-sm text-neutral-600">
                         {post.video.fileName} scheduled for{" "}
-                        {formatScheduledAt(post.scheduledAt, post.timezone)}
+                        {formatScheduledAtForDashboard(post.scheduledAt, post.timezone)}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -105,14 +105,6 @@ export default async function DashboardPage() {
       </div>
     </AppShell>
   );
-}
-
-function formatScheduledAt(date: Date, timezone: string) {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: isValidTimeZone(timezone) ? timezone : "UTC",
-  }).format(date);
 }
 
 function formatPlatform(platform: string) {

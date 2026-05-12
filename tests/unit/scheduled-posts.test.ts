@@ -53,7 +53,7 @@ describe("scheduled post data model", () => {
   });
 
   test("keeps uniqueness rules needed for scheduling and auth adapters", () => {
-    expect(schema).toContain("emailVerified DateTime?");
+    expect(schema).toMatch(/emailVerified\s+DateTime\?/);
     expect(schema).toContain("@@unique([scheduledPostId, platform])");
     expect(schema).toContain("@@unique([workspaceId, platform, externalId])");
     expect(schema).toContain("@@unique([provider, providerAccountId])");

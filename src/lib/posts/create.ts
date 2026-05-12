@@ -5,7 +5,10 @@ import {
   normalizeVideoContentType,
   validateShortFormVideo,
 } from "@/lib/validation/video";
-import { createWorkspaceUploadPrefix } from "@/lib/storage";
+import {
+  createUserWorkspaceUploadPrefix,
+  createWorkspaceUploadPrefix,
+} from "@/lib/storage";
 
 export const MAX_BASE_CAPTION_LENGTH = 2_200;
 
@@ -50,6 +53,7 @@ export type CreateScheduledPostInput = {
 
 export type ParseCreateScheduledPostOptions = {
   workspaceId: string;
+  userId: string;
   now?: Date;
 };
 
@@ -98,6 +102,13 @@ export function parseCreateScheduledPostInput(
     const durationSeconds = getVideoDurationSeconds(data.video);
     if (!storageKeyBelongsToWorkspace(data.video.storageKey, options.workspaceId)) {
       errors.push("Video upload does not belong to this workspace.");
+    } else if (
+      !storageKeyBelongsToUserWorkspace(data.video.storageKey, {
+        workspaceId: options.workspaceId,
+        userId: options.userId,
+      })
+    ) {
+      errors.push("Video upload does not belong to this user.");
     }
 
     if (!isPositiveNumber(data.video.width) || !isPositiveNumber(data.video.height)) {
@@ -200,6 +211,13 @@ function getVideoDurationSeconds(video: {
 
 export function storageKeyBelongsToWorkspace(storageKey: string, workspaceId: string) {
   return storageKey.startsWith(createWorkspaceUploadPrefix(workspaceId));
+}
+
+export function storageKeyBelongsToUserWorkspace(
+  storageKey: string,
+  owner: { workspaceId: string; userId: string },
+) {
+  return storageKey.startsWith(createUserWorkspaceUploadPrefix(owner));
 }
 
 export function isValidTimeZone(timezone: string) {
