@@ -55,7 +55,7 @@ export function ComposerForm() {
             sizeBytes: video.sizeBytes,
             width: video.width,
             height: video.height,
-            durationSeconds: video.durationSeconds,
+            duration: video.durationSeconds,
           },
         }),
       });

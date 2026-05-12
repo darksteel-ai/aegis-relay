@@ -60,19 +60,19 @@ export function PlatformSelector({
             >
               <span className="flex items-start justify-between gap-3">
                 <span className="font-medium text-neutral-950">{platform.label}</span>
-                <span
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-sm border border-neutral-300 bg-white text-white has-[:checked]:border-neutral-950 has-[:checked]:bg-neutral-950"
-                  aria-hidden="true"
-                >
+                <span className="relative grid h-5 w-5 shrink-0 place-items-center">
                   <input
-                    className="peer sr-only"
+                    className="peer absolute inset-0 h-5 w-5 cursor-pointer appearance-none rounded-sm border border-neutral-300 bg-white transition-colors checked:border-neutral-950 checked:bg-neutral-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950 disabled:cursor-not-allowed"
                     checked={checked}
                     disabled={disabled}
                     type="checkbox"
                     value={platform.id}
                     onChange={() => togglePlatform(platform.id)}
                   />
-                  <Check className="hidden h-3.5 w-3.5 peer-checked:block" aria-hidden="true" />
+                  <Check
+                    className="pointer-events-none relative hidden h-3.5 w-3.5 text-white peer-checked:block"
+                    aria-hidden="true"
+                  />
                 </span>
               </span>
               <span className="text-sm leading-5 text-neutral-600">{platform.note}</span>

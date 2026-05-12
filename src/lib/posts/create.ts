@@ -24,6 +24,7 @@ const createScheduledPostPayloadSchema = z
         sizeBytes: z.number().int().positive(),
         width: z.number().int().positive().optional(),
         height: z.number().int().positive().optional(),
+        duration: z.number().positive().optional(),
         durationSeconds: z.number().positive().optional(),
       })
       .optional(),
@@ -83,12 +84,13 @@ export function parseCreateScheduledPostInput(
   if (!data.video) {
     errors.push("Video details are required.");
   } else {
+    const durationSeconds = getVideoDurationSeconds(data.video);
     const videoValidation = validateShortFormVideo({
       contentType: data.video.mimeType,
       sizeBytes: data.video.sizeBytes,
       width: data.video.width,
       height: data.video.height,
-      durationSeconds: data.video.durationSeconds,
+      durationSeconds,
     });
 
     if (!videoValidation.ok) {
@@ -108,8 +110,13 @@ export function parseCreateScheduledPostInput(
       timezone,
       platforms,
       video: {
-        ...data.video,
+        storageKey: data.video.storageKey,
+        fileName: data.video.fileName,
         mimeType: normalizeVideoContentType(data.video.mimeType),
+        sizeBytes: data.video.sizeBytes,
+        width: data.video.width,
+        height: data.video.height,
+        durationSeconds: getVideoDurationSeconds(data.video),
       },
     },
   };
@@ -159,6 +166,13 @@ function normalizePlatforms(value: string[] | undefined, errors: string[]) {
 
 function isSupportedPlatform(platform: string): platform is Platform {
   return supportedPlatforms.includes(platform as Platform);
+}
+
+function getVideoDurationSeconds(video: {
+  duration?: number;
+  durationSeconds?: number;
+}) {
+  return video.duration ?? video.durationSeconds;
 }
 
 function formatPayloadIssues(error: z.ZodError) {

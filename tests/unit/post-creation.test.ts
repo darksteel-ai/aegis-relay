@@ -43,6 +43,24 @@ describe("scheduled post creation rules", () => {
     });
   });
 
+  test("accepts planned duration field for uploaded video payloads", () => {
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      video: {
+        ...validPayload.video,
+        durationSeconds: undefined,
+        duration: 42.4,
+      },
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.video.durationSeconds).toBe(42.4);
+  });
+
   test("rejects missing caption, timezone, platforms, and video", () => {
     const result = parseCreateScheduledPostInput({
       baseCaption: "",
