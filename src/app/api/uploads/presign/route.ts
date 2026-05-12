@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getAuthSession } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { createSignedUploadUrl, createUploadObjectKey } from "@/lib/storage";
 import {
   isSupportedShortFormVideoType,
@@ -28,6 +29,15 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const membership = await db.workspaceMember.findFirst({
+    where: { userId: session.user.id },
+    select: { workspaceId: true },
+  });
+
+  if (!membership) {
+    return NextResponse.json({ error: "Workspace not found." }, { status: 404 });
   }
 
   let payload: unknown;
@@ -68,6 +78,7 @@ export async function POST(request: Request) {
 
   const key = createUploadObjectKey({
     userId: session.user.id,
+    workspaceId: membership.workspaceId,
     fileName: parsed.data.fileName,
     contentType,
   });

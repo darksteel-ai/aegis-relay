@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isValidTimeZone } from "@/lib/posts/create";
 import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -110,7 +111,7 @@ function formatScheduledAt(date: Date, timezone: string) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: timezone,
+    timeZone: isValidTimeZone(timezone) ? timezone : "UTC",
   }).format(date);
 }
 

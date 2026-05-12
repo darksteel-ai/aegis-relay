@@ -311,5 +311,13 @@ function getSelectedFileValidationError(file: File, metadata: VideoMetadata) {
     durationSeconds: metadata.durationSeconds,
   });
 
-  return validation.ok ? null : validation.errors[0];
+  if (!validation.ok) {
+    return validation.errors[0];
+  }
+
+  if (!metadata.width || !metadata.height || !metadata.durationSeconds) {
+    return "Could not read video dimensions and duration.";
+  }
+
+  return null;
 }

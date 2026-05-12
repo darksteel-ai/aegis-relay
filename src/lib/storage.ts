@@ -20,6 +20,7 @@ let storageClient: S3Client | null = null;
 
 export type CreateUploadObjectKeyInput = {
   userId: string;
+  workspaceId: string;
   fileName: string;
   contentType: SupportedShortFormVideoType;
   now?: Date;
@@ -35,6 +36,7 @@ export type CreateSignedUploadUrlInput = {
 
 export function createUploadObjectKey({
   userId,
+  workspaceId,
   fileName,
   contentType,
   now = new Date(),
@@ -43,11 +45,17 @@ export function createUploadObjectKey({
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   const day = String(now.getUTCDate()).padStart(2, "0");
+  const workspacePrefix = createWorkspaceUploadPrefix(workspaceId);
   const safeUserId = sanitizeKeySegment(userId) || "unknown-user";
   const baseName = sanitizeFileBaseName(fileName);
   const extension = EXTENSIONS_BY_CONTENT_TYPE[contentType];
 
-  return `uploads/${safeUserId}/${year}/${month}/${day}/${createId()}-${baseName}.${extension}`;
+  return `${workspacePrefix}users/${safeUserId}/${year}/${month}/${day}/${createId()}-${baseName}.${extension}`;
+}
+
+export function createWorkspaceUploadPrefix(workspaceId: string) {
+  const safeWorkspaceId = sanitizeKeySegment(workspaceId) || "unknown-workspace";
+  return `uploads/workspaces/${safeWorkspaceId}/`;
 }
 
 export async function createSignedUploadUrl({

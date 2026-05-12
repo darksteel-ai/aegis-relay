@@ -24,15 +24,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const parsed = parseCreateScheduledPostInput(payload);
-
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.errors[0] ?? "Invalid post request.", errors: parsed.errors },
-      { status: 400 },
-    );
-  }
-
   const membership = await db.workspaceMember.findFirst({
     where: { userId: session.user.id },
     select: { workspaceId: true },
@@ -40,6 +31,17 @@ export async function POST(request: Request) {
 
   if (!membership) {
     return NextResponse.json({ error: "Workspace not found." }, { status: 404 });
+  }
+
+  const parsed = parseCreateScheduledPostInput(payload, {
+    workspaceId: membership.workspaceId,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.errors[0] ?? "Invalid post request.", errors: parsed.errors },
+      { status: 400 },
+    );
   }
 
   const input = parsed.data;

@@ -5,6 +5,7 @@ import {
   normalizeVideoContentType,
   validateShortFormVideo,
 } from "@/lib/validation/video";
+import { createWorkspaceUploadPrefix } from "@/lib/storage";
 
 export const MAX_BASE_CAPTION_LENGTH = 2_200;
 
@@ -47,12 +48,18 @@ export type CreateScheduledPostInput = {
   };
 };
 
+export type ParseCreateScheduledPostOptions = {
+  workspaceId: string;
+  now?: Date;
+};
+
 export type CreateScheduledPostParseResult =
   | { success: true; data: CreateScheduledPostInput }
   | { success: false; errors: string[] };
 
 export function parseCreateScheduledPostInput(
   payload: unknown,
+  options: ParseCreateScheduledPostOptions,
 ): CreateScheduledPostParseResult {
   const parsed = createScheduledPostPayloadSchema.safeParse(payload);
 
@@ -75,16 +82,32 @@ export function parseCreateScheduledPostInput(
 
   if (!data.scheduledAt || !scheduledAt) {
     errors.push("Schedule time must be a valid datetime.");
+  } else if (scheduledAt <= (options.now ?? new Date())) {
+    errors.push("Schedule time must be in the future.");
   }
 
   if (!timezone) {
     errors.push("Timezone is required.");
+  } else if (!isValidTimeZone(timezone)) {
+    errors.push("Timezone must be a valid IANA timezone.");
   }
 
   if (!data.video) {
     errors.push("Video details are required.");
   } else {
     const durationSeconds = getVideoDurationSeconds(data.video);
+    if (!storageKeyBelongsToWorkspace(data.video.storageKey, options.workspaceId)) {
+      errors.push("Video upload does not belong to this workspace.");
+    }
+
+    if (!isPositiveNumber(data.video.width) || !isPositiveNumber(data.video.height)) {
+      errors.push("Video width and height are required.");
+    }
+
+    if (!isPositiveNumber(durationSeconds)) {
+      errors.push("Video duration is required.");
+    }
+
     const videoValidation = validateShortFormVideo({
       contentType: data.video.mimeType,
       sizeBytes: data.video.sizeBytes,
@@ -173,6 +196,23 @@ function getVideoDurationSeconds(video: {
   durationSeconds?: number;
 }) {
   return video.duration ?? video.durationSeconds;
+}
+
+export function storageKeyBelongsToWorkspace(storageKey: string, workspaceId: string) {
+  return storageKey.startsWith(createWorkspaceUploadPrefix(workspaceId));
+}
+
+export function isValidTimeZone(timezone: string) {
+  try {
+    Intl.DateTimeFormat("en", { timeZone: timezone }).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isPositiveNumber(value: number | undefined) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
 function formatPayloadIssues(error: z.ZodError) {

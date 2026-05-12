@@ -24,9 +24,17 @@ export function ComposerForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const captionCharacters = baseCaption.length;
+  const hasRequiredMetadata = Boolean(video?.width && video.height && video.durationSeconds);
   const canSubmit = useMemo(() => {
-    return Boolean(video && baseCaption.trim() && scheduledAt && timezone && platforms.length);
-  }, [baseCaption, platforms.length, scheduledAt, timezone, video]);
+    return Boolean(
+      video &&
+        hasRequiredMetadata &&
+        baseCaption.trim() &&
+        scheduledAt &&
+        timezone &&
+        platforms.length,
+    );
+  }, [baseCaption, hasRequiredMetadata, platforms.length, scheduledAt, timezone, video]);
 
   async function submitPost(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

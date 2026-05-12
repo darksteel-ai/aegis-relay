@@ -110,13 +110,14 @@ describe("upload object keys", () => {
 
     const key = createUploadObjectKey({
       userId: "user_123",
+      workspaceId: "workspace_456",
       fileName: "../../My Launch Video!!!.MP4",
       contentType: "video/mp4",
       now: new Date("2026-05-12T15:30:00.000Z"),
       randomUUID: () => "uuid-123",
     });
 
-    expect(key).toBe("uploads/user_123/2026/05/12/uuid-123-my-launch-video.mp4");
+    expect(key).toBe("uploads/workspaces/workspace_456/users/user_123/2026/05/12/uuid-123-my-launch-video.mp4");
   });
 
   test("uses the trusted content type extension over a misleading file extension", async () => {
@@ -124,13 +125,14 @@ describe("upload object keys", () => {
 
     const key = createUploadObjectKey({
       userId: "user_123",
+      workspaceId: "workspace_456",
       fileName: "clip.mov",
       contentType: "video/mp4",
       now: new Date("2026-05-12T15:30:00.000Z"),
       randomUUID: () => "uuid-123",
     });
 
-    expect(key).toBe("uploads/user_123/2026/05/12/uuid-123-clip.mp4");
+    expect(key).toBe("uploads/workspaces/workspace_456/users/user_123/2026/05/12/uuid-123-clip.mp4");
   });
 
   test("signs the required content-type header for direct uploads", async () => {
