@@ -10,6 +10,8 @@ const envHelper = existsSync(envHelperPath) ? readFileSync(envHelperPath, "utf8"
 
 describe("scheduled post data model", () => {
   test("defines scheduler enums and core publish workflow models", () => {
+    expect(schema).toContain('url      = env("DATABASE_URL")');
+
     expect(schema).toContain("enum Platform");
     expect(schema).toContain("YOUTUBE");
     expect(schema).toContain("TIKTOK");
@@ -47,6 +49,7 @@ describe("scheduled post data model", () => {
   });
 
   test("keeps uniqueness rules needed for scheduling and auth adapters", () => {
+    expect(schema).toContain("emailVerified DateTime?");
     expect(schema).toContain("@@unique([scheduledPostId, platform])");
     expect(schema).toContain("@@unique([workspaceId, platform, externalId])");
     expect(schema).toContain("@@unique([provider, providerAccountId])");

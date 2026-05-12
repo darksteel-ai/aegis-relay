@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Platform {
@@ -25,15 +25,16 @@ enum PublishStatus {
 }
 
 model User {
-  id         String            @id @default(cuid())
-  email      String            @unique
-  name       String?
-  image      String?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-  workspaces WorkspaceMember[]
-  accounts   Account[]
-  sessions   Session[]
+  id            String            @id @default(cuid())
+  email         String            @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  workspaces    WorkspaceMember[]
+  accounts      Account[]
+  sessions      Session[]
 }
 
 model Workspace {
