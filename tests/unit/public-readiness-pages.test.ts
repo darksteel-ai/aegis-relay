@@ -1,11 +1,39 @@
 import { describe, expect, test } from "vitest";
 
-import { privacyStoredData } from "@/app/privacy/page";
+import { betaPolicyNotice, privacyStoredData } from "@/app/privacy/page";
 import { reviewerDemoSteps } from "@/app/reviewer-demo/page";
-import { failedPostChecklist } from "@/app/support/page";
-import { termsTopics } from "@/app/terms/page";
+import {
+  betaSupportContact,
+  betaSupportNotice,
+  failedPostChecklist,
+} from "@/app/support/page";
+import { betaTermsNotice, termsTopics } from "@/app/terms/page";
 
 describe("public launch readiness page copy", () => {
+  test("beta notices are externally coherent", () => {
+    expect(betaPolicyNotice).toBe(
+      "Beta policy notice: this page describes the current beta service and should be reviewed by counsel before public launch.",
+    );
+    expect(betaTermsNotice).toBe(betaPolicyNotice);
+    expect(betaSupportNotice).toBe(betaPolicyNotice);
+    expect(betaSupportContact).toBe("support@video-scheduler.example");
+  });
+
+  test("public constants avoid internal launch-readiness wording", () => {
+    const copy = [
+      betaPolicyNotice,
+      betaTermsNotice,
+      betaSupportNotice,
+      betaSupportContact,
+      ...privacyStoredData,
+      ...termsTopics,
+      ...failedPostChecklist,
+      ...reviewerDemoSteps,
+    ].join(" ");
+
+    expect(copy).not.toMatch(/\b(draft|placeholder|unresolved|TBD|replace)\b/i);
+  });
+
   test("privacy copy lists the beta data categories and token encryption", () => {
     const copy = privacyStoredData.join(" ");
 

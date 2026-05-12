@@ -14,19 +14,23 @@ export const failedPostChecklist = [
   "Use retry only after fixing connection, permission, file, or platform-policy issues.",
 ];
 
+export const betaSupportContact = "support@video-scheduler.example";
+export const betaSupportNotice =
+  "Beta policy notice: this page describes the current beta service and should be reviewed by counsel before public launch.";
+
 export default function SupportPage() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
         <header className="space-y-3">
           <p className="text-sm font-medium text-neutral-500">
-            Beta support draft
+            Beta support
           </p>
           <h1 className="text-3xl font-semibold tracking-normal">Support</h1>
           <p className="text-base leading-7 text-neutral-600">
-            This page is a launch-readiness draft for reviewers and beta users.
-            Contact wording, support hours, escalation paths, and legal support
-            obligations should be reviewed before public launch.
+            {betaSupportNotice} Use this page for connection, upload,
+            scheduling, billing, and publishing-status questions during beta
+            review.
           </p>
         </header>
 
@@ -36,14 +40,14 @@ export default function SupportPage() {
             Email:{" "}
             <a
               className="font-medium text-neutral-950 underline underline-offset-2"
-              href="mailto:support@example.com"
+              href={`mailto:${betaSupportContact}`}
             >
-              support@example.com
+              {betaSupportContact}
             </a>
           </p>
           <p className="mt-2 text-neutral-600">
-            Placeholder for beta launch. Replace with the approved support
-            address before external release.
+            This is the beta support contact for reviewer access, connection
+            questions, failed publishing attempts, and billing help.
           </p>
         </section>
 

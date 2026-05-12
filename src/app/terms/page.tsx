@@ -14,21 +14,23 @@ export const termsTopics = [
   "Access may be suspended or terminated for misuse, non-payment, security risk, platform policy conflicts, or beta shutdown.",
 ];
 
+export const betaTermsNotice =
+  "Beta policy notice: this page describes the current beta service and should be reviewed by counsel before public launch.";
+
 export default function TermsPage() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
         <header className="space-y-3">
           <p className="text-sm font-medium text-neutral-500">
-            Legal review draft
+            Beta policy notice
           </p>
           <h1 className="text-3xl font-semibold tracking-normal">
             Terms of Service
           </h1>
           <p className="text-base leading-7 text-neutral-600">
-            These terms are a beta readiness draft for product and legal review.
-            They summarize intended operating rules and should not be treated as
-            final legal advice or a production-ready agreement.
+            {betaTermsNotice} These terms summarize the operating rules for
+            beta scheduler access and are not legal advice.
           </p>
         </header>
 
@@ -60,10 +62,10 @@ export default function TermsPage() {
             Legal Review Status
           </h2>
           <p className="mt-3">
-            Before production launch, counsel should review warranty disclaimers,
-            limitation of liability, dispute terms, data processing language,
-            refund policy, subscription notices, and jurisdiction-specific
-            consumer requirements.
+            Counsel should review warranty disclaimers, limitation of liability,
+            dispute terms, data processing language, refund policy, subscription
+            notices, and jurisdiction-specific consumer requirements before
+            public launch.
           </p>
         </section>
       </div>

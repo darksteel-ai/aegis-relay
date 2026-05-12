@@ -15,14 +15,17 @@ export const privacyStoredData = [
   "Support and contact data sent to us while troubleshooting beta access, billing, connection, upload, or publishing issues.",
 ];
 
+export const betaPolicyNotice =
+  "Beta policy notice: this page describes the current beta service and should be reviewed by counsel before public launch.";
+
 export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
         <DocumentHeader
-          eyebrow="Legal review draft"
+          eyebrow="Beta policy notice"
           title="Privacy Policy"
-          description="This beta draft explains how Video Scheduler currently expects to collect and use data for scheduled short-form video publishing. It is provided for product review and legal review, and is not final legal advice."
+          description={betaPolicyNotice}
         />
 
         <div className="mt-8 space-y-6">
@@ -62,12 +65,13 @@ export default function PrivacyPage() {
             </p>
           </PolicySection>
 
-          <PolicySection title="Review Status">
+          <PolicySection title="Policy Review Status">
             <p>
-              This page is a launch-readiness draft. Final retention periods,
-              deletion procedures, subprocessors, regional disclosures, and
-              production legal language should be confirmed by counsel before
-              public launch.
+              The beta service is designed around limited workspace access,
+              scheduled publishing, and support for reviewer workflows. Privacy
+              terms, retention periods, deletion procedures, subprocessors, and
+              regional disclosures should be reviewed by counsel before public
+              launch.
             </p>
           </PolicySection>
         </div>
