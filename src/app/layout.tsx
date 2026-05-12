@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Video Scheduler",
-  description: "Schedule one short-form video across multiple platforms.",
+  description: "Schedule one short-form video across multiple platforms",
 };
 
 export default function RootLayout({
