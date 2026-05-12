@@ -65,7 +65,10 @@ export async function GET(request: Request) {
   }
 
   if (!result.success) {
-    return clearStateCookie(redirectToConnections(request, result.reason));
+    console.error("YouTube OAuth callback returned a handled failure.", {
+      reason: result.reason,
+    });
+    return clearStateCookie(redirectToConnections(request, "oauth-failed"));
   }
 
   return clearStateCookie(redirectToConnections(request, "connected"));
