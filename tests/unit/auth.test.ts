@@ -170,4 +170,16 @@ describe("auth workspace bootstrap", () => {
       }),
     ).toThrow("EMAIL_SERVER");
   });
+
+  test("requires an email sender in production even when email server is configured", async () => {
+    const { createAuthOptions } = await import("../../src/lib/auth");
+
+    expect(() =>
+      createAuthOptions({
+        NODE_ENV: "production",
+        NEXTAUTH_SECRET: "replace-with-a-random-secret",
+        EMAIL_SERVER: "smtp://localhost:1025",
+      }),
+    ).toThrow("EMAIL_FROM");
+  });
 });
