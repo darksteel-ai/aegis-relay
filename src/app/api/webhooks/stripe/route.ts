@@ -1,0 +1,29 @@
+import { NextResponse } from "next/server";
+
+import { getStripe, handleStripeEvent } from "@/lib/billing/stripe";
+import { getStripeEnv } from "@/lib/env";
+
+export async function POST(request: Request) {
+  const signature = request.headers.get("stripe-signature");
+
+  if (!signature) {
+    return NextResponse.json({ error: "Missing Stripe signature." }, { status: 400 });
+  }
+
+  const body = await request.text();
+  let event;
+
+  try {
+    event = getStripe().webhooks.constructEvent(
+      body,
+      signature,
+      getStripeEnv().STRIPE_WEBHOOK_SECRET,
+    );
+  } catch {
+    return NextResponse.json({ error: "Invalid Stripe signature." }, { status: 400 });
+  }
+
+  await handleStripeEvent(event);
+
+  return NextResponse.json({ received: true });
+}

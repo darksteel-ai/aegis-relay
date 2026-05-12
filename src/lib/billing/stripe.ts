@@ -1,0 +1,266 @@
+import Stripe from "stripe";
+
+import { db as defaultDb } from "@/lib/db";
+import { getStripeEnv } from "@/lib/env";
+
+type BillingUser = {
+  id: string;
+  email?: string | null;
+};
+
+type WorkspaceRecord = {
+  id: string;
+  name: string;
+  plan: string;
+  stripeCustomerId: string | null;
+};
+
+type WorkspaceMembershipDb = {
+  workspaceMember: {
+    findFirst(args: {
+      where: { userId: string };
+      include: { workspace: true };
+      orderBy: { id: "asc" };
+    }): Promise<{ workspaceId: string; workspace: WorkspaceRecord } | null>;
+  };
+};
+
+type WorkspaceUpdateDb = {
+  workspace: {
+    update?(args: {
+      where: { id: string };
+      data: {
+        stripeCustomerId: string;
+        stripeSubscriptionId: string;
+        plan: "pro";
+      };
+    }): Promise<unknown>;
+    updateMany?(args: {
+      where: { id?: string; stripeSubscriptionId?: string };
+      data: {
+        stripeSubscriptionId?: string | null;
+        plan: "beta" | "pro";
+      };
+    }): Promise<unknown>;
+  };
+};
+
+type CheckoutStripe = {
+  checkout: {
+    sessions: {
+      create(args: Stripe.Checkout.SessionCreateParams): Promise<{ url: string | null }>;
+    };
+  };
+};
+
+type PortalStripe = {
+  billingPortal: {
+    sessions: {
+      create(args: Stripe.BillingPortal.SessionCreateParams): Promise<{ url: string }>;
+    };
+  };
+};
+
+type StripeEvent = {
+  type: string;
+  data: { object: unknown };
+};
+
+let stripeClient: Stripe | null = null;
+
+export class BillingError extends Error {
+  constructor(
+    message: string,
+    readonly status = 400,
+  ) {
+    super(message);
+    this.name = "BillingError";
+  }
+}
+
+export function getStripe() {
+  if (!stripeClient) {
+    stripeClient = new Stripe(getStripeEnv().STRIPE_SECRET_KEY, {
+      apiVersion: "2026-04-22.dahlia",
+    });
+  }
+
+  return stripeClient;
+}
+
+export async function getWorkspaceForUser(
+  userId: string,
+  database: WorkspaceMembershipDb = defaultDb,
+) {
+  const membership = await database.workspaceMember.findFirst({
+    where: { userId },
+    include: { workspace: true },
+    orderBy: { id: "asc" },
+  });
+
+  return membership?.workspace ?? null;
+}
+
+export async function createSubscriptionCheckoutSession({
+  db = defaultDb,
+  stripe = getStripe(),
+  user,
+  origin,
+  priceId = getStripeEnv().STRIPE_PRICE_ID_PRO,
+}: {
+  db?: WorkspaceMembershipDb;
+  stripe?: CheckoutStripe;
+  user: BillingUser;
+  origin: string;
+  priceId?: string;
+}) {
+  const workspace = await getWorkspaceForUser(user.id, db);
+
+  if (!workspace) {
+    throw new BillingError("Workspace not found.", 404);
+  }
+
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
+    mode: "subscription",
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${origin}/billing?checkout=success`,
+    cancel_url: `${origin}/billing?checkout=cancelled`,
+    metadata: { workspaceId: workspace.id },
+    subscription_data: { metadata: { workspaceId: workspace.id } },
+  };
+
+  if (workspace.stripeCustomerId) {
+    sessionParams.customer = workspace.stripeCustomerId;
+  } else if (user.email) {
+    sessionParams.customer_email = user.email;
+  }
+
+  const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
+
+  if (!checkoutSession.url) {
+    throw new BillingError("Stripe did not return a checkout URL.", 502);
+  }
+
+  return { ...checkoutSession, url: checkoutSession.url };
+}
+
+export async function createBillingPortalSession({
+  db = defaultDb,
+  stripe = getStripe(),
+  user,
+  origin,
+}: {
+  db?: WorkspaceMembershipDb;
+  stripe?: PortalStripe;
+  user: BillingUser;
+  origin: string;
+}) {
+  const workspace = await getWorkspaceForUser(user.id, db);
+
+  if (!workspace) {
+    throw new BillingError("Workspace not found.", 404);
+  }
+
+  if (!workspace.stripeCustomerId) {
+    throw new BillingError("No Stripe customer exists for this workspace.", 400);
+  }
+
+  return stripe.billingPortal.sessions.create({
+    customer: workspace.stripeCustomerId,
+    return_url: `${origin}/billing`,
+  });
+}
+
+export async function handleStripeEvent(
+  event: StripeEvent,
+  database: WorkspaceUpdateDb = defaultDb,
+) {
+  if (event.type === "checkout.session.completed") {
+    await handleCheckoutSessionCompleted(event.data.object, database);
+    return;
+  }
+
+  if (event.type === "customer.subscription.updated") {
+    await handleSubscriptionUpdated(event.data.object, database);
+    return;
+  }
+
+  if (event.type === "customer.subscription.deleted") {
+    await handleSubscriptionDeleted(event.data.object, database);
+  }
+}
+
+async function handleCheckoutSessionCompleted(
+  payload: unknown,
+  database: WorkspaceUpdateDb,
+) {
+  const session = payload as Stripe.Checkout.Session;
+
+  if (session.mode !== "subscription") {
+    return;
+  }
+
+  const workspaceId = session.metadata?.workspaceId;
+  const customerId = stripeId(session.customer);
+  const subscriptionId = stripeId(session.subscription);
+
+  if (!workspaceId || !customerId || !subscriptionId) {
+    throw new BillingError("Checkout session is missing workspace billing metadata.", 400);
+  }
+
+  if (!database.workspace.update) {
+    throw new BillingError("Workspace update operation is unavailable.", 500);
+  }
+
+  await database.workspace.update({
+    where: { id: workspaceId },
+    data: {
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscriptionId,
+      plan: "pro",
+    },
+  });
+}
+
+async function handleSubscriptionUpdated(payload: unknown, database: WorkspaceUpdateDb) {
+  const subscription = payload as Stripe.Subscription;
+  const subscriptionId = subscription.id;
+  const workspaceId = subscription.metadata?.workspaceId;
+  const activeStatuses = new Set(["active", "trialing"]);
+  const plan = activeStatuses.has(subscription.status) ? "pro" : "beta";
+
+  if (!database.workspace.updateMany) {
+    throw new BillingError("Workspace updateMany operation is unavailable.", 500);
+  }
+
+  await database.workspace.updateMany({
+    where: workspaceId ? { id: workspaceId } : { stripeSubscriptionId: subscriptionId },
+    data: { plan },
+  });
+}
+
+async function handleSubscriptionDeleted(payload: unknown, database: WorkspaceUpdateDb) {
+  const subscription = payload as Stripe.Subscription;
+  const subscriptionId = subscription.id;
+  const workspaceId = subscription.metadata?.workspaceId;
+
+  if (!database.workspace.updateMany) {
+    throw new BillingError("Workspace updateMany operation is unavailable.", 500);
+  }
+
+  await database.workspace.updateMany({
+    where: workspaceId ? { id: workspaceId } : { stripeSubscriptionId: subscriptionId },
+    data: {
+      stripeSubscriptionId: null,
+      plan: "beta",
+    },
+  });
+}
+
+function stripeId(value: string | { id?: string } | null | undefined) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return value?.id ?? null;
+}
