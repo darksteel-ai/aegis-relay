@@ -61,6 +61,10 @@ const googleEnvSchema = z.object({
   GOOGLE_REDIRECT_URI: z.string().url(),
 });
 
+const platformTokenEnvSchema = z.object({
+  PLATFORM_TOKEN_ENCRYPTION_KEY: z.string().min(32),
+});
+
 const inngestEnvSchema = z.object({
   INNGEST_EVENT_KEY: z.string().min(1),
 });
@@ -69,6 +73,7 @@ const schedulerEnvSchema = coreEnvSchema
   .extend(stripeEnvSchema.shape)
   .extend(storageEnvSchema.shape)
   .extend(googleEnvSchema.shape)
+  .extend(platformTokenEnvSchema.shape)
   .extend(inngestEnvSchema.shape);
 
 export function parseCoreEnv(source: EnvSource = process.env) {
@@ -89,6 +94,10 @@ export function getStorageEnv(source: EnvSource = process.env) {
 
 export function getGoogleEnv(source: EnvSource = process.env) {
   return googleEnvSchema.parse(source);
+}
+
+export function getPlatformTokenEnv(source: EnvSource = process.env) {
+  return platformTokenEnvSchema.parse(source);
 }
 
 export function getInngestEnv(source: EnvSource = process.env) {

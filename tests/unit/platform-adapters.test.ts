@@ -24,6 +24,13 @@ const publishInput = {
   },
 };
 
+const googleEnv = {
+  GOOGLE_CLIENT_ID: "client-id.apps.googleusercontent.com",
+  GOOGLE_CLIENT_SECRET: "client-secret",
+  GOOGLE_REDIRECT_URI: "https://app.example.com/api/oauth/youtube/callback",
+  PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+};
+
 describe("platform adapters", () => {
   test("YouTube adapter uploads a video with snippet, status, and media stream", async () => {
     const stream = new PassThrough();
@@ -33,6 +40,7 @@ describe("platform adapters", () => {
     const setCredentials = vi.fn();
     const oauthClient = { setCredentials };
     const adapter = createYouTubeAdapter({
+      env: googleEnv,
       createOAuthClient: vi.fn(() => oauthClient),
       getVideoReadStream: vi.fn(async () => stream),
       createYouTubeClient: vi.fn(() => ({
@@ -69,11 +77,83 @@ describe("platform adapters", () => {
     });
   });
 
+  test("YouTube adapter configures OAuth client with Google app credentials", async () => {
+    const createOAuthClient = vi.fn(() => ({ setCredentials: vi.fn() }));
+    const adapter = createYouTubeAdapter({
+      env: {
+        GOOGLE_CLIENT_ID: "client-id.apps.googleusercontent.com",
+        GOOGLE_CLIENT_SECRET: "client-secret",
+        GOOGLE_REDIRECT_URI: "https://app.example.com/api/oauth/youtube/callback",
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+      },
+      createOAuthClient,
+      getVideoReadStream: vi.fn(async () => new PassThrough()),
+      createYouTubeClient: vi.fn(() => ({
+        videos: { insert: vi.fn(async () => ({ data: { id: "youtube-video-123" } })) },
+      })),
+    });
+
+    await adapter.publish(publishInput);
+
+    expect(createOAuthClient).toHaveBeenCalledWith({
+      clientId: "client-id.apps.googleusercontent.com",
+      clientSecret: "client-secret",
+      redirectUri: "https://app.example.com/api/oauth/youtube/callback",
+    });
+  });
+
+  test("YouTube adapter persists refreshed tokens emitted by Google auth", async () => {
+    const onTokens = vi.fn();
+    const oauthClient = {
+      setCredentials: vi.fn(),
+      on: vi.fn(),
+    };
+    const adapter = createYouTubeAdapter({
+      env: googleEnv,
+      createOAuthClient: vi.fn(() => oauthClient),
+      getVideoReadStream: vi.fn(async () => new PassThrough()),
+      persistRefreshedTokens: onTokens,
+      createYouTubeClient: vi.fn(() => ({
+        videos: {
+          insert: vi.fn(async () => {
+            const tokenHandler = oauthClient.on.mock.calls.find(([event]) => event === "tokens")?.[1];
+            tokenHandler?.({
+              access_token: "fresh-access-token",
+              refresh_token: "fresh-refresh-token",
+              expiry_date: Date.parse("2026-06-02T00:00:00.000Z"),
+              scope: "https://www.googleapis.com/auth/youtube.upload",
+            });
+
+            return { data: { id: "youtube-video-123" } };
+          }),
+        },
+      })),
+    });
+
+    await adapter.publish({
+      ...publishInput,
+      connectedAccount: {
+        ...publishInput.connectedAccount,
+        id: "connected_1",
+      },
+    });
+
+    expect(oauthClient.on).toHaveBeenCalledWith("tokens", expect.any(Function));
+    expect(onTokens).toHaveBeenCalledWith({
+      connectedAccountId: "connected_1",
+      accessToken: "fresh-access-token",
+      refreshToken: "fresh-refresh-token",
+      expiresAt: new Date("2026-06-02T00:00:00.000Z"),
+      scopes: "https://www.googleapis.com/auth/youtube.upload",
+    });
+  });
+
   test("YouTube adapter falls back to caption for title and public privacy", async () => {
     const videosInsert = vi.fn(async () => ({
       data: { id: "youtube-video-456" },
     }));
     const adapter = createYouTubeAdapter({
+      env: googleEnv,
       createOAuthClient: vi.fn(() => ({ setCredentials: vi.fn() })),
       getVideoReadStream: vi.fn(async () => new PassThrough()),
       createYouTubeClient: vi.fn(() => ({
@@ -105,6 +185,7 @@ describe("platform adapters", () => {
 
   test("YouTube adapter rejects missing video ids from Google", async () => {
     const adapter = createYouTubeAdapter({
+      env: googleEnv,
       createOAuthClient: vi.fn(() => ({ setCredentials: vi.fn() })),
       getVideoReadStream: vi.fn(async () => new PassThrough()),
       createYouTubeClient: vi.fn(() => ({

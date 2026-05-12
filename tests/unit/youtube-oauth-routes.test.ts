@@ -25,6 +25,7 @@ describe("YouTube OAuth routes", () => {
     vi.stubEnv("GOOGLE_CLIENT_ID", "client-id.apps.googleusercontent.com");
     vi.stubEnv("GOOGLE_CLIENT_SECRET", "client-secret");
     vi.stubEnv("GOOGLE_REDIRECT_URI", "https://app.example.com/api/oauth/youtube/callback");
+    vi.stubEnv("PLATFORM_TOKEN_ENCRYPTION_KEY", "0123456789abcdef0123456789abcdef");
     getAuthSession.mockResolvedValue({
       user: { id: "user_1", email: "owner@example.com" },
     });
@@ -62,5 +63,44 @@ describe("YouTube OAuth routes", () => {
     expect(response.headers.get("location")).toBe(
       "https://app.example.com/connections?youtube=missing-code",
     );
+  });
+
+  test("callback clears state and redirects with a generic failure when Google fails", async () => {
+    const oauthModule = await vi.importActual<typeof import("@/lib/platforms/youtube-oauth")>(
+      "@/lib/platforms/youtube-oauth",
+    );
+    const state = oauthModule.createYouTubeOAuthState({
+      userId: "user_1",
+      workspaceId: "workspace_1",
+      nonce: "nonce_1",
+      secret: "replace-with-a-random-secret",
+    });
+
+    vi.doMock("@/lib/platforms/youtube-oauth", async () => ({
+      ...(await vi.importActual<typeof import("@/lib/platforms/youtube-oauth")>(
+        "@/lib/platforms/youtube-oauth",
+      )),
+      completeYouTubeOAuthCallback: vi.fn(async () => {
+        throw new Error("Google token endpoint unavailable");
+      }),
+    }));
+
+    const { GET } = await import("../../src/app/api/oauth/youtube/callback/route");
+    const response = await (GET as (request: Request) => Promise<Response>)(
+      new Request(
+        `https://app.example.com/api/oauth/youtube/callback?code=oauth-code&state=${encodeURIComponent(state)}`,
+        {
+          headers: {
+            cookie: "youtube_oauth_state=nonce_1",
+          },
+        },
+      ),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.example.com/connections?youtube=oauth-failed",
+    );
+    expect(response.headers.get("set-cookie")).toContain("youtube_oauth_state=;");
   });
 });

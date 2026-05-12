@@ -4,6 +4,8 @@ import {
   buildYouTubeOAuthStartUrl,
   completeYouTubeOAuthCallback,
   createYouTubeOAuthState,
+  decryptConnectedAccountToken,
+  encryptConnectedAccountToken,
   verifyYouTubeOAuthState,
 } from "@/lib/platforms/youtube-oauth";
 
@@ -109,6 +111,7 @@ describe("YouTube OAuth scaffold", () => {
         GOOGLE_CLIENT_ID: "client-id.apps.googleusercontent.com",
         GOOGLE_CLIENT_SECRET: "client-secret",
         GOOGLE_REDIRECT_URI: "https://app.example.com/api/oauth/youtube/callback",
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
       },
       db: {
         connectedAccount: { upsert },
@@ -141,22 +144,74 @@ describe("YouTube OAuth scaffold", () => {
         platform: "YOUTUBE",
         accountName: "Demo Channel",
         externalId: "channel_123",
-        accessToken: "access-token",
-        refreshToken: "refresh-token",
+        accessToken: expect.stringMatching(/^enc:v1:/),
+        refreshToken: expect.stringMatching(/^enc:v1:/),
         expiresAt: new Date("2026-06-01T00:00:00.000Z"),
         scopes: "https://www.googleapis.com/auth/youtube.upload",
         status: "SCHEDULED",
       },
       update: {
         accountName: "Demo Channel",
-        accessToken: "access-token",
-        refreshToken: "refresh-token",
+        accessToken: expect.stringMatching(/^enc:v1:/),
+        refreshToken: expect.stringMatching(/^enc:v1:/),
         expiresAt: new Date("2026-06-01T00:00:00.000Z"),
         scopes: "https://www.googleapis.com/auth/youtube.upload",
         status: "SCHEDULED",
       },
       select: { id: true },
     });
+  });
+
+  test("preserves an existing refresh token when Google does not return a new one", async () => {
+    const upsert = vi.fn(async () => ({ id: "connected_1" }));
+
+    const result = await completeYouTubeOAuthCallback({
+      code: "oauth-code",
+      workspaceId: "workspace_1",
+      env: {
+        GOOGLE_CLIENT_ID: "client-id.apps.googleusercontent.com",
+        GOOGLE_CLIENT_SECRET: "client-secret",
+        GOOGLE_REDIRECT_URI: "https://app.example.com/api/oauth/youtube/callback",
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+      },
+      db: {
+        connectedAccount: { upsert },
+      },
+      exchangeCodeForTokens: vi.fn(async () => ({
+        tokens: {
+          access_token: "access-token",
+          expiry_date: Date.parse("2026-06-01T00:00:00.000Z"),
+          scope: "https://www.googleapis.com/auth/youtube.upload",
+        },
+      })),
+      fetchMineChannel: vi.fn(async () => ({
+        id: "channel_123",
+        title: "Demo Channel",
+      })),
+    });
+
+    expect(result).toEqual({ success: true, accountId: "connected_1" });
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.not.objectContaining({
+          refreshToken: expect.anything(),
+        }),
+      }),
+    );
+  });
+
+  test("encrypts and decrypts connected account tokens", () => {
+    const encrypted = encryptConnectedAccountToken("access-token", {
+      PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+    });
+
+    expect(encrypted).toMatch(/^enc:v1:/);
+    expect(encrypted).not.toContain("access-token");
+    expect(
+      decryptConnectedAccountToken(encrypted, {
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+      }),
+    ).toBe("access-token");
   });
 
   test("returns a clear error when Google does not return an access token", async () => {
@@ -167,6 +222,7 @@ describe("YouTube OAuth scaffold", () => {
         GOOGLE_CLIENT_ID: "client-id.apps.googleusercontent.com",
         GOOGLE_CLIENT_SECRET: "client-secret",
         GOOGLE_REDIRECT_URI: "https://app.example.com/api/oauth/youtube/callback",
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
       },
       db: {
         connectedAccount: { upsert: vi.fn() },
@@ -194,6 +250,7 @@ describe("YouTube OAuth scaffold", () => {
         GOOGLE_CLIENT_ID: "client-id.apps.googleusercontent.com",
         GOOGLE_CLIENT_SECRET: "client-secret",
         GOOGLE_REDIRECT_URI: "https://app.example.com/api/oauth/youtube/callback",
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
       },
       db: {
         connectedAccount: { upsert: vi.fn() },

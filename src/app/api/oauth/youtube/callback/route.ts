@@ -52,10 +52,17 @@ export async function GET(request: Request) {
     return clearStateCookie(redirectToConnections(request, stateResult.reason));
   }
 
-  const result = await completeYouTubeOAuthCallback({
-    code,
-    workspaceId: membership.workspaceId,
-  });
+  let result;
+
+  try {
+    result = await completeYouTubeOAuthCallback({
+      code,
+      workspaceId: membership.workspaceId,
+    });
+  } catch (error) {
+    console.error("YouTube OAuth callback failed.", error);
+    return clearStateCookie(redirectToConnections(request, "oauth-failed"));
+  }
 
   if (!result.success) {
     return clearStateCookie(redirectToConnections(request, result.reason));

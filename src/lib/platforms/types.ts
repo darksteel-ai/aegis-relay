@@ -2,6 +2,7 @@ import type { Platform } from "@prisma/client";
 
 export type PlatformPublishInput = {
   connectedAccount: {
+    id?: string;
     accessToken: string;
     refreshToken?: string | null;
     expiresAt?: Date | null;

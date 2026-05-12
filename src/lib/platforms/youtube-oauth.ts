@@ -4,7 +4,13 @@ import { Platform, PublishStatus } from "@prisma/client";
 import { google } from "googleapis";
 import { ZodError } from "zod";
 
-import { getGoogleEnv } from "@/lib/env";
+import { getGoogleEnv, getPlatformTokenEnv } from "@/lib/env";
+import { encryptConnectedAccountToken } from "@/lib/platforms/token-crypto";
+
+export {
+  decryptConnectedAccountToken,
+  encryptConnectedAccountToken,
+} from "@/lib/platforms/token-crypto";
 
 type EnvSource = Record<string, string | undefined>;
 
@@ -222,13 +228,13 @@ export async function completeYouTubeOAuthCallback({
 }: CompleteYouTubeOAuthCallbackInput): Promise<CompleteYouTubeOAuthCallbackResult> {
   try {
     getGoogleEnv(env);
+    getPlatformTokenEnv(env);
   } catch (error) {
     if (error instanceof ZodError) {
       return {
         success: false,
         reason: "config-error",
-        message:
-          "YouTube OAuth is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI.",
+        message: "YouTube OAuth token storage is not configured.",
       };
     }
 
@@ -261,8 +267,10 @@ export async function completeYouTubeOAuthCallback({
     platform: Platform.YOUTUBE,
     accountName: channel.title,
     externalId: channel.id,
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
+    accessToken: encryptConnectedAccountToken(tokens.access_token, env),
+    refreshToken: tokens.refresh_token
+      ? encryptConnectedAccountToken(tokens.refresh_token, env)
+      : undefined,
     expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
     scopes: tokens.scope ?? youtubeUploadScope,
     status: PublishStatus.SCHEDULED,
@@ -279,10 +287,10 @@ export async function completeYouTubeOAuthCallback({
     update: {
       accountName: accountWrite.accountName,
       accessToken: accountWrite.accessToken,
-      refreshToken: accountWrite.refreshToken,
       expiresAt: accountWrite.expiresAt,
       scopes: accountWrite.scopes,
       status: accountWrite.status,
+      ...(accountWrite.refreshToken ? { refreshToken: accountWrite.refreshToken } : {}),
     },
     select: { id: true },
   });
