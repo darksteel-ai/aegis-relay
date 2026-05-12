@@ -1,13 +1,22 @@
 import { describe, expect, test } from "vitest";
 
-import { betaPolicyNotice, privacyStoredData } from "@/app/privacy/page";
+import {
+  betaPolicyNotice,
+  metadata as privacyMetadata,
+  privacyStoredData,
+} from "@/app/privacy/page";
 import { reviewerDemoSteps } from "@/app/reviewer-demo/page";
 import {
   betaSupportContact,
   betaSupportNotice,
   failedPostChecklist,
+  metadata as supportMetadata,
 } from "@/app/support/page";
-import { betaTermsNotice, termsTopics } from "@/app/terms/page";
+import {
+  betaTermsNotice,
+  metadata as termsMetadata,
+  termsTopics,
+} from "@/app/terms/page";
 
 describe("public launch readiness page copy", () => {
   test("beta notices are externally coherent", () => {
@@ -16,11 +25,16 @@ describe("public launch readiness page copy", () => {
     );
     expect(betaTermsNotice).toBe(betaPolicyNotice);
     expect(betaSupportNotice).toBe(betaPolicyNotice);
-    expect(betaSupportContact).toBe("support@video-scheduler.example");
+    expect(betaSupportContact).toBe(
+      "Use the support contact configured in your beta invitation.",
+    );
   });
 
   test("public constants avoid internal launch-readiness wording", () => {
     const copy = [
+      String(privacyMetadata.description),
+      String(termsMetadata.description),
+      String(supportMetadata.description),
       betaPolicyNotice,
       betaTermsNotice,
       betaSupportNotice,
@@ -32,6 +46,8 @@ describe("public launch readiness page copy", () => {
     ].join(" ");
 
     expect(copy).not.toMatch(/\b(draft|placeholder|unresolved|TBD|replace)\b/i);
+    expect(copy).not.toContain(".example");
+    expect(copy).not.toContain("support@");
   });
 
   test("privacy copy lists the beta data categories and token encryption", () => {

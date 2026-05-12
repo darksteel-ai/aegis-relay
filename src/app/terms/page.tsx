@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Video Scheduler",
-  description: "Draft beta terms for Video Scheduler.",
+  description: "Terms for the current Video Scheduler beta service.",
 };
 
 export const termsTopics = [

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Video Scheduler",
-  description: "Draft privacy notes for the Video Scheduler beta.",
+  description: "Privacy policy for the current Video Scheduler beta service.",
 };
 
 export const privacyStoredData = [

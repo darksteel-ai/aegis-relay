@@ -14,7 +14,7 @@ export const failedPostChecklist = [
   "Use retry only after fixing connection, permission, file, or platform-policy issues.",
 ];
 
-export const betaSupportContact = "support@video-scheduler.example";
+export const betaSupportContact = "Use the support contact configured in your beta invitation.";
 export const betaSupportNotice =
   "Beta policy notice: this page describes the current beta service and should be reviewed by counsel before public launch.";
 
@@ -36,17 +36,9 @@ export default function SupportPage() {
 
         <section className="mt-8 rounded-md border border-neutral-200 bg-white p-6 text-sm leading-6 text-neutral-700 shadow-sm">
           <h2 className="text-base font-semibold text-neutral-950">Contact</h2>
-          <p className="mt-3">
-            Email:{" "}
-            <a
-              className="font-medium text-neutral-950 underline underline-offset-2"
-              href={`mailto:${betaSupportContact}`}
-            >
-              {betaSupportContact}
-            </a>
-          </p>
+          <p className="mt-3 font-medium text-neutral-950">{betaSupportContact}</p>
           <p className="mt-2 text-neutral-600">
-            This is the beta support contact for reviewer access, connection
+            The beta support contact covers reviewer access, connection
             questions, failed publishing attempts, and billing help.
           </p>
         </section>
