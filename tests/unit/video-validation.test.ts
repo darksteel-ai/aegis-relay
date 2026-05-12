@@ -133,6 +133,28 @@ describe("upload object keys", () => {
     expect(key).toBe("uploads/user_123/2026/05/12/uuid-123-clip.mp4");
   });
 
+  test("signs the required content-type header for direct uploads", async () => {
+    vi.stubEnv("S3_ENDPOINT", "https://storage.example.com");
+    vi.stubEnv("S3_REGION", "us-east-1");
+    vi.stubEnv("S3_BUCKET", "video-scheduler-uploads");
+    vi.stubEnv("S3_ACCESS_KEY_ID", "test-access-key");
+    vi.stubEnv("S3_SECRET_ACCESS_KEY", "test-secret-key");
+    const { createSignedUploadUrl } = await import("../../src/lib/storage");
+
+    const signedUpload = await createSignedUploadUrl({
+      key: "uploads/user_123/2026/05/12/uuid-123-video.mp4",
+      contentType: "video/mp4",
+      sizeBytes: 1024,
+      expiresInSeconds: 60,
+    });
+    const url = new URL(signedUpload.url);
+
+    expect(url.searchParams.get("X-Amz-SignedHeaders")?.split(";")).toContain(
+      "content-type",
+    );
+    expect(signedUpload.headers).toEqual({ "Content-Type": "video/mp4" });
+  });
+
   test("does not require storage secrets when the module is imported", async () => {
     vi.unstubAllEnvs();
     vi.stubEnv("DATABASE_URL", "postgresql://user:password@localhost:5432/video_scheduler");

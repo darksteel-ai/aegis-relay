@@ -65,6 +65,7 @@ export async function createSignedUploadUrl({
   });
   const url = await getSignedUrl(getStorageClient(), command, {
     expiresIn: expiresInSeconds,
+    signableHeaders: new Set(["content-type"]),
   });
 
   return {
