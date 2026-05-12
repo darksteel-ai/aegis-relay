@@ -161,16 +161,19 @@ describe("scheduled post creation rules", () => {
       {
         platform: "YOUTUBE",
         caption: "Launch clip for the beta.",
+        scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "SCHEDULED",
       },
       {
         platform: "TIKTOK",
         caption: "Launch clip for the beta.",
+        scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "APPROVAL_PENDING",
       },
       {
         platform: "INSTAGRAM",
         caption: "Launch clip for the beta.",
+        scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "APPROVAL_PENDING",
       },
     ]);

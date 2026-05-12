@@ -129,6 +129,7 @@ model PlatformPost {
   title           String?
   caption         String
   privacy         String           @default("public")
+  scheduledAt     DateTime
   status          PublishStatus    @default(SCHEDULED)
   platformPostId  String?
   platformPostUrl String?
@@ -140,6 +141,7 @@ model PlatformPost {
 
   @@unique([scheduledPostId, platform])
   @@index([status, scheduledPostId])
+  @@index([status, scheduledAt, updatedAt])
 }
 
 model ConnectedAccount {

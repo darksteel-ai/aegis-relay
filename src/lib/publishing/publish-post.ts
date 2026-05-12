@@ -7,6 +7,7 @@ import { youtubeAdapter } from "@/lib/platforms/youtube";
 import {
   PlatformApprovalPendingError,
   type PlatformAdapter,
+  type PlatformPublishResult,
 } from "@/lib/platforms/types";
 
 type LoadedPlatformPost = {
@@ -114,8 +115,10 @@ export async function publishPlatformPost(
     return { status: PublishStatus.FAILED };
   }
 
+  let result: PlatformPublishResult;
+
   try {
-    const result = await adapter.publish({
+    result = await adapter.publish({
       connectedAccount: {
         id: connectedAccount.id,
         accessToken: connectedAccount.accessToken,
@@ -132,7 +135,13 @@ export async function publishPlatformPost(
         mimeType: platformPost.scheduledPost.video.mimeType,
       },
     });
+  } catch (error) {
+    const message = toPublishErrorMessage(error, platformPost.platform);
+    await markPublishAttempt(db, platformPost.id, PublishStatus.FAILED, message);
+    return { status: PublishStatus.FAILED };
+  }
 
+  try {
     await db.platformPost.update({
       where: { id: platformPost.id },
       data: {
@@ -152,9 +161,15 @@ export async function publishPlatformPost(
 
     return { status: PublishStatus.PUBLISHED };
   } catch (error) {
-    const message = toPublishErrorMessage(error, platformPost.platform);
-    await markPublishAttempt(db, platformPost.id, PublishStatus.FAILED, message);
-    return { status: PublishStatus.FAILED };
+    const message =
+      `Published on ${formatPlatformName(platformPost.platform)}, but local confirmation failed. ` +
+      "Manual reconciliation required before retrying.";
+    await markPostPublishedButBlocked(db, platformPost.id, {
+      message,
+      platformPostId: result.platformPostId,
+      platformPostUrl: result.url,
+    });
+    return { status: PublishStatus.BLOCKED, error };
   }
 }
 
@@ -180,6 +195,37 @@ async function markPublishAttempt(
     data: {
       platformPostId,
       status,
+      message,
+    },
+  });
+}
+
+async function markPostPublishedButBlocked(
+  db: PublishPlatformPostDb,
+  platformPostId: string,
+  {
+    message,
+    platformPostId: externalPlatformPostId,
+    platformPostUrl,
+  }: {
+    message: string;
+    platformPostId: string;
+    platformPostUrl?: string;
+  },
+) {
+  await db.platformPost.updateMany({
+    where: { id: platformPostId },
+    data: {
+      status: PublishStatus.BLOCKED,
+      platformPostId: externalPlatformPostId,
+      platformPostUrl,
+      lastError: message,
+    },
+  });
+  await db.publishAttempt.create({
+    data: {
+      platformPostId,
+      status: PublishStatus.BLOCKED,
       message,
     },
   });

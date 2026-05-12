@@ -160,6 +160,7 @@ export function buildPlatformPostCreateInputs(input: CreateScheduledPostInput) {
   return input.platforms.map((platform) => ({
     platform,
     caption: input.baseCaption,
+    scheduledAt: input.scheduledAt,
     status:
       platform === Platform.YOUTUBE
         ? PublishStatus.SCHEDULED

@@ -8,9 +8,6 @@ export type PublishingSchedulerDb = {
     findMany(args: unknown): Promise<Array<{ id: string }>>;
     updateMany(args: unknown): Promise<{ count: number }>;
   };
-  scheduledPost: {
-    findFirst(args: unknown): Promise<{ id: string } | null>;
-  };
 };
 
 type PublishDuePostsOptions = {
@@ -29,10 +26,10 @@ export async function publishDuePosts({
   const duePosts = await db.platformPost.findMany({
     where: {
       status: PublishStatus.SCHEDULED,
-      scheduledPost: { scheduledAt: { lte: now } },
+      scheduledAt: { lte: now },
     },
     select: { id: true },
-    orderBy: { updatedAt: "asc" },
+    orderBy: [{ scheduledAt: "asc" }, { updatedAt: "asc" }],
     take: batchSize,
   });
 
@@ -54,26 +51,18 @@ export async function resetRetryablePlatformPosts({
   postId,
   userId,
 }: ResetRetryablePlatformPostsOptions) {
-  const scheduledPost = await db.scheduledPost.findFirst({
-    where: {
-      id: postId,
-      workspace: {
-        members: {
-          some: { userId },
-        },
-      },
-    },
-    select: { id: true },
-  });
-
-  if (!scheduledPost) {
-    return { found: false, resetCount: 0 };
-  }
-
   const result = await db.platformPost.updateMany({
     where: {
       scheduledPostId: postId,
+      scheduledPost: {
+        workspace: {
+          members: {
+            some: { userId },
+          },
+        },
+      },
       status: { in: [PublishStatus.FAILED, PublishStatus.BLOCKED] },
+      platformPostId: null,
     },
     data: {
       status: PublishStatus.SCHEDULED,
@@ -81,5 +70,5 @@ export async function resetRetryablePlatformPosts({
     },
   });
 
-  return { found: true, resetCount: result.count };
+  return { resetCount: result.count };
 }

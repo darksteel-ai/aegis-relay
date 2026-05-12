@@ -148,6 +148,51 @@ describe("publishPlatformPost", () => {
     });
   });
 
+  test("does not mark a post retryable when adapter succeeds but success persistence fails", async () => {
+    const db = createPublishDb();
+    const update = vi.fn(async () => {
+      throw new Error("database write failed after provider success");
+    });
+    db.platformPost.update = update;
+    const adapter: PlatformAdapter = {
+      publish: vi.fn(async () => ({
+        platformPostId: "youtube_123",
+        url: "https://www.youtube.com/watch?v=youtube_123",
+      })),
+    };
+
+    const result = await publishPlatformPost("platform_post_1", {
+      db,
+      adapters: { [Platform.YOUTUBE]: adapter },
+    });
+
+    expect(result.status).toBe(PublishStatus.BLOCKED);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(db.platformPost.updateMany).toHaveBeenLastCalledWith({
+      where: { id: "platform_post_1" },
+      data: {
+        status: PublishStatus.BLOCKED,
+        platformPostId: "youtube_123",
+        platformPostUrl: "https://www.youtube.com/watch?v=youtube_123",
+        lastError:
+          "Published on YouTube, but local confirmation failed. Manual reconciliation required before retrying.",
+      },
+    });
+    expect(db.publishAttempt.create).toHaveBeenCalledWith({
+      data: {
+        platformPostId: "platform_post_1",
+        status: PublishStatus.BLOCKED,
+        message:
+          "Published on YouTube, but local confirmation failed. Manual reconciliation required before retrying.",
+      },
+    });
+    expect(db.platformPost.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: PublishStatus.FAILED }),
+      }),
+    );
+  });
+
   test("marks adapter failures with a safe message and records a failed attempt", async () => {
     const db = createPublishDb();
     const adapter: PlatformAdapter = {
@@ -197,9 +242,6 @@ describe("publishDuePosts", () => {
         findMany: vi.fn(async () => [{ id: "platform_post_1" }, { id: "platform_post_2" }]),
         updateMany: vi.fn(async () => ({ count: 0 })),
       },
-      scheduledPost: {
-        findFirst: vi.fn(async () => null),
-      },
     };
     const now = new Date("2026-05-12T15:00:00.000Z");
 
@@ -209,10 +251,10 @@ describe("publishDuePosts", () => {
     expect(db.platformPost.findMany).toHaveBeenCalledWith({
       where: {
         status: PublishStatus.SCHEDULED,
-        scheduledPost: { scheduledAt: { lte: now } },
+        scheduledAt: { lte: now },
       },
       select: { id: true },
-      orderBy: { updatedAt: "asc" },
+      orderBy: [{ scheduledAt: "asc" }, { updatedAt: "asc" }],
       take: 2,
     });
     expect(publishOne).toHaveBeenCalledTimes(2);
@@ -222,14 +264,11 @@ describe("publishDuePosts", () => {
 });
 
 describe("resetRetryablePlatformPosts", () => {
-  test("resets only failed and blocked posts for a scheduled post owned by the user workspace", async () => {
+  test("uses one scoped update to reset retryable posts owned by the user workspace", async () => {
     const db: PublishingSchedulerDb = {
       platformPost: {
         findMany: vi.fn(async () => []),
         updateMany: vi.fn(async () => ({ count: 2 })),
-      },
-      scheduledPost: {
-        findFirst: vi.fn(async () => ({ id: "scheduled_post_1" })),
       },
     };
 
@@ -239,22 +278,19 @@ describe("resetRetryablePlatformPosts", () => {
       userId: "user_1",
     });
 
-    expect(result).toEqual({ found: true, resetCount: 2 });
-    expect(db.scheduledPost.findFirst).toHaveBeenCalledWith({
-      where: {
-        id: "scheduled_post_1",
-        workspace: {
-          members: {
-            some: { userId: "user_1" },
-          },
-        },
-      },
-      select: { id: true },
-    });
+    expect(result).toEqual({ resetCount: 2 });
     expect(db.platformPost.updateMany).toHaveBeenCalledWith({
       where: {
         scheduledPostId: "scheduled_post_1",
+        scheduledPost: {
+          workspace: {
+            members: {
+              some: { userId: "user_1" },
+            },
+          },
+        },
         status: { in: [PublishStatus.FAILED, PublishStatus.BLOCKED] },
+        platformPostId: null,
       },
       data: {
         status: PublishStatus.SCHEDULED,
@@ -269,9 +305,6 @@ describe("resetRetryablePlatformPosts", () => {
         findMany: vi.fn(async () => []),
         updateMany: vi.fn(async () => ({ count: 0 })),
       },
-      scheduledPost: {
-        findFirst: vi.fn(async () => null),
-      },
     };
 
     const result = await resetRetryablePlatformPosts({
@@ -280,7 +313,7 @@ describe("resetRetryablePlatformPosts", () => {
       userId: "user_1",
     });
 
-    expect(result).toEqual({ found: false, resetCount: 0 });
-    expect(db.platformPost.updateMany).not.toHaveBeenCalled();
+    expect(result).toEqual({ resetCount: 0 });
+    expect(db.platformPost.updateMany).toHaveBeenCalled();
   });
 });
