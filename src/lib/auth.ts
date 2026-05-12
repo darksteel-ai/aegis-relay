@@ -3,6 +3,7 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 
 import { db } from "@/lib/db";
+import { getAuthEnv } from "@/lib/env";
 
 type UserForWorkspace = {
   id: string;
@@ -12,8 +13,10 @@ type UserForWorkspace = {
 
 type WorkspaceBootstrapTx = {
   workspace: {
-    create(args: {
-      data: { name: string };
+    upsert(args: {
+      where: { id: string };
+      create: { id: string; name: string };
+      update: Record<string, never>;
       select: { id: true };
     }): Promise<{ id: string }>;
   };
@@ -35,6 +38,10 @@ type WorkspaceBootstrapDb = {
   };
   $transaction<T>(callback: (tx: WorkspaceBootstrapTx) => Promise<T>): Promise<T>;
 };
+
+function getBootstrapWorkspaceId(userId: string) {
+  return `bootstrap-${userId}`;
+}
 
 function getDefaultWorkspaceName(user: UserForWorkspace) {
   if (user.name?.trim()) {
@@ -59,8 +66,11 @@ export async function ensureWorkspaceForUser(
   }
 
   await prisma.$transaction(async (tx) => {
-    const workspace = await tx.workspace.create({
-      data: { name: getDefaultWorkspaceName(user) },
+    const workspaceId = getBootstrapWorkspaceId(user.id);
+    const workspace = await tx.workspace.upsert({
+      where: { id: workspaceId },
+      create: { id: workspaceId, name: getDefaultWorkspaceName(user) },
+      update: {},
       select: { id: true },
     });
 
@@ -81,41 +91,52 @@ export async function ensureWorkspaceForUser(
   });
 }
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(db),
-  providers: [
-    EmailProvider({
-      server: process.env.EMAIL_SERVER ?? {
+export function createAuthOptions(
+  source: Record<string, string | undefined> = process.env,
+): NextAuthOptions {
+  const authEnv = getAuthEnv(source);
+  const emailServer =
+    authEnv.EMAIL_SERVER ??
+    (source.NODE_ENV === "production"
+      ? undefined
+      : {
         host: "localhost",
         port: 1025,
         secure: false,
-      },
-      from: process.env.EMAIL_FROM ?? "Video Scheduler <no-reply@example.com>",
-    }),
-  ],
-  pages: {
-    signIn: "/sign-in",
-  },
-  secret: process.env.NEXTAUTH_SECRET ?? "development-only-video-scheduler-secret",
-  session: {
-    strategy: "database",
-  },
-  callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-      }
+      });
 
-      return session;
+  return {
+    adapter: PrismaAdapter(db),
+    providers: [
+      EmailProvider({
+        server: emailServer,
+        from: authEnv.EMAIL_FROM ?? "Video Scheduler <no-reply@example.com>",
+      }),
+    ],
+    pages: {
+      signIn: "/sign-in",
     },
-  },
-  events: {
-    async createUser({ user }) {
-      await ensureWorkspaceForUser(user);
+    secret: authEnv.NEXTAUTH_SECRET,
+    session: {
+      strategy: "database",
     },
-  },
-};
+    callbacks: {
+      session({ session, user }) {
+        if (session.user) {
+          session.user.id = user.id;
+        }
+
+        return session;
+      },
+    },
+    events: {
+      async createUser({ user }) {
+        await ensureWorkspaceForUser(user);
+      },
+    },
+  };
+}
 
 export function getAuthSession() {
-  return getServerSession(authOptions);
+  return getServerSession(createAuthOptions());
 }

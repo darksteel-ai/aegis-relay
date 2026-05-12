@@ -1,10 +1,45 @@
 import { z } from "zod";
 
+type EnvSource = Record<string, string | undefined>;
+
 const coreEnvSchema = z.object({
   DATABASE_URL: z.string().url(),
   NEXTAUTH_URL: z.string().url(),
   NEXTAUTH_SECRET: z.string().min(24),
+  EMAIL_SERVER: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(1).optional(),
 });
+
+const authEnvSchema = coreEnvSchema
+  .pick({
+    NEXTAUTH_SECRET: true,
+    EMAIL_SERVER: true,
+    EMAIL_FROM: true,
+  })
+  .extend({
+    NODE_ENV: z.string().optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.NODE_ENV !== "production") {
+      return;
+    }
+
+    if (!value.EMAIL_SERVER) {
+      context.addIssue({
+        code: "custom",
+        message: "EMAIL_SERVER is required in production.",
+        path: ["EMAIL_SERVER"],
+      });
+    }
+
+    if (!value.EMAIL_FROM) {
+      context.addIssue({
+        code: "custom",
+        message: "EMAIL_FROM is required in production.",
+        path: ["EMAIL_FROM"],
+      });
+    }
+  });
 
 const stripeEnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
@@ -36,28 +71,36 @@ const schedulerEnvSchema = coreEnvSchema
   .extend(googleEnvSchema.shape)
   .extend(inngestEnvSchema.shape);
 
-export function parseCoreEnv(source: NodeJS.ProcessEnv = process.env) {
+export function parseCoreEnv(source: EnvSource = process.env) {
   return coreEnvSchema.parse(source);
 }
 
-export function getStripeEnv(source: NodeJS.ProcessEnv = process.env) {
+export function getAuthEnv(source: EnvSource = process.env) {
+  return authEnvSchema.parse(source);
+}
+
+export function getStripeEnv(source: EnvSource = process.env) {
   return stripeEnvSchema.parse(source);
 }
 
-export function getStorageEnv(source: NodeJS.ProcessEnv = process.env) {
+export function getStorageEnv(source: EnvSource = process.env) {
   return storageEnvSchema.parse(source);
 }
 
-export function getGoogleEnv(source: NodeJS.ProcessEnv = process.env) {
+export function getGoogleEnv(source: EnvSource = process.env) {
   return googleEnvSchema.parse(source);
 }
 
-export function getInngestEnv(source: NodeJS.ProcessEnv = process.env) {
+export function getInngestEnv(source: EnvSource = process.env) {
   return inngestEnvSchema.parse(source);
 }
 
-export function parseSchedulerEnv(source: NodeJS.ProcessEnv = process.env) {
+export function parseSchedulerEnv(source: EnvSource = process.env) {
   return schedulerEnvSchema.parse(source);
 }
 
-export const env = parseCoreEnv();
+export const env = new Proxy({} as z.infer<typeof coreEnvSchema>, {
+  get(_target, property) {
+    return parseCoreEnv()[property as keyof z.infer<typeof coreEnvSchema>];
+  },
+});
