@@ -250,7 +250,9 @@ async function handleSubscriptionUpdated(payload: unknown, database: WorkspaceUp
   }
 
   await database.workspace.updateMany({
-    where: subscriptionWorkspaceWhere(workspaceId, subscriptionId),
+    where: isCanceled
+      ? subscriptionCancellationWorkspaceWhere(workspaceId, subscriptionId)
+      : subscriptionWorkspaceWhere(workspaceId, subscriptionId),
     data: {
       plan,
       ...(plan === "pro" ? { stripeCanceledSubscriptionId: null } : {}),
@@ -274,13 +276,27 @@ async function handleSubscriptionDeleted(payload: unknown, database: WorkspaceUp
   }
 
   await database.workspace.updateMany({
-    where: subscriptionWorkspaceWhere(workspaceId, subscriptionId),
+    where: subscriptionCancellationWorkspaceWhere(workspaceId, subscriptionId),
     data: {
       stripeSubscriptionId: null,
       stripeCanceledSubscriptionId: subscriptionId,
       plan: "beta",
     },
   });
+}
+
+function subscriptionCancellationWorkspaceWhere(
+  workspaceId: string | undefined,
+  subscriptionId: string,
+) {
+  if (workspaceId) {
+    return {
+      id: workspaceId,
+      OR: [{ stripeSubscriptionId: null }, { stripeSubscriptionId: subscriptionId }],
+    };
+  }
+
+  return { stripeSubscriptionId: subscriptionId };
 }
 
 function subscriptionWorkspaceWhere(workspaceId: string | undefined, subscriptionId: string) {
