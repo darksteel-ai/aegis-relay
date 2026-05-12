@@ -138,6 +138,7 @@ export async function publishPlatformPost(
       data: {
         status: PublishStatus.PUBLISHED,
         platformPostId: result.platformPostId,
+        platformPostUrl: result.url,
         lastError: null,
       },
     });

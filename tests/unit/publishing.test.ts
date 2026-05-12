@@ -135,6 +135,7 @@ describe("publishPlatformPost", () => {
       data: {
         status: PublishStatus.PUBLISHED,
         platformPostId: "youtube_123",
+        platformPostUrl: "https://www.youtube.com/watch?v=youtube_123",
         lastError: null,
       },
     });

@@ -190,6 +190,21 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                       </dd>
                     </div>
                     <div>
+                      <dt className="text-neutral-500">Published URL</dt>
+                      <dd className="mt-1 break-all font-medium text-neutral-950">
+                        {platformPost.platformPostUrl ? (
+                          <a
+                            href={platformPost.platformPostUrl}
+                            className="text-neutral-950 underline underline-offset-2 hover:text-neutral-700"
+                          >
+                            {platformPost.platformPostUrl}
+                          </a>
+                        ) : (
+                          "Not published yet"
+                        )}
+                      </dd>
+                    </div>
+                    <div>
                       <dt className="text-neutral-500">Last error</dt>
                       <dd className="mt-1 text-neutral-900">
                         {platformPost.lastError ?? "No error recorded"}
