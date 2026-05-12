@@ -75,6 +75,8 @@ model UploadedVideo {
   createdAt   DateTime        @default(now())
   workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   posts       ScheduledPost[]
+
+  @@index([workspaceId, createdAt])
 }
 
 model ScheduledPost {
@@ -89,6 +91,8 @@ model ScheduledPost {
   workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   video         UploadedVideo  @relation(fields: [videoId], references: [id], onDelete: Restrict)
   platformPosts PlatformPost[]
+
+  @@index([workspaceId, scheduledAt])
 }
 
 model PlatformPost {
@@ -107,6 +111,7 @@ model PlatformPost {
   attempts        PublishAttempt[]
 
   @@unique([scheduledPostId, platform])
+  @@index([status, scheduledPostId])
 }
 
 model ConnectedAccount {
@@ -125,6 +130,7 @@ model ConnectedAccount {
   workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, platform, externalId])
+  @@index([workspaceId, platform])
 }
 
 model PublishAttempt {
@@ -136,6 +142,8 @@ model PublishAttempt {
   retryAt        DateTime?
   createdAt      DateTime      @default(now())
   platformPost   PlatformPost  @relation(fields: [platformPostId], references: [id], onDelete: Cascade)
+
+  @@index([platformPostId, createdAt])
 }
 
 model Account {
