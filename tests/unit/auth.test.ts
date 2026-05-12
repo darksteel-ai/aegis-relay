@@ -72,6 +72,61 @@ describe("auth workspace bootstrap", () => {
     expect(transaction).not.toHaveBeenCalled();
   });
 
+  test("converges simultaneous bootstrap attempts on one workspace and membership", async () => {
+    const workspaces = new Map<string, { id: string; name: string }>();
+    const memberships = new Map<string, { userId: string; workspaceId: string; role: string }>();
+    const findFirst = vi.fn(async () => null);
+    const workspaceUpsert = vi.fn(async (args) => {
+      const existingWorkspace = workspaces.get(args.where.id);
+
+      if (existingWorkspace) {
+        return { id: existingWorkspace.id };
+      }
+
+      workspaces.set(args.create.id, args.create);
+      return { id: args.create.id };
+    });
+    const memberUpsert = vi.fn(async (args) => {
+      const memberKey = `${args.where.userId_workspaceId.userId}:${args.where.userId_workspaceId.workspaceId}`;
+
+      if (!memberships.has(memberKey)) {
+        memberships.set(memberKey, args.create);
+      }
+
+      return memberships.get(memberKey);
+    });
+    const transaction = vi.fn(async (callback) =>
+      callback({
+        workspace: { upsert: workspaceUpsert },
+        workspaceMember: { upsert: memberUpsert },
+      }),
+    );
+    const { ensureWorkspaceForUser } = await import("../../src/lib/auth");
+
+    await Promise.all([
+      ensureWorkspaceForUser(
+        { id: "user_1", email: "owner@example.com", name: "Owner" },
+        {
+          workspaceMember: { findFirst },
+          $transaction: transaction,
+        },
+      ),
+      ensureWorkspaceForUser(
+        { id: "user_1", email: "owner@example.com", name: "Owner" },
+        {
+          workspaceMember: { findFirst },
+          $transaction: transaction,
+        },
+      ),
+    ]);
+
+    expect(findFirst).toHaveBeenCalledTimes(2);
+    expect(workspaceUpsert).toHaveBeenCalledTimes(2);
+    expect(memberUpsert).toHaveBeenCalledTimes(2);
+    expect([...workspaces.keys()]).toEqual(["bootstrap-user_1"]);
+    expect([...memberships.keys()]).toEqual(["user_1:bootstrap-user_1"]);
+  });
+
   test("adds the database user id to the session", async () => {
     const { createAuthOptions } = await import("../../src/lib/auth");
     const authOptions = createAuthOptions();
