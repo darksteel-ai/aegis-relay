@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Video Scheduler",
-  description: "Schedule one short-form video across multiple platforms",
+  title: "Aegis Relay",
+  description:
+    "Schedule one short-form video across TikTok, YouTube Shorts, and Instagram Reels.",
 };
 
 export default function RootLayout({

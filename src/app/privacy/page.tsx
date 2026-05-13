@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Video Scheduler",
-  description: "Privacy policy for the current Video Scheduler beta service.",
+  title: "Privacy Policy | Aegis Relay",
+  description:
+    "Privacy Policy for Aegis Relay, a short-form video scheduling SaaS for TikTok, YouTube Shorts, and Instagram Reels.",
 };
 
 export const privacyStoredData = [
-  "Account profile information such as email address, name, sign-in sessions, and workspace membership.",
-  "Billing references such as Stripe customer IDs, subscription IDs, plan status, and checkout or portal activity references.",
+  "Account profile information such as email address, display name, sign-in session data, and workspace membership.",
+  "Billing references such as Stripe customer IDs, subscription IDs, plan status, checkout events, and billing portal activity references.",
   "Uploaded video metadata and storage keys, including file name, MIME type, file size, duration, resolution, and object storage location.",
   "Captions, platform selections, schedule times, timezones, post settings, and per-platform publishing statuses.",
-  "Connected-platform authorization data, including account IDs, scopes, token expiration, and access or refresh tokens.",
+  "Connected-platform authorization data, including external account IDs, account names, scopes, token expiration, and encrypted access or refresh tokens.",
   "Publish attempts, platform response IDs or URLs, status changes, retry history, and error messages returned by platform APIs.",
-  "Support and contact data sent to us while troubleshooting beta access, billing, connection, upload, or publishing issues.",
+  "Support and contact data sent to Aegis Relay while troubleshooting account access, billing, platform connections, uploads, or publishing issues.",
 ];
 
 export const betaPolicyNotice =
@@ -23,13 +25,24 @@ export default function PrivacyPage() {
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
         <DocumentHeader
-          eyebrow="Beta policy notice"
-          title="Privacy Policy"
-          description={betaPolicyNotice}
+          title="Aegis Relay Privacy Policy"
+          description="This Privacy Policy explains how Aegis Relay collects, uses, stores, and protects information when customers use our short-form video scheduling service."
         />
 
         <div className="mt-8 space-y-6">
-          <PolicySection title="Data We Store">
+          <PolicySection title="Service Covered by This Policy">
+            <p>
+              This Privacy Policy applies to Aegis Relay, available at{" "}
+              <Link href="/" className="font-medium underline underline-offset-2">
+                aegis-relay.vercel.app
+              </Link>
+              , and to related Aegis Relay pages, APIs, account connection flows,
+              upload flows, scheduling tools, billing flows, and support
+              interactions.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="Information Aegis Relay Stores">
             <ul className="list-disc space-y-2 pl-5">
               {privacyStoredData.map((item) => (
                 <li key={item}>{item}</li>
@@ -37,41 +50,67 @@ export default function PrivacyPage() {
             </ul>
           </PolicySection>
 
-          <PolicySection title="How We Use Data">
+          <PolicySection title="How Aegis Relay Uses Information">
             <p>
-              We use this data to authenticate users, organize workspaces, accept
-              uploads, schedule posts, connect platform accounts, submit publish
-              attempts, show status history, support retries, manage billing, and
-              respond to support requests.
+              Aegis Relay uses information to authenticate users, create and
+              manage workspaces, process uploads, schedule posts, connect customer
+              platform accounts, submit publishing attempts requested by users,
+              display publishing status, support retries, manage subscriptions,
+              respond to support requests, prevent abuse, and maintain service
+              security.
             </p>
           </PolicySection>
 
           <PolicySection title="Connected Platform Tokens">
             <p>
-              Connected-platform access and refresh tokens are encrypted at the
-              application layer before storage using the configured platform token
-              encryption key. Tokens are used only to perform requested connection,
-              refresh, upload, and publishing operations for the connected
-              workspace.
+              Aegis Relay stores connected-platform access and refresh tokens only
+              so the service can perform requested connection, refresh, upload,
+              and publishing operations for the connected customer workspace.
+              Tokens are encrypted at the application layer before storage using
+              the configured platform token encryption key.
             </p>
           </PolicySection>
 
           <PolicySection title="Third-Party Services">
             <p>
-              The beta depends on services such as authentication email, Stripe,
-              object storage, Google and YouTube APIs, and any approved future
-              platform APIs. Those providers process data under their own terms
-              and privacy practices.
+              Aegis Relay uses third-party providers for authentication,
+              database hosting, object storage, payment processing, and platform
+              publishing integrations. These providers may include Convex, Stripe,
+              S3-compatible object storage, Google and YouTube APIs, and future
+              approved TikTok or Meta platform APIs. Those providers process data
+              under their own terms and privacy practices.
             </p>
           </PolicySection>
 
-          <PolicySection title="Policy Review Status">
+          <PolicySection title="Data Sharing">
             <p>
-              The beta service is designed around limited workspace access,
-              scheduled publishing, and support for reviewer workflows. Privacy
-              terms, retention periods, deletion procedures, subprocessors, and
-              regional disclosures should be reviewed by counsel before public
-              launch.
+              Aegis Relay does not sell personal information. We share data only
+              when needed to operate the service, complete user-requested platform
+              publishing actions, process payments, comply with legal obligations,
+              protect the service, or work with service providers that support
+              Aegis Relay operations.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="Data Retention and Deletion">
+            <p>
+              Aegis Relay keeps account, workspace, upload, scheduling, billing,
+              and publishing records for as long as needed to provide the service,
+              maintain security, comply with legal obligations, resolve disputes,
+              and preserve operational history. Customers may request deletion or
+              disconnection of account data by contacting Aegis Relay support.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="Contact">
+            <p>
+              For privacy questions or data requests related to Aegis Relay,
+              contact the Aegis Relay operator through the support channel listed
+              in the app or on the{" "}
+              <Link href="/support" className="font-medium underline underline-offset-2">
+                support page
+              </Link>
+              .
             </p>
           </PolicySection>
         </div>
@@ -81,19 +120,20 @@ export default function PrivacyPage() {
 }
 
 function DocumentHeader({
-  eyebrow,
   title,
   description,
 }: Readonly<{
-  eyebrow: string;
   title: string;
   description: string;
 }>) {
   return (
     <header className="space-y-3">
-      <p className="text-sm font-medium text-neutral-500">{eyebrow}</p>
+      <Link href="/" className="text-sm font-medium text-neutral-500 hover:text-neutral-950">
+        Aegis Relay
+      </Link>
       <h1 className="text-3xl font-semibold tracking-normal">{title}</h1>
       <p className="text-base leading-7 text-neutral-600">{description}</p>
+      <p className="text-sm text-neutral-500">Last updated: May 13, 2026</p>
     </header>
   );
 }
