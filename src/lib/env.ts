@@ -31,6 +31,10 @@ const googleEnvSchema = z.object({
   GOOGLE_REDIRECT_URI: z.string().url(),
 });
 
+const tiktokEnvSchema = z.object({
+  TIKTOK_REDIRECT_URI: z.string().url().optional(),
+});
+
 const platformTokenEnvSchema = z.object({
   PLATFORM_TOKEN_ENCRYPTION_KEY: z.string().min(32),
 });
@@ -48,6 +52,7 @@ const schedulerEnvSchema = coreEnvSchema
   .extend(stripeEnvSchema.shape)
   .extend(storageEnvSchema.shape)
   .extend(googleEnvSchema.shape)
+  .extend(tiktokEnvSchema.shape)
   .extend(platformTokenEnvSchema.shape)
   .extend(inngestEnvSchema.shape)
   .extend(convexEnvSchema.shape);
@@ -70,6 +75,10 @@ export function getStorageEnv(source: EnvSource = process.env) {
 
 export function getGoogleEnv(source: EnvSource = process.env) {
   return googleEnvSchema.parse(source);
+}
+
+export function getTikTokEnv(source: EnvSource = process.env) {
+  return tiktokEnvSchema.parse(source);
 }
 
 export function getPlatformTokenEnv(source: EnvSource = process.env) {
