@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { getAuthSession } from "@/lib/auth";
 import { convexApi } from "@/lib/convex-api";
-import { getConvexClient } from "@/lib/convex-server";
+import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 import {
   formatPlatformLabel,
   formatScheduledAtForDashboard,
@@ -35,16 +35,18 @@ export default async function CalendarPage() {
   }
 
   const calendarWindow = getCalendarPostWindow();
-  const client = getConvexClient();
-  const [workspace, postsResult] = await Promise.all([
-    client.query(convexApi.workspaces.getForUser, { userId: session.user.id }),
-    client.query(convexApi.posts.calendar, {
-      userId: session.user.id,
-      start: calendarWindow.start.getTime(),
-      end: calendarWindow.end.getTime(),
-      limit: calendarWindow.take,
-    }),
-  ]);
+  const client = isConvexConfigured() ? getConvexClient() : null;
+  const [workspace, postsResult] = client
+    ? await Promise.all([
+        client.query(convexApi.workspaces.getForUser, { userId: session.user.id }),
+        client.query(convexApi.posts.calendar, {
+          userId: session.user.id,
+          start: calendarWindow.start.getTime(),
+          end: calendarWindow.end.getTime(),
+          limit: calendarWindow.take,
+        }),
+      ])
+    : [null, []];
   const posts: CalendarPost[] = (postsResult ?? []).filter(
     (post): post is CalendarPost => post !== null,
   );

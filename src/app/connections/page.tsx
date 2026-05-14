@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { getAuthSession } from "@/lib/auth";
 import { convexApi } from "@/lib/convex-api";
-import { getConvexClient } from "@/lib/convex-server";
+import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 import {
   formatPlatformLabel,
   selectNewestAccountsByPlatform,
@@ -54,11 +54,13 @@ export default async function ConnectionsPage() {
     redirect("/sign-in");
   }
 
-  const client = getConvexClient();
-  const workspace = await client.query(convexApi.workspaces.getForUser, {
-    userId: session.user.id,
-  });
-  const connectedAccounts = workspace
+  const client = isConvexConfigured() ? getConvexClient() : null;
+  const workspace = client
+    ? await client.query(convexApi.workspaces.getForUser, {
+        userId: session.user.id,
+      })
+    : null;
+  const connectedAccounts = client
     ? await client.query(convexApi.connections.listForUser, { userId: session.user.id })
     : [];
 

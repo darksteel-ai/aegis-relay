@@ -5,6 +5,7 @@ const currentUser = vi.fn();
 
 vi.mock("@/lib/convex-server", () => ({
   getConvexClient: () => ({ mutation }),
+  isConvexConfigured: () => true,
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({

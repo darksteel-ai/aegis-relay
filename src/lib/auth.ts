@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 
 import { convexApi } from "@/lib/convex-api";
-import { getConvexClient } from "@/lib/convex-server";
+import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 
 type UserForWorkspace = {
   id: string;
@@ -20,6 +20,10 @@ export type AppAuthSession = {
 };
 
 export async function ensureWorkspaceForUser(user: UserForWorkspace) {
+  if (!isConvexConfigured()) {
+    return;
+  }
+
   await getConvexClient().mutation(convexApi.workspaces.ensureForUser, {
     userId: user.id,
     email: user.email ?? undefined,

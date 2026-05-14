@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { getAuthSession } from "@/lib/auth";
 import { convexApi } from "@/lib/convex-api";
-import { getConvexClient } from "@/lib/convex-server";
+import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 import { formatScheduledAtForDashboard } from "@/lib/posts/display";
 import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
@@ -28,10 +28,12 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  const data = await getConvexClient().query(convexApi.posts.dashboard, {
-    userId: session.user.id,
-    limit: 6,
-  });
+  const data = isConvexConfigured()
+    ? await getConvexClient().query(convexApi.posts.dashboard, {
+        userId: session.user.id,
+        limit: 6,
+      })
+    : null;
   const posts: DashboardPost[] = (data?.posts ?? []).filter(
     (post): post is DashboardPost => post !== null,
   );
