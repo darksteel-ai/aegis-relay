@@ -33,9 +33,10 @@ const platformRows = [
   {
     platform: "INSTAGRAM",
     name: "Instagram Reels",
-    description: "Publishing is prepared while app approval is pending.",
-    action: "Approval pending",
-    connectable: false,
+    description: "Connect a professional Instagram account linked to a Facebook Page.",
+    action: "Connect Instagram",
+    href: "/api/auth/instagram/start",
+    connectable: true,
   },
 ] as const;
 
@@ -112,7 +113,10 @@ export default async function ConnectionsPage() {
               const account = accountsByPlatform.get(row.platform);
               const status = account?.status ?? "APPROVAL_PENDING";
               const needsDatabase =
-                (row.platform === "YOUTUBE" || row.platform === "TIKTOK") && !client;
+                (row.platform === "YOUTUBE" ||
+                  row.platform === "TIKTOK" ||
+                  row.platform === "INSTAGRAM") &&
+                !client;
               const canConnect = row.connectable && !needsDatabase;
 
               return (
