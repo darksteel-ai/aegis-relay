@@ -38,7 +38,7 @@ describe("YouTube OAuth scaffold", () => {
     expect(url.searchParams.get("prompt")).toBe("consent");
     expect(url.searchParams.get("state")).toBe("signed-state");
     expect(url.searchParams.get("scope")).toBe(
-      "https://www.googleapis.com/auth/youtube.upload",
+      "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly",
     );
     expect(url.search).not.toContain("client-secret");
   });

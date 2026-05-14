@@ -43,7 +43,9 @@ describe("YouTube OAuth routes", () => {
     expect(url.origin).toBe("https://accounts.google.com");
     expect(url.searchParams.get("access_type")).toBe("offline");
     expect(url.searchParams.get("prompt")).toBe("consent");
-    expect(url.searchParams.get("scope")).toBe("https://www.googleapis.com/auth/youtube.upload");
+    expect(url.searchParams.get("scope")).toBe(
+      "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly",
+    );
     expect(url.searchParams.get("state")).toBeTruthy();
     expect(response.headers.get("set-cookie")).toContain("youtube_oauth_state=");
     expect(location).not.toContain("client-secret");

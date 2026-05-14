@@ -27,7 +27,11 @@ type YouTubeOAuthStartUrlResult =
       reason: "config-error";
     };
 
-const youtubeUploadScope = "https://www.googleapis.com/auth/youtube.upload";
+const youtubeOAuthScopes = [
+  "https://www.googleapis.com/auth/youtube.upload",
+  "https://www.googleapis.com/auth/youtube.readonly",
+] as const;
+const youtubeUploadScope = youtubeOAuthScopes[0];
 export const youtubeOAuthStateCookieName = "youtube_oauth_state";
 const youtubeOAuthStateTtlMs = 10 * 60 * 1000;
 
@@ -54,7 +58,7 @@ export function buildYouTubeOAuthStartUrl(
   url.searchParams.set("client_id", googleEnv.GOOGLE_CLIENT_ID);
   url.searchParams.set("redirect_uri", googleEnv.GOOGLE_REDIRECT_URI);
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", youtubeUploadScope);
+  url.searchParams.set("scope", youtubeOAuthScopes.join(" "));
   url.searchParams.set("access_type", "offline");
   url.searchParams.set("prompt", "consent");
 
