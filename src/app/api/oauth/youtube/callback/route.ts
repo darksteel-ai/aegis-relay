@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getAuthSession } from "@/lib/auth";
 import { convexApi } from "@/lib/convex-api";
-import { getConvexClient } from "@/lib/convex-server";
+import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 import {
   completeYouTubeOAuthCallback,
   verifyYouTubeOAuthState,
@@ -19,9 +19,20 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  const workspace = await getConvexClient().query(convexApi.workspaces.getForUser, {
-    userId: session.user.id,
-  });
+  if (!isConvexConfigured()) {
+    return redirectToConnections(request, "storage-not-configured");
+  }
+
+  let workspace;
+
+  try {
+    workspace = await getConvexClient().query(convexApi.workspaces.getForUser, {
+      userId: session.user.id,
+    });
+  } catch (error) {
+    console.error("YouTube OAuth callback could not load workspace.", error);
+    return redirectToConnections(request, "workspace-unavailable");
+  }
 
   if (!workspace) {
     return redirectToConnections(request, "no-workspace");

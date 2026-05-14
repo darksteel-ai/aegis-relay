@@ -9,6 +9,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/convex-server", () => ({
   getConvexClient: () => ({ query }),
+  isConvexConfigured: () => true,
 }));
 
 describe("YouTube OAuth routes", () => {
