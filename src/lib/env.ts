@@ -35,6 +35,12 @@ const tiktokEnvSchema = z.object({
   TIKTOK_REDIRECT_URI: z.string().url().optional(),
 });
 
+const instagramEnvSchema = z.object({
+  META_APP_ID: z.string().min(1).optional(),
+  META_APP_SECRET: z.string().min(1).optional(),
+  INSTAGRAM_REDIRECT_URI: z.string().url().optional(),
+});
+
 const platformTokenEnvSchema = z.object({
   PLATFORM_TOKEN_ENCRYPTION_KEY: z.string().min(32),
 });
@@ -53,6 +59,7 @@ const schedulerEnvSchema = coreEnvSchema
   .extend(storageEnvSchema.shape)
   .extend(googleEnvSchema.shape)
   .extend(tiktokEnvSchema.shape)
+  .extend(instagramEnvSchema.shape)
   .extend(platformTokenEnvSchema.shape)
   .extend(inngestEnvSchema.shape)
   .extend(convexEnvSchema.shape);
@@ -79,6 +86,10 @@ export function getGoogleEnv(source: EnvSource = process.env) {
 
 export function getTikTokEnv(source: EnvSource = process.env) {
   return tiktokEnvSchema.parse(source);
+}
+
+export function getInstagramEnv(source: EnvSource = process.env) {
+  return instagramEnvSchema.parse(source);
 }
 
 export function getPlatformTokenEnv(source: EnvSource = process.env) {
