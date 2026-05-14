@@ -1,11 +1,7 @@
-import { createHash } from "crypto";
-
-import { getServerSession, type NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { currentUser } from "@clerk/nextjs/server";
 
 import { convexApi } from "@/lib/convex-api";
 import { getConvexClient } from "@/lib/convex-server";
-import { getAuthEnv } from "@/lib/env";
 
 type UserForWorkspace = {
   id: string;
@@ -14,9 +10,14 @@ type UserForWorkspace = {
   image?: string | null;
 };
 
-export function authUserIdForEmail(email: string) {
-  return `email-${createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32)}`;
-}
+export type AppAuthSession = {
+  user: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+  };
+};
 
 export async function ensureWorkspaceForUser(user: UserForWorkspace) {
   await getConvexClient().mutation(convexApi.workspaces.ensureForUser, {
@@ -27,60 +28,25 @@ export async function ensureWorkspaceForUser(user: UserForWorkspace) {
   });
 }
 
-export function createAuthOptions(
-  source: Record<string, string | undefined> = process.env,
-): NextAuthOptions {
-  const authEnv = getAuthEnv(source);
+export async function getAuthSession(): Promise<AppAuthSession | null> {
+  const user = await currentUser();
 
-  return {
-    providers: [
-      CredentialsProvider({
-        id: "email",
-        name: "Email",
-        credentials: {
-          email: { label: "Email", type: "email" },
-        },
-        async authorize(credentials) {
-          const email = credentials?.email?.trim().toLowerCase();
-          if (!email || !email.includes("@")) {
-            return null;
-          }
-          const user = {
-            id: authUserIdForEmail(email),
-            email,
-            name: email.split("@")[0],
-          };
-          await ensureWorkspaceForUser(user);
-          return user;
-        },
-      }),
-    ],
-    pages: {
-      signIn: "/sign-in",
-    },
-    secret: authEnv.NEXTAUTH_SECRET,
-    session: {
-      strategy: "jwt",
-    },
-    callbacks: {
-      jwt({ token, user }) {
-        if (user) {
-          token.sub = user.id;
-          token.email = user.email;
-          token.name = user.name;
-        }
-        return token;
-      },
-      session({ session, token }) {
-        if (session.user && token.sub) {
-          session.user.id = token.sub;
-        }
-        return session;
-      },
+  if (!user) {
+    return null;
+  }
+
+  const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
+  const name = user.fullName ?? user.username ?? email?.split("@")[0] ?? null;
+  const session = {
+    user: {
+      id: user.id,
+      email,
+      name,
+      image: user.imageUrl,
     },
   };
-}
 
-export function getAuthSession() {
-  return getServerSession(createAuthOptions());
+  await ensureWorkspaceForUser(session.user);
+
+  return session;
 }

@@ -23,7 +23,7 @@ import {
 const root = process.cwd();
 const publicReadinessFiles = [
   ".env.example",
-  "src/app/(auth)/sign-in/page.tsx",
+  "src/app/(auth)/sign-in/[[...sign-in]]/page.tsx",
   "src/app/dashboard/page.tsx",
   "src/app/privacy/page.tsx",
   "src/app/terms/page.tsx",

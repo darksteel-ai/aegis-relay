@@ -1,3 +1,4 @@
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -20,7 +21,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
     <div className="min-h-screen bg-neutral-50 text-neutral-950">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-neutral-200 bg-white px-4 py-6 md:flex md:flex-col">
         <Link href="/dashboard" className="px-3 text-lg font-semibold">
-          Video Scheduler
+          Aegis Relay
         </Link>
         <nav className="mt-8 flex flex-col gap-1">
           {navItems.map(({ href, label, icon: Icon }) => (
@@ -34,12 +35,16 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             </Link>
           ))}
         </nav>
+        <div className="mt-auto px-3">
+          <UserButton />
+        </div>
       </aside>
       <div className="md:pl-64">
-        <header className="flex h-16 items-center border-b border-neutral-200 bg-white px-4 md:hidden">
+        <header className="flex h-16 items-center justify-between border-b border-neutral-200 bg-white px-4 md:hidden">
           <Link href="/dashboard" className="text-base font-semibold">
-            Video Scheduler
+            Aegis Relay
           </Link>
+          <UserButton />
         </header>
         <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
           {children}

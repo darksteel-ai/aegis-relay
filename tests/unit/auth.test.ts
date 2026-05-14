@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mutation = vi.fn();
+const currentUser = vi.fn();
 
 vi.mock("@/lib/convex-server", () => ({
   getConvexClient: () => ({ mutation }),
 }));
 
-describe("auth workspace bootstrap", () => {
+vi.mock("@clerk/nextjs/server", () => ({
+  currentUser,
+}));
+
+describe("Clerk auth workspace bootstrap", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -14,6 +19,8 @@ describe("auth workspace bootstrap", () => {
     vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://example.convex.cloud");
     vi.stubEnv("NEXTAUTH_URL", "http://localhost:3000");
     vi.stubEnv("NEXTAUTH_SECRET", "replace-with-a-random-secret");
+    vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "pk_test_replace");
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_replace");
   });
 
   test("ensures a Convex workspace for an authenticated user", async () => {
@@ -29,56 +36,38 @@ describe("auth workspace bootstrap", () => {
     });
   });
 
-  test("derives stable auth ids from normalized email addresses", async () => {
-    const { authUserIdForEmail } = await import("../../src/lib/auth");
+  test("returns null when Clerk has no current user", async () => {
+    currentUser.mockResolvedValue(null);
+    const { getAuthSession } = await import("../../src/lib/auth");
 
-    expect(authUserIdForEmail(" Owner@Example.com ")).toBe(
-      authUserIdForEmail("owner@example.com"),
-    );
-    expect(authUserIdForEmail("owner@example.com")).toMatch(/^email-[a-f0-9]{32}$/);
+    await expect(getAuthSession()).resolves.toBeNull();
+    expect(mutation).not.toHaveBeenCalled();
   });
 
-  test("adds the database user id to the session", async () => {
-    const { createAuthOptions } = await import("../../src/lib/auth");
-    const authOptions = createAuthOptions();
-
-    const session = await authOptions.callbacks?.session?.({
-      session: {
-        expires: "2026-06-01T00:00:00.000Z",
-        user: { id: "", email: "owner@example.com", name: "Owner", image: null },
-      },
-      user: {
-        id: "user_1",
-        email: "owner@example.com",
-        emailVerified: null,
-        name: "Owner",
-        image: null,
-      },
-      token: { sub: "user_1" },
-      newSession: undefined,
-      trigger: "update",
+  test("creates an app session and workspace for the current Clerk user", async () => {
+    currentUser.mockResolvedValue({
+      id: "user_clerk_1",
+      primaryEmailAddress: { emailAddress: "owner@example.com" },
+      emailAddresses: [],
+      fullName: "Owner Example",
+      username: null,
+      imageUrl: "https://img.clerk.test/avatar.png",
     });
+    const { getAuthSession } = await import("../../src/lib/auth");
 
-    expect((session?.user as { id?: string } | undefined)?.id).toBe("user_1");
-  });
-
-  test("requires a validated NextAuth secret when creating auth options", async () => {
-    vi.unstubAllEnvs();
-    vi.stubEnv("NODE_ENV", "development");
-
-    const { createAuthOptions } = await import("../../src/lib/auth");
-
-    expect(() => createAuthOptions({})).toThrow("NEXTAUTH_SECRET");
-  });
-
-  test("uses credentials auth in production without SMTP settings", async () => {
-    const { createAuthOptions } = await import("../../src/lib/auth");
-
-    const options = createAuthOptions({
-        NODE_ENV: "production",
-        NEXTAUTH_SECRET: "replace-with-a-random-secret",
-      });
-
-    expect(options.providers[0]?.type).toBe("credentials");
+    await expect(getAuthSession()).resolves.toEqual({
+      user: {
+        id: "user_clerk_1",
+        email: "owner@example.com",
+        name: "Owner Example",
+        image: "https://img.clerk.test/avatar.png",
+      },
+    });
+    expect(mutation).toHaveBeenCalledWith(expect.anything(), {
+      userId: "user_clerk_1",
+      email: "owner@example.com",
+      name: "Owner Example",
+      image: "https://img.clerk.test/avatar.png",
+    });
   });
 });

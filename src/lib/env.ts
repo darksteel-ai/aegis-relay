@@ -11,6 +11,13 @@ const authEnvSchema = coreEnvSchema.pick({
   NEXTAUTH_SECRET: true,
 });
 
+const clerkEnvSchema = z.object({
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+  CLERK_SECRET_KEY: z.string().min(1),
+  NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1).optional(),
+  NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().min(1).optional(),
+});
+
 const stripeEnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
@@ -55,6 +62,7 @@ const convexEnvSchema = z.object({
 });
 
 const schedulerEnvSchema = coreEnvSchema
+  .extend(clerkEnvSchema.shape)
   .extend(stripeEnvSchema.shape)
   .extend(storageEnvSchema.shape)
   .extend(googleEnvSchema.shape)
@@ -70,6 +78,10 @@ export function parseCoreEnv(source: EnvSource = process.env) {
 
 export function getAuthEnv(source: EnvSource = process.env) {
   return authEnvSchema.parse(source);
+}
+
+export function getClerkEnv(source: EnvSource = process.env) {
+  return clerkEnvSchema.parse(source);
 }
 
 export function getStripeEnv(source: EnvSource = process.env) {

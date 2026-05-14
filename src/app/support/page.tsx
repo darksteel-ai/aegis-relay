@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Support | Video Scheduler",
-  description: "Support and troubleshooting notes for the Video Scheduler beta.",
+  title: "Support | Aegis Relay",
+  description: "Support and troubleshooting notes for the Aegis Relay beta.",
 };
 
 export const failedPostChecklist = [

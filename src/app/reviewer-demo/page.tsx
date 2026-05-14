@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Reviewer Demo | Video Scheduler",
-  description: "Reviewer walkthrough for the Video Scheduler beta.",
+  title: "Reviewer Demo | Aegis Relay",
+  description: "Reviewer walkthrough for the Aegis Relay beta.",
 };
 
 export const reviewerDemoSteps = [
