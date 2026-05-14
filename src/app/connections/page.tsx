@@ -1,4 +1,4 @@
-import { ExternalLink, LockKeyhole, PlugZap } from "lucide-react";
+import { AlertTriangle, ExternalLink, LockKeyhole, PlugZap } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
@@ -95,11 +95,23 @@ export default async function ConnectionsPage() {
           </p>
         </div>
 
+        {!client ? (
+          <div className="flex gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+            <p>
+              Database setup is required before accounts can be connected. Finish
+              the Convex cloud setup, then YouTube connections will be enabled.
+            </p>
+          </div>
+        ) : null}
+
         <section className="overflow-hidden rounded-md border border-neutral-200 bg-white">
           <ul className="divide-y divide-neutral-200">
             {platformRows.map((row) => {
               const account = accountsByPlatform.get(row.platform);
               const status = account?.status ?? "APPROVAL_PENDING";
+              const needsDatabase = row.platform === "YOUTUBE" && !client;
+              const canConnect = row.connectable && !needsDatabase;
 
               return (
                 <li
@@ -116,7 +128,9 @@ export default async function ConnectionsPage() {
                     <p className="text-sm leading-6 text-neutral-600">
                       {account
                         ? `${account.accountName} connected as ${formatPlatformLabel(account.platform)}.`
-                        : row.description}
+                        : needsDatabase
+                          ? "YouTube OAuth is ready, but account storage must be connected first."
+                          : row.description}
                     </p>
                     {account ? (
                       <dl className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-500">
@@ -136,7 +150,7 @@ export default async function ConnectionsPage() {
                     ) : null}
                   </div>
 
-                  {row.connectable ? (
+                  {canConnect ? (
                     <a
                       className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100"
                       href={row.href}
@@ -147,7 +161,7 @@ export default async function ConnectionsPage() {
                   ) : (
                     <span className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-4 text-sm font-medium text-neutral-600">
                       <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                      {row.action}
+                      {needsDatabase ? "Setup required" : row.action}
                     </span>
                   )}
                 </li>
