@@ -39,6 +39,8 @@ const googleEnvSchema = z.object({
 });
 
 const tiktokEnvSchema = z.object({
+  TIKTOK_CLIENT_KEY: z.string().min(1).optional(),
+  TIKTOK_CLIENT_SECRET: z.string().min(1).optional(),
   TIKTOK_REDIRECT_URI: z.string().url().optional(),
 });
 
