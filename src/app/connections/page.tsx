@@ -25,9 +25,10 @@ const platformRows = [
   {
     platform: "TIKTOK",
     name: "TikTok",
-    description: "Publishing is prepared while app approval is pending.",
-    action: "Approval pending",
-    connectable: false,
+    description: "Connect an account for TikTok video upload access.",
+    action: "Connect TikTok",
+    href: "/api/auth/tiktok/start",
+    connectable: true,
   },
   {
     platform: "INSTAGRAM",
@@ -110,7 +111,8 @@ export default async function ConnectionsPage() {
             {platformRows.map((row) => {
               const account = accountsByPlatform.get(row.platform);
               const status = account?.status ?? "APPROVAL_PENDING";
-              const needsDatabase = row.platform === "YOUTUBE" && !client;
+              const needsDatabase =
+                (row.platform === "YOUTUBE" || row.platform === "TIKTOK") && !client;
               const canConnect = row.connectable && !needsDatabase;
 
               return (
@@ -129,7 +131,7 @@ export default async function ConnectionsPage() {
                       {account
                         ? `${account.accountName} connected as ${formatPlatformLabel(account.platform)}.`
                         : needsDatabase
-                          ? "YouTube OAuth is ready, but account storage must be connected first."
+                          ? `${row.name} OAuth is ready, but account storage must be connected first.`
                           : row.description}
                     </p>
                     {account ? (
