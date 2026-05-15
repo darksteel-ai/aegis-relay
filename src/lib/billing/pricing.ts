@@ -11,6 +11,7 @@ export type PricingPlan = {
   cta: string;
   featured?: boolean;
   stripePriceEnvKey?: "STRIPE_PRICE_ID_CREATOR" | "STRIPE_PRICE_ID_STUDIO" | "STRIPE_PRICE_ID_PRO";
+  monthlyScheduledPostLimit: number;
   features: string[];
   limits: string[];
 };
@@ -24,13 +25,14 @@ export const pricingPlans: PricingPlan[] = [
     period: "while testing",
     description: "For validating your workflow before you turn on paid publishing.",
     cta: "Current free access",
+    monthlyScheduledPostLimit: 10,
     features: [
       "Connect YouTube, TikTok, and Instagram accounts",
       "Upload vertical videos",
       "Preview scheduling workflows",
       "Basic AI metadata suggestions",
     ],
-    limits: ["Limited beta capacity", "Manual review for some platform publishing"],
+    limits: ["Up to 10 scheduled posts per month", "Manual review for some platform publishing"],
   },
   {
     id: "creator",
@@ -42,6 +44,7 @@ export const pricingPlans: PricingPlan[] = [
     cta: "Start Creator",
     featured: true,
     stripePriceEnvKey: "STRIPE_PRICE_ID_CREATOR",
+    monthlyScheduledPostLimit: 150,
     features: [
       "Schedule across YouTube Shorts, TikTok, and Reels",
       "Cross-platform AI titles and hashtags",
@@ -59,6 +62,7 @@ export const pricingPlans: PricingPlan[] = [
     description: "For agencies and operators managing higher-volume short-form output.",
     cta: "Start Studio",
     stripePriceEnvKey: "STRIPE_PRICE_ID_STUDIO",
+    monthlyScheduledPostLimit: 750,
     features: [
       "Everything in Creator",
       "Higher scheduling volume",
@@ -91,4 +95,8 @@ export function normalizeBillingPlan(planId: string | null | undefined): Billing
   }
 
   return "beta";
+}
+
+export function getMonthlyScheduledPostLimit(planId: string | null | undefined) {
+  return getPricingPlan(normalizeBillingPlan(planId)).monthlyScheduledPostLimit;
 }

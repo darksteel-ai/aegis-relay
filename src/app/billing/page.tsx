@@ -77,6 +77,12 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               <p className="text-sm leading-6 text-slate-400">
                 Workspace: {workspace.name}
               </p>
+              <p className="text-sm leading-6 text-slate-400">
+                Monthly post cap:{" "}
+                <span className="font-medium text-white">
+                  {activePlan.monthlyScheduledPostLimit} scheduled posts
+                </span>
+              </p>
             </div>
 
             {hasActiveSubscription ? (

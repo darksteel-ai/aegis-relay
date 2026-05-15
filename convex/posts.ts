@@ -3,6 +3,12 @@ import { v } from "convex/values";
 import { mutationGeneric as mutation, queryGeneric as query } from "convex/server";
 
 const platform = v.union(v.literal("YOUTUBE"), v.literal("TIKTOK"), v.literal("INSTAGRAM"));
+const monthlyScheduledPostLimits: Record<string, number> = {
+  beta: 10,
+  creator: 150,
+  pro: 150,
+  studio: 750,
+};
 
 async function requireWorkspaceForUser(ctx: any, userId: string) {
   const membership = await ctx.db
@@ -46,6 +52,24 @@ export const createScheduledPost = mutation({
     const workspaceId = await requireWorkspaceForUser(ctx, args.userId);
     if (workspaceId !== args.workspaceId) {
       throw new Error("Workspace not found.");
+    }
+    const workspace = await ctx.db.get(args.workspaceId);
+    const monthlyLimit = monthlyScheduledPostLimits[workspace?.plan ?? "beta"] ?? monthlyScheduledPostLimits.beta;
+    const { monthStart, monthEnd } = scheduledMonthWindow(args.scheduledAt);
+    const postsThisMonth = await ctx.db
+      .query("scheduledPosts")
+      .withIndex("by_workspace_scheduled", (q: any) =>
+        q
+          .eq("workspaceId", args.workspaceId)
+          .gte("scheduledAt", monthStart)
+          .lt("scheduledAt", monthEnd),
+      )
+      .collect();
+
+    if (postsThisMonth.length >= monthlyLimit) {
+      throw new Error(
+        `Monthly post limit reached for the ${workspace?.plan ?? "beta"} plan. This plan allows ${monthlyLimit} scheduled posts per month.`,
+      );
     }
 
     const reservation = await ctx.db
@@ -192,6 +216,14 @@ async function hydratePosts(ctx: any, posts: any[]) {
     result.push(await getPostById(ctx, post._id));
   }
   return result;
+}
+
+function scheduledMonthWindow(timestamp: number) {
+  const date = new Date(timestamp);
+  const monthStart = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
+  const monthEnd = Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
+
+  return { monthStart, monthEnd };
 }
 
 async function getPostById(ctx: any, postId: any) {

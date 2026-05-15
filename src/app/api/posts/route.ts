@@ -63,6 +63,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    if (error instanceof Error && error.message.includes("Monthly post limit")) {
+      return NextResponse.json({ error: error.message }, { status: 402 });
+    }
+
     throw error;
   }
 
