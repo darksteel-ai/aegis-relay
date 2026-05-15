@@ -53,21 +53,20 @@ export default async function CalendarPage() {
 
   return (
     <AppShell>
-      <div className="grid gap-8">
+      <div className="grid gap-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
-            <p className="text-sm font-medium text-neutral-500">Calendar</p>
-            <h1 className="text-3xl font-semibold tracking-normal">
+            <h1 className="text-4xl font-semibold tracking-normal text-white">
               Scheduled posts
             </h1>
-            <p className="max-w-2xl text-base leading-7 text-neutral-600">
+            <p className="max-w-2xl text-base leading-7 text-slate-400">
               {workspace?.name
                 ? `Upcoming and historical publishing status for ${workspace.name}.`
                 : "Upcoming and historical publishing status for the current workspace."}
             </p>
           </div>
           <Link
-            className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md bg-neutral-950 px-4 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
+            className="studio-button-primary w-fit"
             href="/composer"
           >
             <CalendarPlus className="h-4 w-4" aria-hidden="true" />
@@ -77,19 +76,19 @@ export default async function CalendarPage() {
 
         <section>
           {posts.length > 0 ? (
-            <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
-              <ul className="divide-y divide-neutral-200">
+            <div className="studio-panel overflow-hidden rounded-md">
+              <ul className="divide-y divide-white/10">
                 {posts.map((post) => (
                   <li key={post.id} className="p-4">
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                       <div className="min-w-0 space-y-2">
                         <Link
                           href={`/posts/${post.id}`}
-                          className="block truncate text-sm font-semibold text-neutral-950 hover:underline"
+                          className="block truncate text-sm font-semibold text-white hover:text-cyan-200"
                         >
                           {post.baseCaption}
                         </Link>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-600">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
                           <span className="inline-flex items-center gap-1.5">
                             <Clock3 className="h-4 w-4" aria-hidden="true" />
                             {formatScheduledAtForDashboard(
@@ -105,9 +104,9 @@ export default async function CalendarPage() {
                         {post.platformPosts.map((platformPost) => (
                           <div
                             key={platformPost.id}
-                            className="inline-flex items-center gap-2 rounded-md border border-neutral-200 px-2.5 py-1.5"
+                            className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.035] px-2.5 py-1.5"
                           >
-                            <span className="text-xs font-medium text-neutral-600">
+                            <span className="text-xs font-medium text-slate-400">
                               {formatPlatformLabel(platformPost.platform)}
                             </span>
                             <StatusBadge status={platformPost.status} />
@@ -120,7 +119,7 @@ export default async function CalendarPage() {
               </ul>
             </div>
           ) : (
-            <div className="rounded-md border border-neutral-200 bg-white p-6 text-sm leading-6 text-neutral-600">
+            <div className="studio-panel rounded-md p-6 text-sm leading-6 text-slate-400">
               No scheduled posts yet. Create a post to see platform status here.
             </div>
           )}

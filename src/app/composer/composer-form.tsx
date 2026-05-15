@@ -103,7 +103,7 @@ export function ComposerForm() {
       />
 
       {video ? (
-        <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <div className="flex items-center gap-2 rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">
           <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           <p className="break-all">Ready to schedule {video.fileName}.</p>
         </div>
@@ -111,13 +111,13 @@ export function ComposerForm() {
 
       <div className="grid gap-2">
         <div className="flex items-end justify-between gap-3">
-          <label className="text-sm font-medium text-neutral-950" htmlFor="baseCaption">
+          <label className="text-sm font-medium text-white" htmlFor="baseCaption">
             Caption
           </label>
-          <span className="text-xs text-neutral-500">{captionCharacters}/2200</span>
+          <span className="text-xs text-slate-500">{captionCharacters}/2200</span>
         </div>
         <textarea
-          className="min-h-36 w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm leading-6 text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-2 focus:ring-neutral-950/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="studio-input min-h-36 w-full resize-y px-3 py-2 text-sm leading-6 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSubmitting}
           id="baseCaption"
           maxLength={2200}
@@ -134,11 +134,11 @@ export function ComposerForm() {
         onChange={setPlatforms}
       />
 
-      <div className="grid gap-4 rounded-md border border-neutral-200 bg-white p-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium text-neutral-950" htmlFor="scheduledAt">
+      <div className="grid gap-4 rounded-md border border-white/10 bg-black/25 p-4 sm:grid-cols-2">
+        <label className="grid gap-2 text-sm font-medium text-white" htmlFor="scheduledAt">
           Schedule time
           <input
-            className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm font-normal text-neutral-950 outline-none transition-colors focus:border-neutral-950 focus:ring-2 focus:ring-neutral-950/10 disabled:cursor-not-allowed disabled:opacity-60"
+            className="studio-input h-10 px-3 text-sm font-normal disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             id="scheduledAt"
             required
@@ -148,10 +148,10 @@ export function ComposerForm() {
           />
         </label>
 
-        <label className="grid gap-2 text-sm font-medium text-neutral-950" htmlFor="timezone">
+        <label className="grid gap-2 text-sm font-medium text-white" htmlFor="timezone">
           Timezone
           <input
-            className="h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm font-normal text-neutral-950 outline-none transition-colors focus:border-neutral-950 focus:ring-2 focus:ring-neutral-950/10 disabled:cursor-not-allowed disabled:opacity-60"
+            className="studio-input h-10 px-3 text-sm font-normal disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             id="timezone"
             required
@@ -165,8 +165,8 @@ export function ComposerForm() {
         <div
           className={
             submitState.type === "success"
-              ? "flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
-              : "flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
+              ? "flex items-start gap-2 rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+              : "flex items-start gap-2 rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
           }
           role="status"
         >
@@ -180,7 +180,7 @@ export function ComposerForm() {
       ) : null}
 
       <button
-        className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md bg-neutral-950 px-4 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="studio-button-primary w-fit disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!canSubmit || isSubmitting}
         type="submit"
       >

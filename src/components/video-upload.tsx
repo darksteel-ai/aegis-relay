@@ -207,19 +207,19 @@ export function VideoUpload({
   const canUpload = file && status === "ready" && !disabled;
 
   return (
-    <div className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-4">
+    <div className="grid gap-3 rounded-md border border-white/10 bg-black/25 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <label className="text-sm font-medium text-zinc-950" htmlFor={inputId}>
+          <label className="text-sm font-medium text-white" htmlFor={inputId}>
             Video file
           </label>
-          <p className="mt-1 text-sm text-zinc-600" role="status">
+          <p className="mt-1 text-sm text-slate-400" role="status">
             {message}
           </p>
         </div>
         {file ? (
           <button
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="studio-button-secondary h-9 px-3 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={disabled || status === "uploading"}
             type="button"
             onClick={() => selectFile(null)}
@@ -232,7 +232,7 @@ export function VideoUpload({
 
       <input
         accept="video/mp4,video/quicktime,.mp4,.mov"
-        className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+        className="studio-input block w-full px-3 py-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={disabled || status === "uploading"}
         id={inputId}
         type="file"
@@ -240,18 +240,18 @@ export function VideoUpload({
       />
 
       {file ? (
-        <dl className="grid gap-2 rounded-md bg-zinc-50 p-3 text-sm text-zinc-700 sm:grid-cols-2">
+        <dl className="grid gap-2 rounded-md border border-white/10 bg-white/[0.035] p-3 text-sm text-slate-400 sm:grid-cols-2">
           <div>
-            <dt className="font-medium text-zinc-950">Selected</dt>
+            <dt className="font-medium text-white">Selected</dt>
             <dd className="mt-1 break-all">{file.name}</dd>
           </div>
           <div>
-            <dt className="font-medium text-zinc-950">Size</dt>
+            <dt className="font-medium text-white">Size</dt>
             <dd className="mt-1">{formatBytes(file.size)}</dd>
           </div>
           {metadata.width && metadata.height ? (
             <div>
-              <dt className="font-medium text-zinc-950">Format</dt>
+              <dt className="font-medium text-white">Format</dt>
               <dd className="mt-1">
                 {metadata.width} x {metadata.height}
               </dd>
@@ -259,7 +259,7 @@ export function VideoUpload({
           ) : null}
           {metadata.durationSeconds ? (
             <div>
-              <dt className="font-medium text-zinc-950">Duration</dt>
+              <dt className="font-medium text-white">Duration</dt>
               <dd className="mt-1">{Math.round(metadata.durationSeconds)} seconds</dd>
             </div>
           ) : null}
@@ -267,7 +267,7 @@ export function VideoUpload({
       ) : null}
 
       <button
-        className="inline-flex w-fit items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="studio-button-secondary w-fit disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!canUpload}
         type="button"
         onClick={uploadSelectedFile}

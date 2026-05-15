@@ -15,17 +15,16 @@ export default async function ComposerPage() {
 
   return (
     <AppShell>
-      <div className="grid gap-8">
+      <div className="grid gap-6">
         <div className="space-y-3">
-          <p className="text-sm font-medium text-neutral-500">Composer</p>
-          <h1 className="text-3xl font-semibold tracking-normal">Create a scheduled post</h1>
-          <p className="max-w-2xl text-base leading-7 text-neutral-600">
+          <h1 className="text-4xl font-semibold tracking-normal text-white">Create a scheduled post</h1>
+          <p className="max-w-2xl text-base leading-7 text-slate-400">
             Upload one short-form video, choose the channels, and schedule it for
             the current workspace.
           </p>
         </div>
 
-        <section className="max-w-4xl">
+        <section className="studio-panel max-w-5xl rounded-md p-5">
           <ComposerForm />
         </section>
       </div>

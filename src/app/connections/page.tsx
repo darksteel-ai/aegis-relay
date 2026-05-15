@@ -1,4 +1,12 @@
-import { AlertTriangle, ExternalLink, LockKeyhole, PlugZap } from "lucide-react";
+import {
+  AlertTriangle,
+  Camera,
+  ExternalLink,
+  LockKeyhole,
+  Music2,
+  PlaySquare,
+  PlugZap,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
@@ -21,6 +29,8 @@ const platformRows = [
     action: "Connect YouTube",
     href: "/api/oauth/youtube/start",
     connectable: true,
+    icon: PlaySquare,
+    accent: "border-red-400/45 text-red-300",
   },
   {
     platform: "TIKTOK",
@@ -29,6 +39,8 @@ const platformRows = [
     action: "Connect TikTok",
     href: "/api/auth/tiktok/start",
     connectable: true,
+    icon: Music2,
+    accent: "border-cyan-300/45 text-cyan-200",
   },
   {
     platform: "INSTAGRAM",
@@ -37,6 +49,8 @@ const platformRows = [
     action: "Connect Instagram",
     href: "/api/auth/instagram/start",
     connectable: true,
+    icon: Camera,
+    accent: "border-red-400/35 text-red-300",
   },
 ] as const;
 
@@ -84,13 +98,12 @@ export default async function ConnectionsPage() {
 
   return (
     <AppShell>
-      <div className="grid gap-8">
+      <div className="grid gap-6">
         <div className="space-y-3">
-          <p className="text-sm font-medium text-neutral-500">Connections</p>
-          <h1 className="text-3xl font-semibold tracking-normal">
+          <h1 className="text-4xl font-semibold tracking-normal text-white">
             Platform connections
           </h1>
-          <p className="max-w-2xl text-base leading-7 text-neutral-600">
+          <p className="max-w-2xl text-base leading-7 text-slate-400">
             {workspace?.name
               ? `Manage publishing access for ${workspace.name}.`
               : "Manage publishing access for the current workspace."}
@@ -98,7 +111,7 @@ export default async function ConnectionsPage() {
         </div>
 
         {!client ? (
-          <div className="flex gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+          <div className="flex gap-3 rounded-md border border-amber-300/35 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
             <p>
               Database setup is required before accounts can be connected. Finish
@@ -107,8 +120,15 @@ export default async function ConnectionsPage() {
           </div>
         ) : null}
 
-        <section className="overflow-hidden rounded-md border border-neutral-200 bg-white">
-          <ul className="divide-y divide-neutral-200">
+        <section className="studio-panel rounded-md p-5">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Publishing channels</h2>
+              <p className="mt-1 text-sm text-slate-500">OAuth access for every customer workspace.</p>
+            </div>
+            <PlugZap className="h-5 w-5 text-cyan-200" aria-hidden="true" />
+          </div>
+          <ul className="grid gap-3">
             {platformRows.map((row) => {
               const account = accountsByPlatform.get(row.platform);
               const status = account?.status ?? "APPROVAL_PENDING";
@@ -122,16 +142,17 @@ export default async function ConnectionsPage() {
               return (
                 <li
                   key={row.platform}
-                  className="grid gap-4 p-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                  className={`grid gap-4 rounded-md border bg-black/25 p-4 sm:grid-cols-[1fr_auto] sm:items-center ${row.accent}`}
                 >
                   <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-base font-semibold text-neutral-950">
+                      <row.icon className="h-5 w-5" aria-hidden="true" />
+                      <h3 className="text-base font-semibold text-white">
                         {row.name}
-                      </h2>
+                      </h3>
                       <StatusBadge status={status} />
                     </div>
-                    <p className="text-sm leading-6 text-neutral-600">
+                    <p className="text-sm leading-6 text-slate-400">
                       {account
                         ? `${account.accountName} connected as ${formatPlatformLabel(account.platform)}.`
                         : needsDatabase
@@ -139,7 +160,7 @@ export default async function ConnectionsPage() {
                           : row.description}
                     </p>
                     {account ? (
-                      <dl className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-500">
+                      <dl className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
                         <div>
                           <dt className="sr-only">External account id</dt>
                           <dd>ID {account.externalId}</dd>
@@ -158,14 +179,14 @@ export default async function ConnectionsPage() {
 
                   {canConnect ? (
                     <a
-                      className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100"
+                      className={account ? "studio-button-secondary w-fit" : "studio-button-primary w-fit"}
                       href={row.href}
                     >
                       {account ? "Reconnect" : row.action}
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
                     </a>
                   ) : (
-                    <span className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-4 text-sm font-medium text-neutral-600">
+                    <span className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-slate-500">
                       <LockKeyhole className="h-4 w-4" aria-hidden="true" />
                       {needsDatabase ? "Setup required" : row.action}
                     </span>
@@ -176,7 +197,7 @@ export default async function ConnectionsPage() {
           </ul>
         </section>
 
-        <div className="flex items-center gap-2 text-sm text-neutral-600">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
           <PlugZap className="h-4 w-4" aria-hidden="true" />
           Connected accounts are scoped to the signed-in workspace.
         </div>

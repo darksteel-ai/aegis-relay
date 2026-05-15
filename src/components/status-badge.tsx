@@ -1,14 +1,14 @@
 import { formatStatusLabel } from "@/lib/posts/display";
 
 const statusStyles: Record<string, string> = {
-  DRAFT: "border-neutral-300 bg-neutral-50 text-neutral-800",
-  SCHEDULED: "border-sky-300 bg-sky-50 text-sky-950",
-  PROCESSING: "border-violet-300 bg-violet-50 text-violet-950",
-  PUBLISHED: "border-emerald-300 bg-emerald-50 text-emerald-950",
-  FAILED: "border-red-300 bg-red-50 text-red-950",
-  RETRYING: "border-amber-300 bg-amber-50 text-amber-950",
-  BLOCKED: "border-stone-400 bg-stone-100 text-stone-950",
-  APPROVAL_PENDING: "border-amber-300 bg-amber-50 text-amber-950",
+  DRAFT: "border-slate-500/30 bg-slate-500/10 text-slate-200",
+  SCHEDULED: "border-cyan-300/45 bg-cyan-300/10 text-cyan-100",
+  PROCESSING: "border-blue-300/40 bg-blue-300/10 text-blue-100",
+  PUBLISHED: "border-emerald-300/45 bg-emerald-300/10 text-emerald-100",
+  FAILED: "border-red-300/45 bg-red-400/10 text-red-100",
+  RETRYING: "border-amber-300/45 bg-amber-300/10 text-amber-100",
+  BLOCKED: "border-slate-400/35 bg-slate-400/10 text-slate-100",
+  APPROVAL_PENDING: "border-amber-300/45 bg-amber-300/10 text-amber-100",
 };
 
 const dotStyles: Record<string, string> = {
@@ -32,7 +32,7 @@ export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${statusStyles[status] ?? statusStyles.DRAFT} ${className}`}
+      className={`inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${statusStyles[status] ?? statusStyles.DRAFT} ${className}`}
       aria-label={`Status: ${label}`}
     >
       <span

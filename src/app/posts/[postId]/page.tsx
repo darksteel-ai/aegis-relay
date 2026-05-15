@@ -57,22 +57,21 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
   return (
     <AppShell>
-      <div className="grid gap-8">
+      <div className="grid gap-6">
         <div className="space-y-5">
           <Link
             href="/calendar"
-            className="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-neutral-950"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-cyan-200"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Calendar
           </Link>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-neutral-500">Post detail</p>
-            <h1 className="max-w-4xl text-3xl font-semibold tracking-normal">
+            <h1 className="max-w-4xl text-4xl font-semibold tracking-normal text-white">
               {post.baseCaption}
             </h1>
-            <p className="max-w-2xl text-base leading-7 text-neutral-600">
+            <p className="max-w-2xl text-base leading-7 text-slate-400">
               Scheduled for{" "}
               {formatScheduledAtForDashboard(new Date(post.scheduledAt), post.timezone)} in{" "}
               {post.timezone}.
@@ -81,68 +80,68 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         </div>
 
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="rounded-md border border-neutral-200 bg-white p-6">
-            <h2 className="text-base font-semibold text-neutral-950">Video</h2>
+          <div className="studio-panel rounded-md p-6">
+            <h2 className="text-base font-semibold text-white">Video</h2>
             <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-neutral-500">File name</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">File name</dt>
+                <dd className="mt-1 font-medium text-white">
                   {post.video.fileName}
                 </dd>
               </div>
               <div>
-                <dt className="text-neutral-500">MIME type</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">MIME type</dt>
+                <dd className="mt-1 font-medium text-white">
                   {post.video.mimeType}
                 </dd>
               </div>
               <div>
-                <dt className="text-neutral-500">File size</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">File size</dt>
+                <dd className="mt-1 font-medium text-white">
                   {formatFileSize(post.video.sizeBytes)}
                 </dd>
               </div>
               <div>
-                <dt className="text-neutral-500">Duration</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">Duration</dt>
+                <dd className="mt-1 font-medium text-white">
                   {formatDuration(post.video.durationSec)}
                 </dd>
               </div>
               <div>
-                <dt className="text-neutral-500">Resolution</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">Resolution</dt>
+                <dd className="mt-1 font-medium text-white">
                   {post.video.width && post.video.height
                     ? `${post.video.width} x ${post.video.height}`
                     : "Unknown resolution"}
                 </dd>
               </div>
               <div>
-                <dt className="text-neutral-500">Storage key</dt>
-                <dd className="mt-1 break-all font-medium text-neutral-950">
+                <dt className="text-slate-500">Storage key</dt>
+                <dd className="mt-1 break-all font-medium text-white">
                   {post.video.storageKey}
                 </dd>
               </div>
             </dl>
           </div>
 
-          <div className="rounded-md border border-neutral-200 bg-white p-6">
-            <h2 className="text-base font-semibold text-neutral-950">Schedule</h2>
+          <div className="studio-panel rounded-md p-6">
+            <h2 className="text-base font-semibold text-white">Schedule</h2>
             <dl className="mt-4 space-y-4 text-sm">
               <div>
-                <dt className="text-neutral-500">Scheduled time</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">Scheduled time</dt>
+                <dd className="mt-1 font-medium text-white">
                   {formatScheduledAtForDashboard(new Date(post.scheduledAt), post.timezone)}
                 </dd>
               </div>
               <div>
-                <dt className="text-neutral-500">Timezone</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">Timezone</dt>
+                <dd className="mt-1 font-medium text-white">
                   {post.timezone}
                 </dd>
               </div>
               <div>
-                <dt className="text-neutral-500">Created</dt>
-                <dd className="mt-1 font-medium text-neutral-950">
+                <dt className="text-slate-500">Created</dt>
+                <dd className="mt-1 font-medium text-white">
                   {formatScheduledAtForDashboard(new Date(post.createdAt), post.timezone)}
                 </dd>
               </div>
@@ -150,48 +149,48 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </div>
         </section>
 
-        <section className="rounded-md border border-neutral-200 bg-white">
-          <div className="border-b border-neutral-200 p-4">
-            <h2 className="text-base font-semibold text-neutral-950">
+        <section className="studio-panel overflow-hidden rounded-md">
+          <div className="border-b border-white/10 p-4">
+            <h2 className="text-base font-semibold text-white">
               Platform posts
             </h2>
           </div>
-          <ul className="divide-y divide-neutral-200">
+          <ul className="divide-y divide-white/10">
             {post.platformPosts.map((platformPost: PostPlatformPost) => (
               <li key={platformPost.id} className="grid gap-4 p-4 lg:grid-cols-[1fr_auto]">
                 <div className="min-w-0 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-semibold text-neutral-950">
+                    <h3 className="text-sm font-semibold text-white">
                       {formatPlatformLabel(platformPost.platform)}
                     </h3>
                     <StatusBadge status={platformPost.status} />
                   </div>
                   <dl className="grid gap-3 text-sm sm:grid-cols-2">
                     <div>
-                      <dt className="text-neutral-500">Caption</dt>
-                      <dd className="mt-1 text-neutral-900">
+                      <dt className="text-slate-500">Caption</dt>
+                      <dd className="mt-1 text-slate-200">
                         {platformPost.caption}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-neutral-500">Privacy</dt>
-                      <dd className="mt-1 font-medium text-neutral-950">
+                      <dt className="text-slate-500">Privacy</dt>
+                      <dd className="mt-1 font-medium text-white">
                         {platformPost.privacy}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-neutral-500">Platform ID</dt>
-                      <dd className="mt-1 break-all font-medium text-neutral-950">
+                      <dt className="text-slate-500">Platform ID</dt>
+                      <dd className="mt-1 break-all font-medium text-white">
                         {platformPost.platformPostId ?? "Not published yet"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-neutral-500">Published URL</dt>
-                      <dd className="mt-1 break-all font-medium text-neutral-950">
+                      <dt className="text-slate-500">Published URL</dt>
+                      <dd className="mt-1 break-all font-medium text-white">
                         {platformPost.platformPostUrl ? (
                           <a
                             href={platformPost.platformPostUrl}
-                            className="text-neutral-950 underline underline-offset-2 hover:text-neutral-700"
+                            className="text-cyan-200 underline underline-offset-2 hover:text-cyan-100"
                           >
                             {platformPost.platformPostUrl}
                           </a>
@@ -201,8 +200,8 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-neutral-500">Last error</dt>
-                      <dd className="mt-1 text-neutral-900">
+                      <dt className="text-slate-500">Last error</dt>
+                      <dd className="mt-1 text-slate-200">
                         {platformPost.lastError ?? "No error recorded"}
                       </dd>
                     </div>
@@ -213,13 +212,13 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </ul>
         </section>
 
-        <section className="rounded-md border border-neutral-200 bg-white p-6">
+        <section className="studio-panel rounded-md p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <h2 className="text-base font-semibold text-neutral-950">
+              <h2 className="text-base font-semibold text-white">
                 Retry publishing
               </h2>
-              <p id="retry-note" className="text-sm leading-6 text-neutral-600">
+              <p id="retry-note" className="text-sm leading-6 text-slate-400">
                 Failed or blocked platform posts can be reset to scheduled for
                 the next publishing run.
               </p>
@@ -227,7 +226,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
             <form action={`/api/posts/${post.id}/retry`} method="post">
               <button
                 type="submit"
-                className="inline-flex h-10 items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-950 hover:bg-neutral-100 disabled:bg-neutral-100 disabled:text-neutral-500"
+                className="studio-button-secondary disabled:bg-white/[0.04] disabled:text-slate-500"
                 disabled={!hasRetryablePost}
                 aria-describedby="retry-note"
               >

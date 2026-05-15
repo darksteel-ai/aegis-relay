@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050608;
+  --foreground: #f5f7fb;
 }
 
 @theme inline {
@@ -12,15 +12,92 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.28);
+  color: #ffffff;
+}
+
+@layer components {
+  .studio-panel {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(180deg, rgba(17, 22, 32, 0.92), rgba(8, 10, 15, 0.94));
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34);
+  }
+
+  .studio-panel-subtle {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .studio-button-primary {
+    display: inline-flex;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.375rem;
+    background: #ff3347;
+    padding-inline: 1rem;
+    font-size: 0.875rem;
+    font-weight: 650;
+    color: #ffffff;
+    box-shadow: 0 14px 36px rgba(255, 51, 71, 0.2);
+    transition: background-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+  }
+
+  .studio-button-primary:hover {
+    background: #ff4f60;
+  }
+
+  .studio-button-secondary {
+    display: inline-flex;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.045);
+    padding-inline: 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #f8fafc;
+    transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+  }
+
+  .studio-button-secondary:hover {
+    border-color: rgba(34, 211, 238, 0.42);
+    background: rgba(34, 211, 238, 0.08);
+  }
+
+  .studio-input {
+    border-radius: 0.375rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(2, 6, 12, 0.72);
+    color: #f8fafc;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  }
+
+  .studio-input::placeholder {
+    color: #64748b;
+  }
+
+  .studio-input:focus {
+    border-color: rgba(34, 211, 238, 0.72);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+  }
+
+  .studio-input:disabled,
+  .studio-button-primary:disabled,
+  .studio-button-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
 }

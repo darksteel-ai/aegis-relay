@@ -35,44 +35,45 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
   return (
     <AppShell>
-      <div className="max-w-3xl space-y-6">
+      <div className="max-w-4xl space-y-6">
         <div className="space-y-3">
-          <p className="text-sm font-medium text-neutral-500">Billing</p>
-          <h1 className="text-3xl font-semibold tracking-normal">
+          <h1 className="text-4xl font-semibold tracking-normal text-white">
             Subscription management
           </h1>
-          <p className="max-w-2xl text-base leading-7 text-neutral-600">
+          <p className="max-w-2xl text-base leading-7 text-slate-400">
             Upgrade the current workspace to unlock paid beta scheduling, or
             manage the active subscription in Stripe.
           </p>
         </div>
 
         {checkoutState === "success" ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <div className="rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">
             Checkout completed. Stripe will confirm the subscription shortly.
           </div>
         ) : null}
 
         {checkoutState === "cancelled" ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="rounded-md border border-amber-300/35 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
             Checkout was cancelled. Your workspace is unchanged.
           </div>
         ) : null}
 
-        <section className="rounded-md border border-neutral-200 bg-white p-6 shadow-sm">
+        <section className="studio-panel rounded-md p-6">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-neutral-500" aria-hidden="true" />
-                <h2 className="text-lg font-semibold">Pro plan</h2>
+                <span className="grid h-10 w-10 place-items-center rounded-md border border-cyan-300/25 bg-cyan-300/10 text-cyan-200">
+                  <CreditCard className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h2 className="text-lg font-semibold text-white">Pro plan</h2>
               </div>
-              <p className="text-sm leading-6 text-neutral-600">
+              <p className="text-sm leading-6 text-slate-400">
                 Status:{" "}
-                <span className="font-medium text-neutral-950">
+                <span className="font-medium text-white">
                   {isPro ? "Active" : "Beta"}
                 </span>
               </p>
-              <p className="text-sm leading-6 text-neutral-600">
+              <p className="text-sm leading-6 text-slate-400">
                 Workspace: {workspace.name}
               </p>
             </div>
@@ -81,7 +82,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               <form action="/api/stripe/portal" method="post">
                 <button
                   type="submit"
-                  className="inline-flex h-10 items-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100"
+                  className="studio-button-secondary"
                 >
                   Manage
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
@@ -91,7 +92,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               <form action="/api/stripe/checkout" method="post">
                 <button
                   type="submit"
-                  className="inline-flex h-10 items-center gap-2 rounded-md bg-neutral-950 px-4 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
+                  className="studio-button-primary"
                 >
                   Start Pro
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
