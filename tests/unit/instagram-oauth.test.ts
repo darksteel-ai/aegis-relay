@@ -8,11 +8,13 @@ import {
 } from "@/lib/platforms/instagram-oauth";
 
 describe("Instagram OAuth scaffold", () => {
-  test("builds a Meta authorization URL when configuration is present", () => {
+  test("builds an Instagram authorization URL when configuration is present", () => {
     const result = buildInstagramOAuthStartUrl(
       {
         META_APP_ID: "meta-app-id",
         META_APP_SECRET: "meta-secret",
+        INSTAGRAM_APP_ID: "instagram-app-id",
+        INSTAGRAM_APP_SECRET: "instagram-secret",
         INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
       },
       { state: "signed-state" },
@@ -25,18 +27,21 @@ describe("Instagram OAuth scaffold", () => {
     }
 
     const url = new URL(result.url);
-    expect(url.origin).toBe("https://www.facebook.com");
-    expect(url.pathname).toBe("/v24.0/dialog/oauth");
-    expect(url.searchParams.get("client_id")).toBe("meta-app-id");
+    expect(url.origin).toBe("https://www.instagram.com");
+    expect(url.pathname).toBe("/oauth/authorize");
+    expect(url.searchParams.get("client_id")).toBe("instagram-app-id");
     expect(url.searchParams.get("redirect_uri")).toBe(
       "https://app.example.com/api/auth/instagram/callback",
     );
     expect(url.searchParams.get("response_type")).toBe("code");
     expect(url.searchParams.get("state")).toBe("signed-state");
     expect(url.searchParams.get("scope")).toBe(
-      "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
+      "instagram_business_basic,instagram_business_content_publish",
     );
+    expect(url.searchParams.get("enable_fb_login")).toBe("0");
+    expect(url.searchParams.get("force_authentication")).toBe("1");
     expect(url.search).not.toContain("meta-secret");
+    expect(url.search).not.toContain("instagram-secret");
   });
 
   test("creates and verifies signed OAuth state tied to user and workspace", () => {
@@ -85,10 +90,8 @@ describe("Instagram OAuth scaffold", () => {
       })),
       fetchInstagramAccounts: vi.fn(async () => [
         {
-          pageAccessToken: "page-access-token",
           instagramAccountId: "ig_123",
           accountName: "Demo Instagram",
-          pageName: "Demo Page",
         },
       ]),
     });
@@ -101,8 +104,8 @@ describe("Instagram OAuth scaffold", () => {
       externalId: "ig_123",
       accessToken: expect.stringMatching(/^enc:v1:/),
       refreshToken: undefined,
-      expiresAt: null,
-      scopes: "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
+      expiresAt: expect.any(Number),
+      scopes: "instagram_business_basic,instagram_business_content_publish",
       status: "SCHEDULED",
     });
   });

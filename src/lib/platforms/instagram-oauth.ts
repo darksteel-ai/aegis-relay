@@ -25,6 +25,7 @@ type MetaTokenResponse = {
   access_token?: string;
   token_type?: string;
   expires_in?: number;
+  user_id?: number;
   error?: {
     message?: string;
     type?: string;
@@ -33,18 +34,14 @@ type MetaTokenResponse = {
 };
 
 export type InstagramAccountCandidate = {
-  pageAccessToken: string;
   instagramAccountId: string;
   accountName: string;
-  pageName: string;
 };
 
 const graphApiVersion = "v24.0";
 const instagramOAuthScopes = [
-  "instagram_basic",
-  "instagram_content_publish",
-  "pages_show_list",
-  "pages_read_engagement",
+  "instagram_business_basic",
+  "instagram_business_content_publish",
 ] as const;
 const instagramDefaultScope = instagramOAuthScopes.join(",");
 export const instagramOAuthStateCookieName = "instagram_oauth_state";
@@ -69,18 +66,23 @@ export function buildInstagramOAuthStartUrl(
     throw error;
   }
 
-  if (!instagramEnv.META_APP_ID || !instagramEnv.META_APP_SECRET || !instagramEnv.INSTAGRAM_REDIRECT_URI) {
+  const clientId = instagramEnv.INSTAGRAM_APP_ID ?? instagramEnv.META_APP_ID;
+  const clientSecret = instagramEnv.INSTAGRAM_APP_SECRET ?? instagramEnv.META_APP_SECRET;
+
+  if (!clientId || !clientSecret || !instagramEnv.INSTAGRAM_REDIRECT_URI) {
     return {
       success: false,
       reason: "config-error",
     };
   }
 
-  const url = new URL(`https://www.facebook.com/${graphApiVersion}/dialog/oauth`);
-  url.searchParams.set("client_id", instagramEnv.META_APP_ID);
+  const url = new URL("https://www.instagram.com/oauth/authorize");
+  url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", instagramEnv.INSTAGRAM_REDIRECT_URI);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", instagramDefaultScope);
+  url.searchParams.set("enable_fb_login", "0");
+  url.searchParams.set("force_authentication", "1");
 
   if (options.state) {
     url.searchParams.set("state", options.state);
@@ -272,9 +274,9 @@ export async function completeInstagramOAuthCallback({
     platform: Platform.INSTAGRAM,
     accountName: account.accountName,
     externalId: account.instagramAccountId,
-    accessToken: encryptConnectedAccountToken(account.pageAccessToken, env),
+    accessToken: encryptConnectedAccountToken(token.access_token, env),
     refreshToken: undefined,
-    expiresAt: null,
+    expiresAt: token.expires_in ? Date.now() + token.expires_in * 1000 : null,
     scopes: instagramDefaultScope,
     status: PublishStatus.SCHEDULED,
   };
@@ -295,57 +297,77 @@ export async function completeInstagramOAuthCallback({
 
 async function exchangeInstagramCodeForToken(code: string, env: EnvSource) {
   const instagramEnv = getInstagramEnv(env);
+  const clientId = instagramEnv.INSTAGRAM_APP_ID ?? instagramEnv.META_APP_ID;
+  const clientSecret = instagramEnv.INSTAGRAM_APP_SECRET ?? instagramEnv.META_APP_SECRET;
 
-  if (!instagramEnv.META_APP_ID || !instagramEnv.META_APP_SECRET || !instagramEnv.INSTAGRAM_REDIRECT_URI) {
+  if (!clientId || !clientSecret || !instagramEnv.INSTAGRAM_REDIRECT_URI) {
     throw new Error("Instagram OAuth is not configured.");
   }
 
-  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/oauth/access_token`);
-  url.searchParams.set("client_id", instagramEnv.META_APP_ID);
-  url.searchParams.set("client_secret", instagramEnv.META_APP_SECRET);
-  url.searchParams.set("redirect_uri", instagramEnv.INSTAGRAM_REDIRECT_URI);
-  url.searchParams.set("code", code);
-  const response = await fetch(url);
+  const body = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    grant_type: "authorization_code",
+    redirect_uri: instagramEnv.INSTAGRAM_REDIRECT_URI,
+    code,
+  });
+  const response = await fetch("https://api.instagram.com/oauth/access_token", {
+    method: "POST",
+    body,
+  });
 
-  return (await response.json()) as MetaTokenResponse;
+  const token = (await response.json()) as MetaTokenResponse;
+
+  if (!token.access_token) {
+    return token;
+  }
+
+  return exchangeInstagramShortLivedToken(token, clientSecret);
+}
+
+async function exchangeInstagramShortLivedToken(token: MetaTokenResponse, clientSecret: string) {
+  const url = new URL("https://graph.instagram.com/access_token");
+  url.searchParams.set("grant_type", "ig_exchange_token");
+  url.searchParams.set("client_secret", clientSecret);
+  url.searchParams.set("access_token", token.access_token ?? "");
+
+  const response = await fetch(url, {
+    method: "POST",
+  });
+  const longLivedToken = (await response.json()) as MetaTokenResponse;
+
+  if (!longLivedToken.access_token) {
+    return token;
+  }
+
+  return longLivedToken;
 }
 
 async function fetchInstagramAccountsForToken(accessToken: string) {
-  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/me/accounts`);
-  url.searchParams.set(
-    "fields",
-    "id,name,access_token,instagram_business_account{id,username,name}",
-  );
+  const url = new URL(`https://graph.instagram.com/${graphApiVersion}/me`);
+  url.searchParams.set("fields", "user_id,username,name,account_type");
   url.searchParams.set("access_token", accessToken);
   const response = await fetch(url);
   const body = (await response.json()) as {
-    data?: Array<{
-      name?: string;
-      access_token?: string;
-      instagram_business_account?: {
-        id?: string;
-        username?: string;
-        name?: string;
-      };
-    }>;
+    id?: string;
+    user_id?: string;
+    username?: string;
+    name?: string;
+    account_type?: string;
   };
 
-  return (body.data ?? [])
-    .map((page) => {
-      const instagramAccount = page.instagram_business_account;
+  const instagramAccountId = body.user_id ?? body.id;
 
-      if (!page.access_token || !instagramAccount?.id) {
-        return null;
-      }
+  if (!instagramAccountId) {
+    return [];
+  }
 
-      return {
-        pageAccessToken: page.access_token,
-        instagramAccountId: instagramAccount.id,
-        accountName: instagramAccount.username ?? instagramAccount.name ?? "Instagram account",
-        pageName: page.name ?? "Facebook Page",
-      };
-    })
-    .filter((account): account is InstagramAccountCandidate => account !== null);
+  return [
+    {
+      instagramAccountId,
+      accountName: body.username ?? body.name ?? "Instagram account",
+    },
+  ];
 }
 
 function signState(payload: string, secret: string) {
