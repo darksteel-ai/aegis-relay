@@ -4,6 +4,12 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { convexApi } from "@/lib/convex-api";
 import { getConvexClient } from "@/lib/convex-server";
 import { getStripeEnv } from "@/lib/env";
+import {
+  getPaidPricingPlan,
+  normalizeBillingPlan,
+  type BillingPlanId,
+  type PaidPlanId,
+} from "@/lib/billing/pricing";
 
 type BillingUser = {
   id: string;
@@ -46,7 +52,7 @@ type WorkspaceUpdateDb = {
         stripeCustomerId?: string;
         stripeSubscriptionId?: string | null;
         stripeCanceledSubscriptionId?: string | null;
-        plan: "beta" | "pro";
+        plan: BillingPlanId;
       };
     }): Promise<unknown>;
   };
@@ -95,6 +101,30 @@ export function getStripe() {
   return stripeClient;
 }
 
+export function getStripePriceIdForPlan(planId: PaidPlanId) {
+  const env = getStripeEnv();
+  const plan = getPaidPricingPlan(planId);
+
+  if (!plan) {
+    throw new BillingError("This billing plan is not available.", 400);
+  }
+
+  const priceId = plan.stripePriceEnvKey ? env[plan.stripePriceEnvKey] : undefined;
+
+  if (priceId) {
+    return priceId;
+  }
+
+  if (planId === "creator" && env.STRIPE_PRICE_ID_PRO) {
+    return env.STRIPE_PRICE_ID_PRO;
+  }
+
+  throw new BillingError(
+    `Stripe Price ID is missing for the ${plan.name} plan.`,
+    500,
+  );
+}
+
 export async function getWorkspaceForUser(
   userId: string,
   database?: WorkspaceMembershipDb,
@@ -120,12 +150,14 @@ export async function createSubscriptionCheckoutSession({
   stripe = getStripe(),
   user,
   appUrl,
-  priceId = getStripeEnv().STRIPE_PRICE_ID_PRO,
+  planId = "creator",
+  priceId = getStripePriceIdForPlan(planId),
 }: {
   db?: WorkspaceMembershipDb;
   stripe?: CheckoutStripe;
   user: BillingUser;
   appUrl: string;
+  planId?: PaidPlanId;
   priceId?: string;
 }) {
   const workspace = await getWorkspaceForUser(user.id, db);
@@ -139,8 +171,8 @@ export async function createSubscriptionCheckoutSession({
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}/billing?checkout=success`,
     cancel_url: `${appUrl}/billing?checkout=cancelled`,
-    metadata: { workspaceId: workspace.id },
-    subscription_data: { metadata: { workspaceId: workspace.id } },
+    metadata: { workspaceId: workspace.id, plan: planId },
+    subscription_data: { metadata: { workspaceId: workspace.id, plan: planId } },
   };
 
   if (workspace.stripeCustomerId) {
@@ -215,6 +247,7 @@ async function handleCheckoutSessionCompleted(
   }
 
   const workspaceId = session.metadata?.workspaceId;
+  const plan = normalizePaidPlan(session.metadata?.plan);
   const customerId = stripeId(session.customer);
   const subscriptionId = stripeId(session.subscription);
 
@@ -227,6 +260,7 @@ async function handleCheckoutSessionCompleted(
       workspaceId: workspaceId as Id<"workspaces">,
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
+      plan,
     });
     return;
   }
@@ -250,7 +284,7 @@ async function handleCheckoutSessionCompleted(
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
       stripeCanceledSubscriptionId: null,
-      plan: "pro",
+      plan,
     },
   });
 }
@@ -259,8 +293,9 @@ async function handleSubscriptionUpdated(payload: unknown, database?: WorkspaceU
   const subscription = payload as Stripe.Subscription;
   const subscriptionId = subscription.id;
   const workspaceId = subscription.metadata?.workspaceId;
+  const activePlan = normalizePaidPlan(subscription.metadata?.plan);
   const activeStatuses = new Set(["active", "trialing"]);
-  const plan = activeStatuses.has(subscription.status) ? "pro" : "beta";
+  const plan = activeStatuses.has(subscription.status) ? activePlan : "beta";
   const isCanceled = subscription.status === "canceled";
 
   if (!database) {
@@ -268,6 +303,7 @@ async function handleSubscriptionUpdated(payload: unknown, database?: WorkspaceU
       workspaceId: workspaceId as Id<"workspaces"> | undefined,
       stripeSubscriptionId: subscriptionId,
       status: subscription.status,
+      plan: activePlan,
     });
     return;
   }
@@ -282,7 +318,7 @@ async function handleSubscriptionUpdated(payload: unknown, database?: WorkspaceU
       : subscriptionWorkspaceWhere(workspaceId, subscriptionId),
     data: {
       plan,
-      ...(plan === "pro" ? { stripeCanceledSubscriptionId: null } : {}),
+      ...(plan !== "beta" ? { stripeCanceledSubscriptionId: null } : {}),
       ...(isCanceled
         ? {
           stripeSubscriptionId: null,
@@ -349,4 +385,9 @@ function stripeId(value: string | { id?: string } | null | undefined) {
   }
 
   return value?.id ?? null;
+}
+
+function normalizePaidPlan(value: string | null | undefined): PaidPlanId {
+  const plan = normalizeBillingPlan(value);
+  return plan === "studio" ? "studio" : "creator";
 }

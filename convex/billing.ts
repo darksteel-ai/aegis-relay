@@ -6,6 +6,7 @@ export const checkoutCompleted = mutation({
     workspaceId: v.id("workspaces"),
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
+    plan: v.optional(v.union(v.literal("creator"), v.literal("studio"))),
   },
   handler: async (ctx, args) => {
     const workspace = await ctx.db.get(args.workspaceId);
@@ -23,7 +24,7 @@ export const checkoutCompleted = mutation({
       stripeCustomerId: args.stripeCustomerId,
       stripeSubscriptionId: args.stripeSubscriptionId,
       stripeCanceledSubscriptionId: undefined,
-      plan: "pro",
+      plan: args.plan ?? "creator",
       updatedAt: Date.now(),
     });
   },
@@ -34,6 +35,7 @@ export const subscriptionChanged = mutation({
     workspaceId: v.optional(v.id("workspaces")),
     stripeSubscriptionId: v.string(),
     status: v.string(),
+    plan: v.optional(v.union(v.literal("creator"), v.literal("studio"))),
   },
   handler: async (ctx, args) => {
     const workspace = args.workspaceId
@@ -57,7 +59,7 @@ export const subscriptionChanged = mutation({
       return;
     }
     await ctx.db.patch(workspace._id, {
-      plan: active ? "pro" : "beta",
+      plan: active ? args.plan ?? "creator" : "beta",
       stripeSubscriptionId: canceled ? undefined : workspace.stripeSubscriptionId,
       stripeCanceledSubscriptionId: canceled
         ? args.stripeSubscriptionId

@@ -41,9 +41,52 @@ describe("billing helpers", () => {
       line_items: [{ price: "price_pro", quantity: 1 }],
       success_url: "http://localhost:3000/billing?checkout=success",
       cancel_url: "http://localhost:3000/billing?checkout=cancelled",
-      metadata: { workspaceId: "workspace_1" },
-      subscription_data: { metadata: { workspaceId: "workspace_1" } },
+      metadata: { workspaceId: "workspace_1", plan: "creator" },
+      subscription_data: { metadata: { workspaceId: "workspace_1", plan: "creator" } },
     });
+  });
+
+  test("creates checkout for the selected studio plan", async () => {
+    const stripe = {
+      checkout: {
+        sessions: {
+          create: vi.fn(async () => ({ id: "cs_test_1", url: "https://checkout.stripe.test/session" })),
+        },
+      },
+    };
+    const db = {
+      workspaceMember: {
+        findFirst: vi.fn(async () => ({
+          workspaceId: "workspace_1",
+          workspace: {
+            id: "workspace_1",
+            name: "Creator Studio",
+            plan: "beta",
+            stripeCustomerId: null,
+            stripeSubscriptionId: null,
+            stripeCanceledSubscriptionId: null,
+          },
+        })),
+      },
+    };
+    const { createSubscriptionCheckoutSession } = await import("../../src/lib/billing/stripe");
+
+    await createSubscriptionCheckoutSession({
+      db,
+      stripe,
+      user: { id: "user_1", email: "owner@example.com" },
+      appUrl: "http://localhost:3000",
+      planId: "studio",
+      priceId: "price_studio",
+    });
+
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: [{ price: "price_studio", quantity: 1 }],
+        metadata: { workspaceId: "workspace_1", plan: "studio" },
+        subscription_data: { metadata: { workspaceId: "workspace_1", plan: "studio" } },
+      }),
+    );
   });
 
   test("uses an existing Stripe customer for checkout when the workspace has one", async () => {
@@ -103,7 +146,7 @@ describe("billing helpers", () => {
             mode: "subscription",
             customer: "cus_123",
             subscription: "sub_123",
-            metadata: { workspaceId: "workspace_1" },
+            metadata: { workspaceId: "workspace_1", plan: "studio" },
           },
         },
       },
@@ -125,7 +168,7 @@ describe("billing helpers", () => {
         stripeCustomerId: "cus_123",
         stripeSubscriptionId: "sub_123",
         stripeCanceledSubscriptionId: null,
-        plan: "pro",
+        plan: "studio",
       },
     });
   });
@@ -139,7 +182,7 @@ describe("billing helpers", () => {
           stripeCustomerId: "cus_new",
           stripeSubscriptionId: "sub_new",
           stripeCanceledSubscriptionId: null,
-          plan: "pro",
+          plan: "creator",
         },
       ],
     ]);
@@ -206,7 +249,7 @@ describe("billing helpers", () => {
         stripeCustomerId: "cus_old",
         stripeSubscriptionId: "sub_old",
         stripeCanceledSubscriptionId: null,
-        plan: "pro",
+        plan: "creator",
       },
     });
     expect(workspaces.get("workspace_1")).toEqual({
@@ -214,7 +257,7 @@ describe("billing helpers", () => {
       stripeCustomerId: "cus_new",
       stripeSubscriptionId: "sub_new",
       stripeCanceledSubscriptionId: null,
-      plan: "pro",
+      plan: "creator",
     });
   });
 
@@ -407,7 +450,7 @@ describe("billing helpers", () => {
           id: "workspace_1",
           stripeSubscriptionId: "sub_new",
           stripeCanceledSubscriptionId: null,
-          plan: "pro",
+          plan: "creator",
         },
       ],
     ]);
@@ -462,7 +505,7 @@ describe("billing helpers", () => {
       id: "workspace_1",
       stripeSubscriptionId: "sub_new",
       stripeCanceledSubscriptionId: null,
-      plan: "pro",
+      plan: "creator",
     });
   });
 

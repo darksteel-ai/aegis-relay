@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { pricingPlans } from "@/lib/billing/pricing";
+
 const platformNodes = [
   { name: "TikTok", accent: "border-cyan-400/40 text-cyan-200", dot: "bg-cyan-300" },
   { name: "YouTube Shorts", accent: "border-rose-400/40 text-rose-200", dot: "bg-rose-300" },
@@ -97,6 +99,9 @@ export default function Home() {
             <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
               <a href="#features" className="hover:text-white">
                 Features
+              </a>
+              <a href="#pricing" className="hover:text-white">
+                Pricing
               </a>
               <Link href="/privacy" className="hover:text-white">
                 Privacy
@@ -236,6 +241,63 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="pricing" className="border-b border-white/10 bg-[#061015]">
+        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
+          <div className="max-w-3xl space-y-3">
+            <h2 className="text-3xl font-semibold tracking-normal text-white">
+              Pricing for steady short-form output.
+            </h2>
+            <p className="text-base leading-7 text-slate-300">
+              Start in beta, then upgrade when you are ready to schedule repeat
+              publishing across connected customer accounts.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {pricingPlans.map((plan) => (
+              <article
+                className={
+                  plan.featured
+                    ? "rounded-md border border-cyan-300/35 bg-cyan-300/[0.055] p-6 shadow-2xl shadow-cyan-950/20"
+                    : "rounded-md border border-white/10 bg-white/[0.035] p-6"
+                }
+                key={plan.id}
+              >
+                <p className="text-xs font-semibold uppercase text-cyan-200">
+                  {plan.eyebrow}
+                </p>
+                <h3 className="mt-2 text-2xl font-semibold text-white">{plan.name}</h3>
+                <div className="mt-5 flex items-end gap-2">
+                  <span className="text-4xl font-semibold text-white">{plan.price}</span>
+                  <span className="pb-1 text-sm text-slate-400">{plan.period}</span>
+                </div>
+                <p className="mt-4 min-h-16 text-sm leading-6 text-slate-300">
+                  {plan.description}
+                </p>
+                <ul className="mt-5 grid gap-2 text-sm text-slate-200">
+                  {plan.features.slice(0, 4).map((feature) => (
+                    <li className="flex gap-2" key={feature}>
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  className={
+                    plan.id === "beta"
+                      ? "mt-6 inline-flex h-10 w-full items-center justify-center rounded-md border border-white/15 bg-white/[0.03] px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                      : "mt-6 inline-flex h-10 w-full items-center justify-center rounded-md bg-cyan-200 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-white"
+                  }
+                  href={plan.id === "beta" ? "/sign-in" : "/billing"}
+                >
+                  {plan.id === "beta" ? "Start free" : plan.cta}
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <footer className="bg-[#061015]">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-sm space-y-3">
@@ -255,6 +317,9 @@ export default function Home() {
               <p className="font-semibold text-white">Product</p>
               <a href="#features" className="block text-slate-400 hover:text-white">
                 Features
+              </a>
+              <a href="#pricing" className="block text-slate-400 hover:text-white">
+                Pricing
               </a>
             </div>
             <div className="space-y-3">

@@ -46,6 +46,7 @@ describe("billing API routes", () => {
     expect(createSubscriptionCheckoutSession).toHaveBeenCalledWith({
       user: { id: "user_1", email: "owner@example.com" },
       appUrl: "https://app.example.com",
+      planId: "creator",
     });
   });
 

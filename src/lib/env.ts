@@ -21,7 +21,9 @@ const clerkEnvSchema = z.object({
 const stripeEnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
-  STRIPE_PRICE_ID_PRO: z.string().min(1),
+  STRIPE_PRICE_ID_CREATOR: z.string().min(1).optional(),
+  STRIPE_PRICE_ID_STUDIO: z.string().min(1).optional(),
+  STRIPE_PRICE_ID_PRO: z.string().min(1).optional(),
 });
 
 const storageEnvSchema = z.object({
