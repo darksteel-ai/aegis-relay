@@ -27,6 +27,8 @@ export const createScheduledPost = mutation({
     userId: v.string(),
     workspaceId: v.id("workspaces"),
     baseCaption: v.string(),
+    youtubeTitle: v.optional(v.string()),
+    hashtags: v.optional(v.string()),
     scheduledAt: v.number(),
     timezone: v.string(),
     platforms: v.array(platform),
@@ -90,13 +92,17 @@ export const createScheduledPost = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    const platformCaption = args.hashtags
+      ? `${args.baseCaption.trim()}\n\n${args.hashtags}`.trim()
+      : args.baseCaption;
 
     for (const item of args.platforms) {
       await ctx.db.insert("platformPosts", {
         scheduledPostId: postId,
         workspaceId: args.workspaceId,
         platform: item,
-        caption: args.baseCaption,
+        title: item === "YOUTUBE" ? args.youtubeTitle : undefined,
+        caption: platformCaption,
         privacy: "public",
         scheduledAt: args.scheduledAt,
         status: item === "YOUTUBE" ? "SCHEDULED" : "APPROVAL_PENDING",

@@ -69,6 +69,42 @@ describe("scheduled post creation rules", () => {
     expect(result.data.video.durationSeconds).toBe(42.4);
   });
 
+  test("normalizes YouTube title and hashtags", () => {
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      youtubeTitle: "  Launch demo title  ",
+      hashtags: "shorts, #ai launch",
+      platforms: ["YOUTUBE", "INSTAGRAM"],
+    }, {
+      workspaceId: "workspace_123",
+      userId: "user_123",
+      now: new Date("2026-05-12T12:00:00.000Z"),
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.youtubeTitle).toBe("Launch demo title");
+    expect(result.data.hashtags).toBe("#shorts #ai #launch");
+    expect(buildPlatformPostCreateInputs(result.data)).toEqual([
+      {
+        platform: "YOUTUBE",
+        title: "Launch demo title",
+        caption: "Launch clip for the beta.\n\n#shorts #ai #launch",
+        scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
+        status: "SCHEDULED",
+      },
+      {
+        platform: "INSTAGRAM",
+        caption: "Launch clip for the beta.\n\n#shorts #ai #launch",
+        scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
+        status: "APPROVAL_PENDING",
+      },
+    ]);
+  });
+
   test("rejects missing caption, timezone, platforms, and video", () => {
     const result = parseCreateScheduledPostInput({
       baseCaption: "",

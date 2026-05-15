@@ -51,6 +51,8 @@ export async function POST(request: Request) {
       userId: session.user.id,
       workspaceId: workspace.id,
       baseCaption: input.baseCaption,
+      youtubeTitle: input.youtubeTitle,
+      hashtags: input.hashtags,
       scheduledAt: input.scheduledAt.getTime(),
       timezone: input.timezone,
       platforms: input.platforms,

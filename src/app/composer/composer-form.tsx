@@ -18,12 +18,16 @@ export function ComposerForm() {
   const [video, setVideo] = useState<UploadedVideo | null>(null);
   const [platforms, setPlatforms] = useState<ComposerPlatform[]>(["YOUTUBE"]);
   const [baseCaption, setBaseCaption] = useState("");
+  const [youtubeTitle, setYoutubeTitle] = useState("");
+  const [hashtags, setHashtags] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [timezone, setTimezone] = useState(getDefaultTimezone);
   const [submitState, setSubmitState] = useState<SubmitState>({ type: "idle" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const captionCharacters = baseCaption.length;
+  const youtubeTitleCharacters = youtubeTitle.length;
+  const hashtagCharacters = hashtags.length;
   const hasRequiredMetadata = Boolean(video?.width && video.height && video.durationSeconds);
   const canSubmit = useMemo(() => {
     return Boolean(
@@ -53,6 +57,8 @@ export function ComposerForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           baseCaption,
+          youtubeTitle,
+          hashtags,
           scheduledAt: new Date(scheduledAt).toISOString(),
           timezone,
           platforms,
@@ -78,6 +84,8 @@ export function ComposerForm() {
         message: "Post scheduled. YouTube will publish automatically; TikTok and Instagram are saved for approval.",
       });
       setBaseCaption("");
+      setYoutubeTitle("");
+      setHashtags("");
       setScheduledAt("");
       setPlatforms(["YOUTUBE"]);
       setVideo(null);
@@ -126,6 +134,44 @@ export function ComposerForm() {
           onChange={(event) => setBaseCaption(event.target.value)}
           placeholder="Write the caption that every selected platform should start from."
         />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)]">
+        <div className="grid gap-2">
+          <div className="flex items-end justify-between gap-3">
+            <label className="text-sm font-medium text-white" htmlFor="youtubeTitle">
+              YouTube title
+            </label>
+            <span className="text-xs text-slate-500">{youtubeTitleCharacters}/100</span>
+          </div>
+          <input
+            className="studio-input h-10 px-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isSubmitting}
+            id="youtubeTitle"
+            maxLength={100}
+            value={youtubeTitle}
+            onChange={(event) => setYoutubeTitle(event.target.value)}
+            placeholder="Optional. If blank, YouTube uses the caption."
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <div className="flex items-end justify-between gap-3">
+            <label className="text-sm font-medium text-white" htmlFor="hashtags">
+              Hashtags
+            </label>
+            <span className="text-xs text-slate-500">{hashtagCharacters}/500</span>
+          </div>
+          <input
+            className="studio-input h-10 px-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isSubmitting}
+            id="hashtags"
+            maxLength={500}
+            value={hashtags}
+            onChange={(event) => setHashtags(event.target.value)}
+            placeholder="#shorts #creator #launch"
+          />
+        </div>
       </div>
 
       <PlatformSelector

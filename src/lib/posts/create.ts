@@ -11,12 +11,16 @@ import {
 } from "@/lib/storage";
 
 export const MAX_BASE_CAPTION_LENGTH = 2_200;
+export const MAX_YOUTUBE_TITLE_LENGTH = 100;
+export const MAX_HASHTAGS_LENGTH = 500;
 
 const supportedPlatforms = [Platform.YOUTUBE, Platform.TIKTOK, Platform.INSTAGRAM] as const;
 
 const createScheduledPostPayloadSchema = z
   .object({
     baseCaption: z.string().trim().optional(),
+    youtubeTitle: z.string().trim().optional(),
+    hashtags: z.string().trim().optional(),
     scheduledAt: z.string().trim().optional(),
     timezone: z.string().trim().max(100).optional(),
     platforms: z.array(z.string()).optional(),
@@ -37,6 +41,8 @@ const createScheduledPostPayloadSchema = z
 
 export type CreateScheduledPostInput = {
   baseCaption: string;
+  youtubeTitle?: string;
+  hashtags: string;
   scheduledAt: Date;
   timezone: string;
   platforms: Platform[];
@@ -74,6 +80,9 @@ export function parseCreateScheduledPostInput(
   const errors: string[] = [];
   const data = parsed.data;
   const baseCaption = data.baseCaption?.trim() ?? "";
+  const youtubeTitle = data.youtubeTitle?.trim() ?? "";
+  const hashtags = normalizeHashtags(data.hashtags?.trim() ?? "");
+  const captionWithHashtags = appendHashtags(baseCaption, hashtags);
   const timezone = data.timezone?.trim() ?? "";
   const scheduledAt = parseScheduledAt(data.scheduledAt);
   const platforms = normalizePlatforms(data.platforms, errors);
@@ -82,6 +91,18 @@ export function parseCreateScheduledPostInput(
     errors.push("Caption is required.");
   } else if (baseCaption.length > MAX_BASE_CAPTION_LENGTH) {
     errors.push(`Caption must be ${MAX_BASE_CAPTION_LENGTH} characters or fewer.`);
+  }
+
+  if (youtubeTitle.length > MAX_YOUTUBE_TITLE_LENGTH) {
+    errors.push(`YouTube title must be ${MAX_YOUTUBE_TITLE_LENGTH} characters or fewer.`);
+  }
+
+  if (hashtags.length > MAX_HASHTAGS_LENGTH) {
+    errors.push(`Hashtags must be ${MAX_HASHTAGS_LENGTH} characters or fewer.`);
+  }
+
+  if (captionWithHashtags.length > MAX_BASE_CAPTION_LENGTH) {
+    errors.push(`Caption and hashtags must be ${MAX_BASE_CAPTION_LENGTH} characters or fewer.`);
   }
 
   if (!data.scheduledAt || !scheduledAt) {
@@ -140,6 +161,8 @@ export function parseCreateScheduledPostInput(
     success: true,
     data: {
       baseCaption,
+      youtubeTitle: youtubeTitle || undefined,
+      hashtags,
       scheduledAt,
       timezone,
       platforms,
@@ -157,15 +180,39 @@ export function parseCreateScheduledPostInput(
 }
 
 export function buildPlatformPostCreateInputs(input: CreateScheduledPostInput) {
+  const caption = appendHashtags(input.baseCaption, input.hashtags);
+
   return input.platforms.map((platform) => ({
     platform,
-    caption: input.baseCaption,
+    ...(platform === Platform.YOUTUBE && input.youtubeTitle ? { title: input.youtubeTitle } : {}),
+    caption,
     scheduledAt: input.scheduledAt,
     status:
       platform === Platform.YOUTUBE
         ? PublishStatus.SCHEDULED
         : PublishStatus.APPROVAL_PENDING,
   }));
+}
+
+function normalizeHashtags(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .split(/[\s,]+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`))
+    .join(" ");
+}
+
+function appendHashtags(caption: string, hashtags: string) {
+  if (!hashtags) {
+    return caption;
+  }
+
+  return `${caption.trim()}\n\n${hashtags}`.trim();
 }
 
 function parseScheduledAt(value: string | undefined) {
