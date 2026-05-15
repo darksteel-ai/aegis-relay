@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CalendarPlus, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CalendarPlus, CheckCircle2, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -14,6 +14,12 @@ type SubmitState =
   | { type: "success"; message: string }
   | { type: "error"; message: string };
 
+type AiSuggestion = {
+  title: string;
+  hashtags: string[];
+  rationale: string;
+};
+
 export function ComposerForm() {
   const [video, setVideo] = useState<UploadedVideo | null>(null);
   const [platforms, setPlatforms] = useState<ComposerPlatform[]>(["YOUTUBE"]);
@@ -23,7 +29,10 @@ export function ComposerForm() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [timezone, setTimezone] = useState(getDefaultTimezone);
   const [submitState, setSubmitState] = useState<SubmitState>({ type: "idle" });
+  const [aiState, setAiState] = useState<SubmitState>({ type: "idle" });
+  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const captionCharacters = baseCaption.length;
   const youtubeTitleCharacters = youtubeTitle.length;
@@ -96,6 +105,48 @@ export function ComposerForm() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function optimizeMetadata() {
+    if (!baseCaption.trim()) {
+      setAiState({ type: "error", message: "Add a caption before optimizing." });
+      return;
+    }
+
+    setIsOptimizing(true);
+    setAiState({ type: "idle" });
+
+    try {
+      const response = await fetch("/api/ai/optimize-metadata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caption: baseCaption,
+          youtubeTitle,
+          hashtags,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await readErrorMessage(response);
+        throw new Error(error);
+      }
+
+      const body = (await response.json()) as { suggestions?: AiSuggestion[] };
+      setAiSuggestions(body.suggestions ?? []);
+      setAiState({
+        type: "success",
+        message: "AI suggestions are ready.",
+      });
+    } catch (error) {
+      setAiSuggestions([]);
+      setAiState({
+        type: "error",
+        message: error instanceof Error ? error.message : "AI optimization failed.",
+      });
+    } finally {
+      setIsOptimizing(false);
     }
   }
 
@@ -172,6 +223,79 @@ export function ComposerForm() {
             placeholder="#shorts #creator #launch"
           />
         </div>
+      </div>
+
+      <div className="rounded-md border border-cyan-300/20 bg-cyan-300/[0.045] p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-white">AI metadata optimizer</p>
+            <p className="mt-1 text-sm text-slate-400">
+              Suggest titles and hashtags using this caption plus recent YouTube uploads.
+            </p>
+          </div>
+          <button
+            className="studio-button-secondary w-fit disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isOptimizing || isSubmitting || !baseCaption.trim()}
+            type="button"
+            onClick={optimizeMetadata}
+          >
+            <Sparkles className="h-4 w-4 text-cyan-200" aria-hidden="true" />
+            {isOptimizing ? "Optimizing..." : "Optimize with AI"}
+          </button>
+        </div>
+
+        {aiState.type !== "idle" ? (
+          <div
+            className={
+              aiState.type === "success"
+                ? "mt-4 flex items-start gap-2 rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+                : "mt-4 flex items-start gap-2 rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+            }
+            role="status"
+          >
+            {aiState.type === "success" ? (
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            )}
+            <p>{aiState.message}</p>
+          </div>
+        ) : null}
+
+        {aiSuggestions.length > 0 ? (
+          <div className="mt-4 grid gap-3">
+            {aiSuggestions.map((suggestion) => (
+              <div
+                className="rounded-md border border-white/10 bg-black/25 p-4"
+                key={`${suggestion.title}-${suggestion.hashtags.join("-")}`}
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-semibold text-white">
+                      {suggestion.title}
+                    </p>
+                    <p className="mt-2 break-words text-sm text-cyan-100">
+                      {suggestion.hashtags.join(" ")}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                      {suggestion.rationale}
+                    </p>
+                  </div>
+                  <button
+                    className="studio-button-primary h-9 w-fit px-3"
+                    type="button"
+                    onClick={() => {
+                      setYoutubeTitle(suggestion.title);
+                      setHashtags(suggestion.hashtags.join(" "));
+                    }}
+                  >
+                    Use
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <PlatformSelector

@@ -58,6 +58,11 @@ const inngestEnvSchema = z.object({
   INNGEST_EVENT_KEY: z.string().min(1),
 });
 
+const openAiEnvSchema = z.object({
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_METADATA_MODEL: z.string().min(1).optional(),
+});
+
 const convexEnvSchema = z.object({
   NEXT_PUBLIC_CONVEX_URL: z.string().url(),
   CONVEX_DEPLOY_KEY: z.string().min(1).optional(),
@@ -72,6 +77,7 @@ const schedulerEnvSchema = coreEnvSchema
   .extend(instagramEnvSchema.shape)
   .extend(platformTokenEnvSchema.shape)
   .extend(inngestEnvSchema.shape)
+  .extend(openAiEnvSchema.shape)
   .extend(convexEnvSchema.shape);
 
 export function parseCoreEnv(source: EnvSource = process.env) {
@@ -112,6 +118,10 @@ export function getPlatformTokenEnv(source: EnvSource = process.env) {
 
 export function getInngestEnv(source: EnvSource = process.env) {
   return inngestEnvSchema.parse(source);
+}
+
+export function getOpenAiEnv(source: EnvSource = process.env) {
+  return openAiEnvSchema.parse(source);
 }
 
 export function getConvexEnv(source: EnvSource = process.env) {
