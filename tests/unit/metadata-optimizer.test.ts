@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
+  fetchInstagramPerformanceSignal,
+  fetchTikTokPerformanceSignal,
+  fetchYouTubePerformanceSignal,
   fetchYouTubeRecentUploads,
   normalizeHashtags,
   optimizeMetadataWithOpenAI,
@@ -39,6 +42,99 @@ describe("metadata optimizer", () => {
     ]);
   });
 
+  test("enriches YouTube uploads with stats when a token is available", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(`
+      <feed>
+        <entry>
+          <title>3 AI Tools</title>
+          <link rel="alternate" href="https://www.youtube.com/watch?v=abc" />
+          <published>2026-05-01T12:00:00+00:00</published>
+        </entry>
+      </feed>
+    `, { status: 200 }))
+      .mockResolvedValueOnce(Response.json({
+        items: [
+          {
+            id: "abc",
+            snippet: {
+              title: "3 AI Tools",
+              publishedAt: "2026-05-01T12:00:00Z",
+            },
+            statistics: {
+              viewCount: "1200",
+              likeCount: "90",
+              commentCount: "8",
+            },
+          },
+        ],
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchYouTubePerformanceSignal({
+      channelId: "channel_123",
+      accountName: "Aegis Relay",
+      accessToken: "youtube-token",
+    })).resolves.toMatchObject({
+      platform: "YouTube",
+      status: "available",
+      recentItems: [
+        {
+          title: "3 AI Tools",
+          metrics: {
+            views: 1200,
+            likes: 90,
+            comments: 8,
+          },
+        },
+      ],
+    });
+  });
+
+  test("explains when TikTok video data needs an additional scope", async () => {
+    await expect(fetchTikTokPerformanceSignal({
+      accountName: "Aegis TikTok",
+      accessToken: "tiktok-token",
+      scopes: "user.info.basic,video.upload",
+    })).resolves.toMatchObject({
+      platform: "TikTok",
+      status: "limited",
+      notes: ["Reconnect TikTok after video.list is approved to use recent TikTok video data."],
+    });
+  });
+
+  test("reads Instagram media engagement when available", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      data: [
+        {
+          caption: "Launch day reel",
+          permalink: "https://instagram.com/p/1",
+          timestamp: "2026-05-02T12:00:00+0000",
+          like_count: 40,
+          comments_count: 3,
+        },
+      ],
+    })));
+
+    await expect(fetchInstagramPerformanceSignal({
+      accountName: "Aegis Instagram",
+      accessToken: "instagram-token",
+    })).resolves.toMatchObject({
+      platform: "Instagram",
+      status: "available",
+      recentItems: [
+        {
+          caption: "Launch day reel",
+          metrics: {
+            likes: 40,
+            comments: 3,
+          },
+        },
+      ],
+    });
+  });
+
   test("returns structured OpenAI metadata suggestions", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({
       choices: [
@@ -74,6 +170,15 @@ describe("metadata optimizer", () => {
       basedOn: {
         channelName: "Aegis Relay",
         recentTitles: ["3 AI Tools That Save Hours"],
+        platforms: [
+          {
+            platform: "YouTube",
+            accountName: "Aegis Relay",
+            status: "limited",
+            recentItems: [{ title: "3 AI Tools That Save Hours", url: "https://youtu.be/1" }],
+            notes: ["Using recent public YouTube titles."],
+          },
+        ],
       },
     });
   });

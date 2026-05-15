@@ -4,6 +4,30 @@ export type YouTubeRecentUpload = {
   title: string;
   url: string;
   publishedAt?: string;
+  metrics?: PlatformMetrics;
+};
+
+export type PlatformMetrics = {
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+};
+
+export type PlatformPerformanceItem = {
+  title?: string;
+  caption?: string;
+  url?: string;
+  publishedAt?: string;
+  metrics?: PlatformMetrics;
+};
+
+export type PlatformDataSignal = {
+  platform: "YouTube" | "TikTok" | "Instagram";
+  accountName?: string;
+  status: "available" | "limited" | "unavailable";
+  recentItems: PlatformPerformanceItem[];
+  notes: string[];
 };
 
 export type MetadataSuggestion = {
@@ -17,6 +41,7 @@ export type MetadataOptimizationResult = {
   basedOn: {
     channelName?: string;
     recentTitles: string[];
+    platforms: PlatformDataSignal[];
   };
 };
 
@@ -49,12 +74,239 @@ export async function fetchYouTubeRecentUploads(channelId: string) {
   return parseYouTubeUploadFeed(await response.text()).slice(0, 10);
 }
 
+export async function fetchYouTubePerformanceSignal({
+  channelId,
+  accountName,
+  accessToken,
+}: {
+  channelId: string;
+  accountName?: string;
+  accessToken?: string;
+}): Promise<PlatformDataSignal> {
+  const uploads = await fetchYouTubeRecentUploads(channelId);
+
+  if (!accessToken || uploads.length === 0) {
+    return {
+      platform: "YouTube",
+      accountName,
+      status: uploads.length ? "limited" : "unavailable",
+      recentItems: uploads,
+      notes: uploads.length
+        ? ["Using recent public YouTube titles. Connect data access enables richer stats."]
+        : ["No recent YouTube uploads were found."],
+    };
+  }
+
+  const videoIds = uploads.map((upload) => readYouTubeVideoId(upload.url)).filter(Boolean);
+
+  if (videoIds.length === 0) {
+    return {
+      platform: "YouTube",
+      accountName,
+      status: "limited",
+      recentItems: uploads,
+      notes: ["Using recent public YouTube titles. Video IDs were not available for stats lookup."],
+    };
+  }
+
+  const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+  url.searchParams.set("part", "snippet,statistics");
+  url.searchParams.set("id", videoIds.join(","));
+  url.searchParams.set("maxResults", "10");
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+    next: { revalidate: 900 },
+  });
+
+  if (!response.ok) {
+    return {
+      platform: "YouTube",
+      accountName,
+      status: "limited",
+      recentItems: uploads,
+      notes: ["Using recent public YouTube titles. YouTube stats were not available."],
+    };
+  }
+
+  const body = (await response.json()) as {
+    items?: Array<{
+      id?: string;
+      snippet?: { title?: string; publishedAt?: string };
+      statistics?: { viewCount?: string; likeCount?: string; commentCount?: string };
+    }>;
+  };
+  const enriched = (body.items ?? []).map((item) => ({
+    title: item.snippet?.title,
+    url: item.id ? `https://www.youtube.com/watch?v=${item.id}` : undefined,
+    publishedAt: item.snippet?.publishedAt,
+    metrics: {
+      views: parseMetric(item.statistics?.viewCount),
+      likes: parseMetric(item.statistics?.likeCount),
+      comments: parseMetric(item.statistics?.commentCount),
+    },
+  }));
+
+  return {
+    platform: "YouTube",
+    accountName,
+    status: enriched.length ? "available" : "limited",
+    recentItems: enriched.length ? enriched : uploads,
+    notes: enriched.length
+      ? ["Using recent YouTube titles and public engagement stats."]
+      : ["Using recent public YouTube titles. No video stats were returned."],
+  };
+}
+
+export async function fetchTikTokPerformanceSignal({
+  accountName,
+  accessToken,
+  scopes,
+}: {
+  accountName?: string;
+  accessToken?: string;
+  scopes?: string;
+}): Promise<PlatformDataSignal> {
+  if (!accessToken) {
+    return unavailablePlatform("TikTok", accountName, "TikTok is not connected yet.");
+  }
+
+  if (!hasScope(scopes, "video.list")) {
+    return {
+      platform: "TikTok",
+      accountName,
+      status: "limited",
+      recentItems: [],
+      notes: ["Reconnect TikTok after video.list is approved to use recent TikTok video data."],
+    };
+  }
+
+  const response = await fetch(
+    "https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,create_time,share_url,view_count,like_count,comment_count,share_count",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ max_count: 10 }),
+      next: { revalidate: 900 },
+    },
+  );
+
+  if (!response.ok) {
+    return unavailablePlatform("TikTok", accountName, "TikTok video data was not available.");
+  }
+
+  const body = (await response.json()) as {
+    data?: {
+      videos?: Array<{
+        title?: string;
+        video_description?: string;
+        create_time?: number;
+        share_url?: string;
+        view_count?: number;
+        like_count?: number;
+        comment_count?: number;
+        share_count?: number;
+      }>;
+    };
+  };
+
+  return {
+    platform: "TikTok",
+    accountName,
+    status: "available",
+    recentItems: (body.data?.videos ?? []).map((video) => ({
+      title: video.title,
+      caption: video.video_description,
+      url: video.share_url,
+      publishedAt: video.create_time
+        ? new Date(video.create_time * 1000).toISOString()
+        : undefined,
+      metrics: {
+        views: video.view_count,
+        likes: video.like_count,
+        comments: video.comment_count,
+        shares: video.share_count,
+      },
+    })),
+    notes: ["Using recent TikTok videos and engagement stats."],
+  };
+}
+
+export async function fetchInstagramPerformanceSignal({
+  accountName,
+  accessToken,
+}: {
+  accountName?: string;
+  accessToken?: string;
+}): Promise<PlatformDataSignal> {
+  if (!accessToken) {
+    return unavailablePlatform("Instagram", accountName, "Instagram is not connected yet.");
+  }
+
+  const url = new URL("https://graph.instagram.com/v24.0/me/media");
+  url.searchParams.set("fields", "id,caption,media_type,permalink,timestamp,like_count,comments_count");
+  url.searchParams.set("limit", "10");
+  url.searchParams.set("access_token", accessToken);
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    next: { revalidate: 900 },
+  });
+
+  if (!response.ok) {
+    return unavailablePlatform(
+      "Instagram",
+      accountName,
+      "Instagram media data was not available. Extra Instagram permissions or review may be needed.",
+    );
+  }
+
+  const body = (await response.json()) as {
+    data?: Array<{
+      caption?: string;
+      permalink?: string;
+      timestamp?: string;
+      like_count?: number;
+      comments_count?: number;
+    }>;
+  };
+
+  return {
+    platform: "Instagram",
+    accountName,
+    status: "available",
+    recentItems: (body.data ?? []).map((media) => ({
+      caption: media.caption,
+      url: media.permalink,
+      publishedAt: media.timestamp,
+      metrics: {
+        likes: media.like_count,
+        comments: media.comments_count,
+      },
+    })),
+    notes: ["Using recent Instagram media and engagement stats."],
+  };
+}
+
 export async function optimizeMetadataWithOpenAI({
   caption,
   currentTitle,
   currentHashtags,
   channelName,
   recentUploads,
+  platformSignals = [
+    {
+      platform: "YouTube",
+      accountName: channelName,
+      status: "limited",
+      recentItems: recentUploads,
+      notes: ["Using recent public YouTube titles."],
+    },
+  ],
   apiKey = process.env.OPENAI_API_KEY,
   model = process.env.OPENAI_METADATA_MODEL ?? "chat-latest",
 }: {
@@ -63,6 +315,7 @@ export async function optimizeMetadataWithOpenAI({
   currentHashtags?: string;
   channelName?: string;
   recentUploads: YouTubeRecentUpload[];
+  platformSignals?: PlatformDataSignal[];
   apiKey?: string;
   model?: string;
 }): Promise<MetadataOptimizationResult> {
@@ -84,7 +337,7 @@ export async function optimizeMetadataWithOpenAI({
         {
           role: "system",
           content:
-            "You optimize YouTube Shorts metadata for creators. Return only JSON with 3 suggestions. Titles must be punchy, specific, and 100 characters or fewer. Hashtags must include #shorts when appropriate and avoid spam.",
+            "You optimize short-form video metadata for YouTube Shorts, TikTok, and Instagram Reels. Return only JSON with 3 suggestions. Titles must be punchy, specific, and 100 characters or fewer. Hashtags must work cross-platform, include #shorts when appropriate, and avoid spam.",
         },
         {
           role: "user",
@@ -94,6 +347,7 @@ export async function optimizeMetadataWithOpenAI({
             currentTitle,
             currentHashtags,
             recentYouTubeTitles: recentTitles,
+            platformSignals,
             requiredJsonShape: {
               suggestions: [
                 {
@@ -134,6 +388,7 @@ export async function optimizeMetadataWithOpenAI({
     basedOn: {
       channelName,
       recentTitles,
+      platforms: platformSignals,
     },
   };
 }
@@ -165,6 +420,50 @@ function parseYouTubeUploadFeed(xml: string): YouTubeRecentUpload[] {
       publishedAt: readXmlValue(entryXml, "published") || undefined,
     };
   }).filter((upload) => upload.title);
+}
+
+function readYouTubeVideoId(url: string) {
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.hostname.includes("youtu.be")) {
+      return parsed.pathname.split("/").filter(Boolean)[0];
+    }
+
+    return parsed.searchParams.get("v");
+  } catch {
+    return null;
+  }
+}
+
+function parseMetric(value: string | number | null | undefined) {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function hasScope(scopes: string | undefined, scope: string) {
+  return (scopes ?? "")
+    .split(/[\s,]+/)
+    .map((value) => value.trim())
+    .includes(scope);
+}
+
+function unavailablePlatform(
+  platform: PlatformDataSignal["platform"],
+  accountName: string | undefined,
+  note: string,
+): PlatformDataSignal {
+  return {
+    platform,
+    accountName,
+    status: "unavailable",
+    recentItems: [],
+    notes: [note],
+  };
 }
 
 function readXmlValue(xml: string, tag: string) {

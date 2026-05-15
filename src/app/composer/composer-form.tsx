@@ -20,6 +20,13 @@ type AiSuggestion = {
   rationale: string;
 };
 
+type AiPlatformSignal = {
+  platform: string;
+  status: "available" | "limited" | "unavailable";
+  recentItems: unknown[];
+  notes: string[];
+};
+
 export function ComposerForm() {
   const [video, setVideo] = useState<UploadedVideo | null>(null);
   const [platforms, setPlatforms] = useState<ComposerPlatform[]>(["YOUTUBE"]);
@@ -31,6 +38,7 @@ export function ComposerForm() {
   const [submitState, setSubmitState] = useState<SubmitState>({ type: "idle" });
   const [aiState, setAiState] = useState<SubmitState>({ type: "idle" });
   const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
+  const [aiPlatformSignals, setAiPlatformSignals] = useState<AiPlatformSignal[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
 
@@ -133,14 +141,19 @@ export function ComposerForm() {
         throw new Error(error);
       }
 
-      const body = (await response.json()) as { suggestions?: AiSuggestion[] };
+      const body = (await response.json()) as {
+        suggestions?: AiSuggestion[];
+        basedOn?: { platforms?: AiPlatformSignal[] };
+      };
       setAiSuggestions(body.suggestions ?? []);
+      setAiPlatformSignals(body.basedOn?.platforms ?? []);
       setAiState({
         type: "success",
         message: "AI suggestions are ready.",
       });
     } catch (error) {
       setAiSuggestions([]);
+      setAiPlatformSignals([]);
       setAiState({
         type: "error",
         message: error instanceof Error ? error.message : "AI optimization failed.",
@@ -230,7 +243,7 @@ export function ComposerForm() {
           <div>
             <p className="text-sm font-semibold text-white">AI metadata optimizer</p>
             <p className="mt-1 text-sm text-slate-400">
-              Suggest titles and hashtags using this caption plus recent YouTube uploads.
+              Suggest titles and hashtags using this caption plus connected platform data.
             </p>
           </div>
           <button
@@ -264,6 +277,21 @@ export function ComposerForm() {
 
         {aiSuggestions.length > 0 ? (
           <div className="mt-4 grid gap-3">
+            {aiPlatformSignals.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {aiPlatformSignals.map((signal) => (
+                  <span
+                    className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-slate-300"
+                    key={signal.platform}
+                    title={signal.notes.join(" ")}
+                  >
+                    {signal.platform}: {signal.status}
+                    {signal.recentItems.length ? ` (${signal.recentItems.length})` : ""}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
             {aiSuggestions.map((suggestion) => (
               <div
                 className="rounded-md border border-white/10 bg-black/25 p-4"

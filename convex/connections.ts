@@ -46,6 +46,30 @@ export const listForUser = query({
   },
 });
 
+export const listPrivateForUser = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const workspaceId = await requireWorkspaceForUser(ctx, args.userId);
+    const accounts = await ctx.db
+      .query("connectedAccounts")
+      .withIndex("by_workspace_platform", (q: any) => q.eq("workspaceId", workspaceId))
+      .collect();
+
+    return accounts.map((account) => ({
+      id: account._id,
+      platform: account.platform,
+      accountName: account.accountName,
+      externalId: account.externalId,
+      accessToken: account.accessToken,
+      refreshToken: account.refreshToken,
+      expiresAt: account.expiresAt ?? null,
+      scopes: account.scopes,
+      status: account.status,
+      updatedAt: account.updatedAt,
+    }));
+  },
+});
+
 export const upsert = mutation({
   args: {
     workspaceId: v.id("workspaces"),

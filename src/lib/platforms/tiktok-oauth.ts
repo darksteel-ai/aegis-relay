@@ -47,7 +47,7 @@ type TikTokUserInfoResponse = {
   };
 };
 
-const tiktokOAuthScopes = ["user.info.basic", "video.upload"] as const;
+const tiktokOAuthScopes = ["user.info.basic", "user.info.stats", "video.upload", "video.list"] as const;
 const tiktokDefaultScope = tiktokOAuthScopes.join(",");
 export const tiktokOAuthStateCookieName = "tiktok_oauth_state";
 const tiktokOAuthStateTtlMs = 10 * 60 * 1000;
