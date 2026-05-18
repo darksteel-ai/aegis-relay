@@ -39,6 +39,7 @@ export const listForUser = query({
       platform: account.platform,
       accountName: account.accountName,
       externalId: account.externalId,
+      scopes: account.scopes,
       status: account.status,
       expiresAt: account.expiresAt ?? null,
       updatedAt: account.updatedAt,

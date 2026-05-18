@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 
 import { getStripe, handleStripeEvent } from "@/lib/billing/stripe";
 import { getStripeEnv } from "@/lib/env";
@@ -19,7 +20,11 @@ export async function POST(request: Request) {
       signature,
       getStripeEnv().STRIPE_WEBHOOK_SECRET,
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: "Stripe webhook is not configured." }, { status: 503 });
+    }
+
     return NextResponse.json({ error: "Invalid Stripe signature." }, { status: 400 });
   }
 

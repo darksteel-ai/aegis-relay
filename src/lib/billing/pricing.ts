@@ -100,3 +100,10 @@ export function normalizeBillingPlan(planId: string | null | undefined): Billing
 export function getMonthlyScheduledPostLimit(planId: string | null | undefined) {
   return getPricingPlan(normalizeBillingPlan(planId)).monthlyScheduledPostLimit;
 }
+
+export function getMonthlyUsageWindow(now = new Date()) {
+  return {
+    start: Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    end: Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+  };
+}

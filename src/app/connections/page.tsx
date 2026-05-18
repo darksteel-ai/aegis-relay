@@ -12,10 +12,10 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { getAuthSession } from "@/lib/auth";
+import { getConnectionHealth } from "@/lib/connections/health";
 import { convexApi } from "@/lib/convex-api";
 import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 import {
-  formatPlatformLabel,
   selectNewestAccountsByPlatform,
 } from "@/lib/posts/display";
 
@@ -45,7 +45,7 @@ const platformRows = [
   {
     platform: "INSTAGRAM",
     name: "Instagram Reels",
-    description: "Connect a professional Instagram account linked to a Facebook Page.",
+    description: "Connect a professional Instagram account for Reels publishing access.",
     action: "Connect Instagram",
     href: "/api/auth/instagram/start",
     connectable: true,
@@ -59,18 +59,38 @@ type ConnectedAccountView = {
   status: string;
   accountName: string;
   externalId: string;
+  scopes?: string | null;
   expiresAt: Date | null;
   updatedAt: Date;
 };
 
-export default async function ConnectionsPage() {
+type ConnectionsPageProps = {
+  searchParams?: Promise<{
+    instagram?: string;
+    tiktok?: string;
+    youtube?: string;
+  }>;
+};
+
+const connectionMessages: Record<string, string> = {
+  connected: "Connection saved.",
+  "oauth-failed": "Connection was approved, but Aegis Relay could not save it. Check the platform app secret and try again.",
+  "missing-code": "The platform did not return a connection code. Please try again.",
+  "invalid-state": "The connection session expired. Please try again.",
+  "missing-state": "The connection session expired. Please try again.",
+};
+
+export default async function ConnectionsPage({ searchParams }: ConnectionsPageProps) {
   const session = await getAuthSession();
 
   if (!session?.user?.id) {
     redirect("/sign-in");
   }
 
-  const client = isConvexConfigured() ? getConvexClient() : null;
+  const [params, client] = await Promise.all([
+    searchParams,
+    Promise.resolve(isConvexConfigured() ? getConvexClient() : null),
+  ]);
   const workspace = client
     ? await client.query(convexApi.workspaces.getForUser, {
         userId: session.user.id,
@@ -85,6 +105,7 @@ export default async function ConnectionsPage() {
       status: string;
       accountName: string;
       externalId: string;
+      scopes?: string | null;
       expiresAt?: number | null;
       updatedAt: number;
     }) => ({
@@ -120,6 +141,19 @@ export default async function ConnectionsPage() {
           </div>
         ) : null}
 
+        {params?.instagram && connectionMessages[params.instagram] ? (
+          <div
+            className={
+              params.instagram === "connected"
+                ? "rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+                : "rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+            }
+            role="status"
+          >
+            Instagram: {connectionMessages[params.instagram]}
+          </div>
+        ) : null}
+
         <section className="studio-panel rounded-md p-5">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
@@ -132,6 +166,7 @@ export default async function ConnectionsPage() {
             {platformRows.map((row) => {
               const account = accountsByPlatform.get(row.platform);
               const status = account?.status ?? "APPROVAL_PENDING";
+              const health = getConnectionHealth(account);
               const needsDatabase =
                 (row.platform === "YOUTUBE" ||
                   row.platform === "TIKTOK" ||
@@ -154,7 +189,7 @@ export default async function ConnectionsPage() {
                     </div>
                     <p className="text-sm leading-6 text-slate-400">
                       {account
-                        ? `${account.accountName} connected as ${formatPlatformLabel(account.platform)}.`
+                        ? health.message
                         : needsDatabase
                           ? `${row.name} OAuth is ready, but account storage must be connected first.`
                           : row.description}
@@ -164,6 +199,10 @@ export default async function ConnectionsPage() {
                         <div>
                           <dt className="sr-only">External account id</dt>
                           <dd>ID {account.externalId}</dd>
+                        </div>
+                        <div>
+                          <dt className="sr-only">Connection health</dt>
+                          <dd>{health.label}</dd>
                         </div>
                         <div>
                           <dt className="sr-only">Token expiration</dt>

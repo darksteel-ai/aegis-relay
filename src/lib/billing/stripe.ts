@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { ZodError } from "zod";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 import { convexApi } from "@/lib/convex-api";
@@ -93,7 +94,8 @@ export class BillingError extends Error {
 
 export function getStripe() {
   if (!stripeClient) {
-    stripeClient = new Stripe(getStripeEnv().STRIPE_SECRET_KEY, {
+    const stripeEnv = readStripeEnv();
+    stripeClient = new Stripe(stripeEnv.STRIPE_SECRET_KEY, {
       apiVersion: "2026-04-22.dahlia",
     });
   }
@@ -102,7 +104,7 @@ export function getStripe() {
 }
 
 export function getStripePriceIdForPlan(planId: PaidPlanId) {
-  const env = getStripeEnv();
+  const env = readStripeEnv();
   const plan = getPaidPricingPlan(planId);
 
   if (!plan) {
@@ -123,6 +125,18 @@ export function getStripePriceIdForPlan(planId: PaidPlanId) {
     `Stripe Price ID is missing for the ${plan.name} plan.`,
     500,
   );
+}
+
+function readStripeEnv() {
+  try {
+    return getStripeEnv();
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new BillingError("Stripe is not configured yet. Add Stripe keys and Price IDs first.", 503);
+    }
+
+    throw error;
+  }
 }
 
 export async function getWorkspaceForUser(

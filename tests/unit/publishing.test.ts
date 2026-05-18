@@ -232,6 +232,18 @@ describe("publishPlatformPost", () => {
       "TikTok publishing is pending platform approval.",
     );
   });
+
+  test("explains expired token failures in plain language", () => {
+    expect(toPublishErrorMessage(new Error("invalid_grant: token expired"), Platform.YOUTUBE)).toBe(
+      "YouTube access expired. Reconnect the account, then retry this post.",
+    );
+  });
+
+  test("explains missing permission failures in plain language", () => {
+    expect(toPublishErrorMessage(new Error("403 insufficient permission scope"), Platform.INSTAGRAM)).toBe(
+      "Instagram is missing a required permission. Reconnect the account and approve every requested permission.",
+    );
+  });
 });
 
 describe("publishDuePosts", () => {

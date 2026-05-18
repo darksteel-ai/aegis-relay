@@ -271,6 +271,31 @@ export function toPublishErrorMessage(error: unknown, platform: Platform) {
     return error.message;
   }
 
+  const rawMessage = error instanceof Error ? error.message.toLowerCase() : "";
+  const platformName = formatPlatformName(platform);
+
+  if (
+    rawMessage.includes("invalid_grant") ||
+    rawMessage.includes("expired") ||
+    rawMessage.includes("unauthorized") ||
+    rawMessage.includes("401")
+  ) {
+    return `${platformName} access expired. Reconnect the account, then retry this post.`;
+  }
+
+  if (
+    rawMessage.includes("permission") ||
+    rawMessage.includes("scope") ||
+    rawMessage.includes("forbidden") ||
+    rawMessage.includes("403")
+  ) {
+    return `${platformName} is missing a required permission. Reconnect the account and approve every requested permission.`;
+  }
+
+  if (rawMessage.includes("quota") || rawMessage.includes("rate limit")) {
+    return `${platformName} temporarily limited this request. Retry after the platform limit resets.`;
+  }
+
   return `${formatPlatformName(platform)} publishing failed. Please try again or reconnect the account.`;
 }
 

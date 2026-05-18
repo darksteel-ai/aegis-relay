@@ -140,7 +140,12 @@ export const createScheduledPost = mutation({
 });
 
 export const dashboard = query({
-  args: { userId: v.string(), limit: v.optional(v.number()) },
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+    usageStart: v.optional(v.number()),
+    usageEnd: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     const workspaceId = await requireWorkspaceForUser(ctx, args.userId);
     const workspace = await ctx.db.get(workspaceId);
@@ -149,8 +154,64 @@ export const dashboard = query({
       .withIndex("by_workspace_scheduled", (q: any) => q.eq("workspaceId", workspaceId))
       .order("desc")
       .take(args.limit ?? 6);
+    const now = new Date();
+    const usageStart =
+      args.usageStart ?? Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+    const usageEnd =
+      args.usageEnd ?? Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
+    const scheduledThisMonth = await ctx.db
+      .query("scheduledPosts")
+      .withIndex("by_workspace_scheduled", (q: any) =>
+        q
+          .eq("workspaceId", workspaceId)
+          .gte("scheduledAt", usageStart)
+          .lt("scheduledAt", usageEnd),
+      )
+      .collect();
+    const accounts = await ctx.db
+      .query("connectedAccounts")
+      .withIndex("by_workspace_platform", (q: any) => q.eq("workspaceId", workspaceId))
+      .collect();
+    const firstUpload = await ctx.db
+      .query("uploadedVideos")
+      .withIndex("by_workspace_created", (q: any) => q.eq("workspaceId", workspaceId))
+      .first();
     return {
-      workspace: workspace ? { id: workspace._id, name: workspace.name } : null,
+      workspace: workspace
+        ? {
+            id: workspace._id,
+            name: workspace.name,
+            plan: workspace.plan,
+            stripeCustomerId: workspace.stripeCustomerId ?? null,
+            stripeSubscriptionId: workspace.stripeSubscriptionId ?? null,
+        }
+        : null,
+      usage: {
+        scheduledThisMonth: scheduledThisMonth.length,
+        usageStart,
+        usageEnd,
+      },
+      onboarding: {
+        hasConnectedPlatform: accounts.length > 0,
+        connectedPlatformCount: new Set(accounts.map((account) => account.platform)).size,
+        hasUploadedVideo: Boolean(firstUpload),
+        hasScheduledPost: scheduledThisMonth.length > 0 || posts.length > 0,
+        hasBillingSetup: Boolean(
+          workspace?.stripeCustomerId ||
+            workspace?.stripeSubscriptionId ||
+            workspace?.plan !== "beta",
+        ),
+      },
+      connectedAccounts: accounts.map((account) => ({
+        id: account._id,
+        platform: account.platform,
+        accountName: account.accountName,
+        externalId: account.externalId,
+        scopes: account.scopes,
+        status: account.status,
+        expiresAt: account.expiresAt ?? null,
+        updatedAt: account.updatedAt,
+      })),
       posts: await hydratePosts(ctx, posts),
     };
   },
