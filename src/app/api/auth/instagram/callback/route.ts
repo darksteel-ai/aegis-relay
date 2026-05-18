@@ -90,14 +90,27 @@ export async function GET(request: Request) {
       reason: result.reason,
       message: result.message,
     });
-    return clearStateCookie(redirectToConnections(request, "oauth-failed"));
+    return clearStateCookie(
+      redirectToConnections(request, "oauth-failed", result.message),
+    );
   }
 
   return clearStateCookie(redirectToConnections(request, "connected"));
 }
 
-function redirectToConnections(request: Request, instagramStatus: string) {
-  return NextResponse.redirect(new URL(`/connections?instagram=${instagramStatus}`, request.url));
+function redirectToConnections(
+  request: Request,
+  instagramStatus: string,
+  message?: string,
+) {
+  const url = new URL("/connections", request.url);
+  url.searchParams.set("instagram", instagramStatus);
+
+  if (message) {
+    url.searchParams.set("instagram_message", message);
+  }
+
+  return NextResponse.redirect(url);
 }
 
 function clearStateCookie(response: NextResponse) {

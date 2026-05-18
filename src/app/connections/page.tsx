@@ -68,6 +68,7 @@ type ConnectedAccountView = {
 type ConnectionsPageProps = {
   searchParams?: Promise<{
     instagram?: string;
+    instagram_message?: string;
     tiktok?: string;
     youtube?: string;
   }>;
@@ -152,7 +153,7 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
             }
             role="status"
           >
-            Instagram: {connectionMessages[params.instagram]}
+            Instagram: {params.instagram_message ?? connectionMessages[params.instagram]}
           </div>
         ) : null}
 

@@ -26,6 +26,11 @@ type MetaTokenResponse = {
   token_type?: string;
   expires_in?: number;
   user_id?: number;
+  error_message?: string;
+  error_type?: string;
+  error_code?: number;
+  code?: number;
+  fbtrace_id?: string;
   error?: {
     message?: string;
     type?: string;
@@ -276,7 +281,7 @@ export async function completeInstagramOAuthCallback({
     return {
       success: false,
       reason: "missing-token",
-      message: token.error?.message ?? "Meta did not return an access token.",
+      message: getInstagramTokenErrorMessage(token),
     };
   }
 
@@ -340,6 +345,10 @@ async function exchangeInstagramCodeForToken(code: string, env: EnvSource) {
   const token = (await response.json()) as MetaTokenResponse;
 
   if (!token.access_token) {
+    console.error("Instagram short-lived token exchange failed.", {
+      status: response.status,
+      error: redactInstagramTokenError(token),
+    });
     return token;
   }
 
@@ -358,6 +367,10 @@ async function exchangeInstagramShortLivedToken(token: MetaTokenResponse, client
   const longLivedToken = (await response.json()) as MetaTokenResponse;
 
   if (!longLivedToken.access_token) {
+    console.error("Instagram long-lived token exchange failed.", {
+      status: response.status,
+      error: redactInstagramTokenError(longLivedToken),
+    });
     return token;
   }
 
@@ -389,6 +402,23 @@ async function fetchInstagramAccountsForToken(accessToken: string) {
       accountName: body.username ?? body.name ?? "Instagram account",
     },
   ];
+}
+
+function getInstagramTokenErrorMessage(token: MetaTokenResponse) {
+  return (
+    token.error?.message ??
+    token.error_message ??
+    "Meta did not return an access token."
+  );
+}
+
+function redactInstagramTokenError(token: MetaTokenResponse) {
+  return {
+    message: getInstagramTokenErrorMessage(token),
+    type: token.error?.type ?? token.error_type,
+    code: token.error?.code ?? token.error_code ?? token.code,
+    fbtraceId: token.fbtrace_id,
+  };
 }
 
 function signState(payload: string, secret: string) {

@@ -130,4 +130,32 @@ describe("Instagram OAuth scaffold", () => {
       status: "SCHEDULED",
     });
   });
+
+  test("reports Instagram token endpoint error messages", async () => {
+    const result = await completeInstagramOAuthCallback({
+      code: "oauth-code",
+      workspaceId: "workspace_1",
+      env: {
+        META_APP_ID: "meta-app-id",
+        META_APP_SECRET: "meta-secret",
+        INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+      },
+      db: {
+        connectedAccount: { upsert: vi.fn() },
+      },
+      exchangeCodeForToken: vi.fn(async () => ({
+        error_message: "Invalid verification code format.",
+        error_type: "OAuthException",
+        code: 100,
+      })),
+      fetchInstagramAccounts: vi.fn(),
+    });
+
+    expect(result).toEqual({
+      success: false,
+      reason: "missing-token",
+      message: "Invalid verification code format.",
+    });
+  });
 });
