@@ -79,6 +79,7 @@ export async function GET(request: Request) {
     result = await completeInstagramOAuthCallback({
       code,
       workspaceId: workspace.id,
+      redirectUri: stateResult.redirectUri,
     });
   } catch (error) {
     console.error("Instagram OAuth callback failed.", error);

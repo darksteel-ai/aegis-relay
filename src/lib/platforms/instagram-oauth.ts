@@ -43,6 +43,12 @@ export type InstagramAccountCandidate = {
   accountName: string;
 };
 
+type InstagramOAuthCredentials = {
+  clientId?: string;
+  clientSecret?: string;
+  redirectUri?: string;
+};
+
 const graphApiVersion = "v24.0";
 const instagramOAuthScopes = [
   "instagram_business_basic",
@@ -52,7 +58,7 @@ const instagramDefaultScope = instagramOAuthScopes.join(",");
 export const instagramOAuthStateCookieName = "instagram_oauth_state";
 const instagramOAuthStateTtlMs = 10 * 60 * 1000;
 
-function getInstagramOAuthCredentials(source: EnvSource) {
+function getInstagramOAuthCredentials(source: EnvSource): InstagramOAuthCredentials {
   const instagramEnv = getInstagramEnv(source);
 
   if (instagramEnv.INSTAGRAM_APP_ID && instagramEnv.INSTAGRAM_APP_SECRET) {
@@ -76,6 +82,10 @@ function getInstagramOAuthCredentials(source: EnvSource) {
     clientSecret: undefined,
     redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
   };
+}
+
+export function getInstagramOAuthRedirectUri(source: EnvSource = process.env) {
+  return getInstagramOAuthCredentials(source).redirectUri;
 }
 
 export function buildInstagramOAuthStartUrl(
@@ -131,18 +141,21 @@ export function createInstagramOAuthState({
   workspaceId,
   nonce,
   secret,
+  redirectUri,
   now = new Date(),
 }: {
   userId: string;
   workspaceId: string;
   nonce: string;
   secret: string;
+  redirectUri?: string;
   now?: Date;
 }) {
   const payload = {
     userId,
     workspaceId,
     nonce,
+    redirectUri,
     expiresAt: now.getTime() + instagramOAuthStateTtlMs,
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
@@ -170,6 +183,7 @@ export function verifyInstagramOAuthState({
       success: true;
       userId: string;
       workspaceId: string;
+      redirectUri?: string;
     }
   | {
       success: false;
@@ -195,6 +209,7 @@ export function verifyInstagramOAuthState({
     userId?: unknown;
     workspaceId?: unknown;
     nonce?: unknown;
+    redirectUri?: unknown;
     expiresAt?: unknown;
   };
 
@@ -218,6 +233,7 @@ export function verifyInstagramOAuthState({
     success: true,
     userId,
     workspaceId,
+    redirectUri: typeof payload.redirectUri === "string" ? payload.redirectUri : undefined,
   };
 }
 
@@ -226,6 +242,7 @@ export async function completeInstagramOAuthCallback({
   workspaceId,
   env = process.env,
   db,
+  redirectUri,
   exchangeCodeForToken = exchangeInstagramCodeForToken,
   fetchInstagramAccounts = fetchInstagramAccountsForToken,
 }: {
@@ -247,7 +264,12 @@ export async function completeInstagramOAuthCallback({
       }): Promise<string>;
     };
   };
-  exchangeCodeForToken?: (code: string, env: EnvSource) => Promise<MetaTokenResponse>;
+  redirectUri?: string;
+  exchangeCodeForToken?: (
+    code: string,
+    env: EnvSource,
+    redirectUri?: string,
+  ) => Promise<MetaTokenResponse>;
   fetchInstagramAccounts?: (accessToken: string) => Promise<InstagramAccountCandidate[]>;
 }): Promise<
   | {
@@ -275,7 +297,7 @@ export async function completeInstagramOAuthCallback({
     throw error;
   }
 
-  const token = await exchangeCodeForToken(code, env);
+  const token = await exchangeCodeForToken(code, env, redirectUri);
 
   if (!token.access_token) {
     return {
@@ -323,10 +345,15 @@ export async function completeInstagramOAuthCallback({
   };
 }
 
-async function exchangeInstagramCodeForToken(code: string, env: EnvSource) {
+async function exchangeInstagramCodeForToken(
+  code: string,
+  env: EnvSource,
+  redirectUriOverride?: string,
+) {
   const credentials = getInstagramOAuthCredentials(env);
+  const redirectUri = redirectUriOverride ?? credentials.redirectUri;
 
-  if (!credentials.clientId || !credentials.clientSecret || !credentials.redirectUri) {
+  if (!credentials.clientId || !credentials.clientSecret || !redirectUri) {
     throw new Error("Instagram OAuth is not configured.");
   }
 
@@ -334,7 +361,7 @@ async function exchangeInstagramCodeForToken(code: string, env: EnvSource) {
     client_id: credentials.clientId,
     client_secret: credentials.clientSecret,
     grant_type: "authorization_code",
-    redirect_uri: credentials.redirectUri,
+    redirect_uri: redirectUri,
     code,
   });
   const response = await fetch("https://api.instagram.com/oauth/access_token", {

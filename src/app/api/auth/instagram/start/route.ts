@@ -7,6 +7,7 @@ import {
   buildInstagramOAuthStartUrl,
   createInstagramOAuthNonce,
   createInstagramOAuthState,
+  getInstagramOAuthRedirectUri,
   instagramOAuthStateCookieName,
 } from "@/lib/platforms/instagram-oauth";
 
@@ -46,11 +47,13 @@ export async function GET(request: Request) {
   }
 
   const nonce = createInstagramOAuthNonce();
+  const redirectUri = getInstagramOAuthRedirectUri(process.env);
   const state = createInstagramOAuthState({
     userId: session.user.id,
     workspaceId: workspace.id,
     nonce,
     secret,
+    redirectUri,
   });
   const oauthUrl = buildInstagramOAuthStartUrl(process.env, { state });
 

@@ -71,6 +71,7 @@ describe("Instagram OAuth scaffold", () => {
       workspaceId: "workspace_1",
       nonce: "nonce_1",
       secret: "this-is-a-long-nextauth-secret",
+      redirectUri: "https://app.example.com/api/auth/instagram/callback",
       now: new Date("2026-05-12T12:00:00.000Z"),
     });
 
@@ -87,6 +88,7 @@ describe("Instagram OAuth scaffold", () => {
       success: true,
       userId: "user_1",
       workspaceId: "workspace_1",
+      redirectUri: "https://app.example.com/api/auth/instagram/callback",
     });
   });
 
@@ -157,5 +159,40 @@ describe("Instagram OAuth scaffold", () => {
       reason: "missing-token",
       message: "Invalid verification code format.",
     });
+  });
+
+  test("passes the signed redirect URI into the token exchange", async () => {
+    const exchangeCodeForToken = vi.fn(async () => ({
+      access_token: "user-access-token",
+      expires_in: 3600,
+    }));
+
+    await completeInstagramOAuthCallback({
+      code: "oauth-code",
+      workspaceId: "workspace_1",
+      redirectUri: "https://www.aegisrelay.app/api/auth/instagram/callback",
+      env: {
+        META_APP_ID: "meta-app-id",
+        META_APP_SECRET: "meta-secret",
+        INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
+        PLATFORM_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef",
+      },
+      db: {
+        connectedAccount: { upsert: vi.fn(async () => "connected_1") },
+      },
+      exchangeCodeForToken,
+      fetchInstagramAccounts: vi.fn(async () => [
+        {
+          instagramAccountId: "ig_123",
+          accountName: "Demo Instagram",
+        },
+      ]),
+    });
+
+    expect(exchangeCodeForToken).toHaveBeenCalledWith(
+      "oauth-code",
+      expect.any(Object),
+      "https://www.aegisrelay.app/api/auth/instagram/callback",
+    );
   });
 });
