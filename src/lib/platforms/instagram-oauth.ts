@@ -362,15 +362,15 @@ async function exchangeInstagramCodeForToken(
     throw new Error("Instagram OAuth is not configured.");
   }
 
-  const body = new URLSearchParams({
-    client_id: credentials.clientId,
-    client_secret: credentials.clientSecret,
-    grant_type: "authorization_code",
-    redirect_uri: redirectUri,
-    code,
-  });
+  const body = new FormData();
+  body.set("client_id", credentials.clientId);
+  body.set("client_secret", credentials.clientSecret);
+  body.set("grant_type", "authorization_code");
+  body.set("redirect_uri", redirectUri);
+  body.set("code", code);
 
   logger.info("Instagram short-lived token exchange started.", {
+    clientIdLength: credentials.clientId.length,
     redirectUriHost: safeUrlHost(redirectUri),
     redirectUriPath: safeUrlPath(redirectUri),
     redirectUriLength: redirectUri.length,

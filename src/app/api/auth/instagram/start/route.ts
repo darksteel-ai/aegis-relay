@@ -64,6 +64,14 @@ export async function GET(request: Request) {
     );
   }
 
+  if (redirectUri) {
+    console.info("Instagram OAuth start created.", {
+      redirectUriHost: safeUrlHost(redirectUri),
+      redirectUriPath: safeUrlPath(redirectUri),
+      redirectUriLength: redirectUri.length,
+    });
+  }
+
   const response = NextResponse.redirect(oauthUrl.url);
   response.cookies.set(instagramOAuthStateCookieName, nonce, {
     httpOnly: true,
@@ -78,4 +86,20 @@ export async function GET(request: Request) {
 
 function redirectToConnections(request: Request, instagramStatus: string) {
   return NextResponse.redirect(new URL(`/connections?instagram=${instagramStatus}`, request.url));
+}
+
+function safeUrlHost(value: string) {
+  try {
+    return new URL(value).host;
+  } catch {
+    return "invalid-url";
+  }
+}
+
+function safeUrlPath(value: string) {
+  try {
+    return new URL(value).pathname;
+  } catch {
+    return "invalid-url";
+  }
 }
