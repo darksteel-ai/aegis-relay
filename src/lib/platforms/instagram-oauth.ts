@@ -10,6 +10,7 @@ import { getInstagramEnv, getPlatformTokenEnv } from "@/lib/env";
 import { encryptConnectedAccountToken } from "@/lib/platforms/token-crypto";
 
 type EnvSource = Record<string, string | undefined>;
+type ConsoleLike = Pick<typeof console, "error" | "info">;
 
 type InstagramOAuthStartUrlResult =
   | {
@@ -243,6 +244,7 @@ export async function completeInstagramOAuthCallback({
   env = process.env,
   db,
   redirectUri,
+  logger = console,
   exchangeCodeForToken = exchangeInstagramCodeForToken,
   fetchInstagramAccounts = fetchInstagramAccountsForToken,
 }: {
@@ -265,10 +267,12 @@ export async function completeInstagramOAuthCallback({
     };
   };
   redirectUri?: string;
+  logger?: ConsoleLike;
   exchangeCodeForToken?: (
     code: string,
     env: EnvSource,
     redirectUri?: string,
+    logger?: ConsoleLike,
   ) => Promise<MetaTokenResponse>;
   fetchInstagramAccounts?: (accessToken: string) => Promise<InstagramAccountCandidate[]>;
 }): Promise<
@@ -297,7 +301,7 @@ export async function completeInstagramOAuthCallback({
     throw error;
   }
 
-  const token = await exchangeCodeForToken(code, env, redirectUri);
+  const token = await exchangeCodeForToken(code, env, redirectUri, logger);
 
   if (!token.access_token) {
     return {
@@ -349,6 +353,7 @@ async function exchangeInstagramCodeForToken(
   code: string,
   env: EnvSource,
   redirectUriOverride?: string,
+  logger: ConsoleLike = console,
 ) {
   const credentials = getInstagramOAuthCredentials(env);
   const redirectUri = redirectUriOverride ?? credentials.redirectUri;
@@ -364,6 +369,14 @@ async function exchangeInstagramCodeForToken(
     redirect_uri: redirectUri,
     code,
   });
+
+  logger.info("Instagram short-lived token exchange started.", {
+    redirectUriHost: safeUrlHost(redirectUri),
+    redirectUriPath: safeUrlPath(redirectUri),
+    redirectUriLength: redirectUri.length,
+    codeLength: code.length,
+  });
+
   const response = await fetch("https://api.instagram.com/oauth/access_token", {
     method: "POST",
     body,
@@ -372,17 +385,21 @@ async function exchangeInstagramCodeForToken(
   const token = (await response.json()) as MetaTokenResponse;
 
   if (!token.access_token) {
-    console.error("Instagram short-lived token exchange failed.", {
+    logger.error("Instagram short-lived token exchange failed.", {
       status: response.status,
       error: redactInstagramTokenError(token),
     });
     return token;
   }
 
-  return exchangeInstagramShortLivedToken(token, credentials.clientSecret);
+  return exchangeInstagramShortLivedToken(token, credentials.clientSecret, logger);
 }
 
-async function exchangeInstagramShortLivedToken(token: MetaTokenResponse, clientSecret: string) {
+async function exchangeInstagramShortLivedToken(
+  token: MetaTokenResponse,
+  clientSecret: string,
+  logger: ConsoleLike = console,
+) {
   const url = new URL("https://graph.instagram.com/access_token");
   url.searchParams.set("grant_type", "ig_exchange_token");
   url.searchParams.set("client_secret", clientSecret);
@@ -394,7 +411,7 @@ async function exchangeInstagramShortLivedToken(token: MetaTokenResponse, client
   const longLivedToken = (await response.json()) as MetaTokenResponse;
 
   if (!longLivedToken.access_token) {
-    console.error("Instagram long-lived token exchange failed.", {
+    logger.error("Instagram long-lived token exchange failed.", {
       status: response.status,
       error: redactInstagramTokenError(longLivedToken),
     });
@@ -402,6 +419,22 @@ async function exchangeInstagramShortLivedToken(token: MetaTokenResponse, client
   }
 
   return longLivedToken;
+}
+
+function safeUrlHost(value: string) {
+  try {
+    return new URL(value).host;
+  } catch {
+    return "invalid-url";
+  }
+}
+
+function safeUrlPath(value: string) {
+  try {
+    return new URL(value).pathname;
+  } catch {
+    return "invalid-url";
+  }
 }
 
 async function fetchInstagramAccountsForToken(accessToken: string) {

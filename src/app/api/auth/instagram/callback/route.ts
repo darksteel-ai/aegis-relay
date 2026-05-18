@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     return clearStateCookie(redirectToConnections(request, "oauth-failed"));
   }
 
-  const code = url.searchParams.get("code");
+  const code = cleanInstagramAuthorizationCode(url.searchParams.get("code"));
 
   if (!code) {
     return redirectToConnections(request, "missing-code");
@@ -97,6 +97,10 @@ export async function GET(request: Request) {
   }
 
   return clearStateCookie(redirectToConnections(request, "connected"));
+}
+
+function cleanInstagramAuthorizationCode(code: string | null) {
+  return code?.split("#")[0]?.trim() ?? null;
 }
 
 function redirectToConnections(

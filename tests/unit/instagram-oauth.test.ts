@@ -193,6 +193,10 @@ describe("Instagram OAuth scaffold", () => {
       "oauth-code",
       expect.any(Object),
       "https://www.aegisrelay.app/api/auth/instagram/callback",
+      expect.objectContaining({
+        error: expect.any(Function),
+        info: expect.any(Function),
+      }),
     );
   });
 });
