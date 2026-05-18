@@ -37,6 +37,7 @@ describe("billing helpers", () => {
     expect(checkout.url).toBe("https://checkout.stripe.test/session");
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith({
       mode: "subscription",
+      allow_promotion_codes: true,
       customer_email: "owner@example.com",
       line_items: [{ price: "price_pro", quantity: 1 }],
       success_url: "http://localhost:3000/billing?checkout=success",
@@ -82,6 +83,7 @@ describe("billing helpers", () => {
 
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
+        allow_promotion_codes: true,
         line_items: [{ price: "price_studio", quantity: 1 }],
         metadata: { workspaceId: "workspace_1", plan: "studio" },
         subscription_data: { metadata: { workspaceId: "workspace_1", plan: "studio" } },

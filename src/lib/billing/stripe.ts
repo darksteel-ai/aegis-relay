@@ -182,6 +182,7 @@ export async function createSubscriptionCheckoutSession({
 
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     mode: "subscription",
+    allow_promotion_codes: true,
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}/billing?checkout=success`,
     cancel_url: `${appUrl}/billing?checkout=cancelled`,
