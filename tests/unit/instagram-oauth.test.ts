@@ -44,6 +44,27 @@ describe("Instagram OAuth scaffold", () => {
     expect(url.search).not.toContain("instagram-secret");
   });
 
+  test("does not mix an Instagram app ID with a Meta app secret", () => {
+    const result = buildInstagramOAuthStartUrl(
+      {
+        META_APP_ID: "meta-app-id",
+        META_APP_SECRET: "meta-secret",
+        INSTAGRAM_APP_ID: "instagram-app-id",
+        INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
+      },
+      { state: "signed-state" },
+    );
+
+    expect(result.success).toBe(true);
+
+    if (!result.success) {
+      return;
+    }
+
+    const url = new URL(result.url);
+    expect(url.searchParams.get("client_id")).toBe("meta-app-id");
+  });
+
   test("creates and verifies signed OAuth state tied to user and workspace", () => {
     const state = createInstagramOAuthState({
       userId: "user_1",

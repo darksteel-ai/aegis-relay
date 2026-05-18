@@ -47,14 +47,40 @@ const instagramDefaultScope = instagramOAuthScopes.join(",");
 export const instagramOAuthStateCookieName = "instagram_oauth_state";
 const instagramOAuthStateTtlMs = 10 * 60 * 1000;
 
+function getInstagramOAuthCredentials(source: EnvSource) {
+  const instagramEnv = getInstagramEnv(source);
+
+  if (instagramEnv.INSTAGRAM_APP_ID && instagramEnv.INSTAGRAM_APP_SECRET) {
+    return {
+      clientId: instagramEnv.INSTAGRAM_APP_ID,
+      clientSecret: instagramEnv.INSTAGRAM_APP_SECRET,
+      redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
+    };
+  }
+
+  if (instagramEnv.META_APP_ID && instagramEnv.META_APP_SECRET) {
+    return {
+      clientId: instagramEnv.META_APP_ID,
+      clientSecret: instagramEnv.META_APP_SECRET,
+      redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
+    };
+  }
+
+  return {
+    clientId: undefined,
+    clientSecret: undefined,
+    redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
+  };
+}
+
 export function buildInstagramOAuthStartUrl(
   source: EnvSource = process.env,
   options: { state?: string } = {},
 ): InstagramOAuthStartUrlResult {
-  let instagramEnv;
+  let credentials;
 
   try {
-    instagramEnv = getInstagramEnv(source);
+    credentials = getInstagramOAuthCredentials(source);
   } catch (error) {
     if (error instanceof ZodError) {
       return {
@@ -66,10 +92,7 @@ export function buildInstagramOAuthStartUrl(
     throw error;
   }
 
-  const clientId = instagramEnv.INSTAGRAM_APP_ID ?? instagramEnv.META_APP_ID;
-  const clientSecret = instagramEnv.INSTAGRAM_APP_SECRET ?? instagramEnv.META_APP_SECRET;
-
-  if (!clientId || !clientSecret || !instagramEnv.INSTAGRAM_REDIRECT_URI) {
+  if (!credentials.clientId || !credentials.clientSecret || !credentials.redirectUri) {
     return {
       success: false,
       reason: "config-error",
@@ -77,8 +100,8 @@ export function buildInstagramOAuthStartUrl(
   }
 
   const url = new URL("https://www.instagram.com/oauth/authorize");
-  url.searchParams.set("client_id", clientId);
-  url.searchParams.set("redirect_uri", instagramEnv.INSTAGRAM_REDIRECT_URI);
+  url.searchParams.set("client_id", credentials.clientId);
+  url.searchParams.set("redirect_uri", credentials.redirectUri);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", instagramDefaultScope);
   url.searchParams.set("enable_fb_login", "0");
@@ -296,19 +319,17 @@ export async function completeInstagramOAuthCallback({
 }
 
 async function exchangeInstagramCodeForToken(code: string, env: EnvSource) {
-  const instagramEnv = getInstagramEnv(env);
-  const clientId = instagramEnv.INSTAGRAM_APP_ID ?? instagramEnv.META_APP_ID;
-  const clientSecret = instagramEnv.INSTAGRAM_APP_SECRET ?? instagramEnv.META_APP_SECRET;
+  const credentials = getInstagramOAuthCredentials(env);
 
-  if (!clientId || !clientSecret || !instagramEnv.INSTAGRAM_REDIRECT_URI) {
+  if (!credentials.clientId || !credentials.clientSecret || !credentials.redirectUri) {
     throw new Error("Instagram OAuth is not configured.");
   }
 
   const body = new URLSearchParams({
-    client_id: clientId,
-    client_secret: clientSecret,
+    client_id: credentials.clientId,
+    client_secret: credentials.clientSecret,
     grant_type: "authorization_code",
-    redirect_uri: instagramEnv.INSTAGRAM_REDIRECT_URI,
+    redirect_uri: credentials.redirectUri,
     code,
   });
   const response = await fetch("https://api.instagram.com/oauth/access_token", {
@@ -322,7 +343,7 @@ async function exchangeInstagramCodeForToken(code: string, env: EnvSource) {
     return token;
   }
 
-  return exchangeInstagramShortLivedToken(token, clientSecret);
+  return exchangeInstagramShortLivedToken(token, credentials.clientSecret);
 }
 
 async function exchangeInstagramShortLivedToken(token: MetaTokenResponse, clientSecret: string) {
