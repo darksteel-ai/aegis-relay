@@ -2,6 +2,11 @@ import { z } from "zod";
 
 type EnvSource = Record<string, string | undefined>;
 
+const optionalNonEmptyString = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.string().min(1).optional(),
+);
+
 const coreEnvSchema = z.object({
   NEXTAUTH_URL: z.string().url(),
   NEXTAUTH_SECRET: z.string().min(24),
@@ -20,10 +25,10 @@ const clerkEnvSchema = z.object({
 
 const stripeEnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1),
-  STRIPE_PRICE_ID_CREATOR: z.string().min(1).optional(),
-  STRIPE_PRICE_ID_STUDIO: z.string().min(1).optional(),
-  STRIPE_PRICE_ID_PRO: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: optionalNonEmptyString,
+  STRIPE_PRICE_ID_CREATOR: optionalNonEmptyString,
+  STRIPE_PRICE_ID_STUDIO: optionalNonEmptyString,
+  STRIPE_PRICE_ID_PRO: optionalNonEmptyString,
 });
 
 const storageEnvSchema = z.object({

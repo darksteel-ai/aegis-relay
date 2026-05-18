@@ -13,12 +13,17 @@ export async function POST(request: Request) {
 
   const body = await request.text();
   let event;
+  const webhookSecret = getStripeEnv().STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    return NextResponse.json({ error: "Stripe webhook is not configured." }, { status: 503 });
+  }
 
   try {
     event = getStripe().webhooks.constructEvent(
       body,
       signature,
-      getStripeEnv().STRIPE_WEBHOOK_SECRET,
+      webhookSecret,
     );
   } catch (error) {
     if (error instanceof ZodError) {
