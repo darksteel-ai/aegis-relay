@@ -60,6 +60,7 @@ type ConnectedAccountView = {
   accountName: string;
   externalId: string;
   scopes?: string | null;
+  hasRefreshToken?: boolean | null;
   expiresAt: Date | null;
   updatedAt: Date;
 };
@@ -106,6 +107,7 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
       accountName: string;
       externalId: string;
       scopes?: string | null;
+      hasRefreshToken?: boolean | null;
       expiresAt?: number | null;
       updatedAt: number;
     }) => ({

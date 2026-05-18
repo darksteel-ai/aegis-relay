@@ -34,6 +34,20 @@ describe("connection health", () => {
     });
   });
 
+  test("keeps refreshable accounts connected even when access token expires", () => {
+    expect(getConnectionHealth({
+      platform: "YOUTUBE",
+      accountName: "Brand Channel",
+      scopes: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly",
+      expiresAt: Date.parse("2026-05-10T00:00:00.000Z"),
+      hasRefreshToken: true,
+    }, new Date("2026-05-17T00:00:00.000Z"))).toMatchObject({
+      status: "connected",
+      label: "Connected",
+      message: "Brand Channel is connected. Access refreshes automatically.",
+    });
+  });
+
   test("marks healthy accounts as connected", () => {
     expect(getConnectionHealth({
       platform: "YOUTUBE",

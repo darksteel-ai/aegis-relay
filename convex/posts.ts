@@ -208,6 +208,7 @@ export const dashboard = query({
         accountName: account.accountName,
         externalId: account.externalId,
         scopes: account.scopes,
+        hasRefreshToken: Boolean(account.refreshToken),
         status: account.status,
         expiresAt: account.expiresAt ?? null,
         updatedAt: account.updatedAt,

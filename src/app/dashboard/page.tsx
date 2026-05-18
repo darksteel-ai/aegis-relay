@@ -45,6 +45,7 @@ type DashboardAccount = {
   accountName: string;
   externalId: string;
   scopes?: string | null;
+  hasRefreshToken?: boolean | null;
   status: string;
   expiresAt?: number | null;
   updatedAt: number;
@@ -259,6 +260,7 @@ export default async function DashboardPage() {
                     accountName: account.accountName,
                     scopes: account.scopes,
                     expiresAt: account.expiresAt ?? null,
+                    hasRefreshToken: account.hasRefreshToken,
                   }
                   : null,
               );

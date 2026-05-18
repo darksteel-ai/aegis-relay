@@ -12,6 +12,7 @@ export type ConnectionHealthInput = {
   accountName?: string;
   scopes?: string | null;
   expiresAt?: Date | number | null;
+  hasRefreshToken?: boolean | null;
 };
 
 const requiredScopes: Record<string, string[]> = {
@@ -48,6 +49,14 @@ export function getConnectionHealth(
   }
 
   const expiresAt = normalizeExpiresAt(account.expiresAt);
+
+  if (account.hasRefreshToken) {
+    return {
+      status: "connected" as const,
+      label: "Connected",
+      message: `${account.accountName ?? formatPlatformName(account.platform)} is connected. Access refreshes automatically.`,
+    };
+  }
 
   if (expiresAt && expiresAt.getTime() <= now.getTime()) {
     return {
