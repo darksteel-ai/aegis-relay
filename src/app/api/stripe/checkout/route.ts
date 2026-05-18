@@ -5,6 +5,12 @@ import { getAuthSession } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { getPaidPricingPlan, type PaidPlanId } from "@/lib/billing/pricing";
 
+type CheckoutErrorReason = "configuration" | "unavailable";
+
+export function GET() {
+  return NextResponse.redirect(new URL("/billing", env.NEXTAUTH_URL));
+}
+
 export async function POST(request: Request) {
   const session = await getAuthSession();
 
@@ -31,9 +37,34 @@ export async function POST(request: Request) {
     return NextResponse.redirect(checkout.url, { status: 303 });
   } catch (error) {
     if (error instanceof BillingError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return redirectToBillingError("configuration");
     }
 
-    throw error;
+    console.error("Stripe checkout failed", error);
+    return redirectToBillingError(getStripeCheckoutErrorReason(error));
   }
+}
+
+function redirectToBillingError(reason: CheckoutErrorReason) {
+  const url = new URL("/billing", env.NEXTAUTH_URL);
+  url.searchParams.set("checkout", "failed");
+  url.searchParams.set("reason", reason);
+  return NextResponse.redirect(url, { status: 303 });
+}
+
+function getStripeCheckoutErrorReason(error: unknown): CheckoutErrorReason {
+  if (isStripeResourceMissingError(error)) {
+    return "configuration";
+  }
+
+  return "unavailable";
+}
+
+function isStripeResourceMissingError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "resource_missing"
+  );
 }

@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 type BillingPageProps = {
   searchParams?: Promise<{
     checkout?: string;
+    reason?: string;
   }>;
 };
 
@@ -33,6 +34,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const activePlan = getPricingPlan(workspace.plan);
   const hasActiveSubscription = workspace.plan !== "beta" && Boolean(workspace.stripeSubscriptionId);
   const checkoutState = params?.checkout;
+  const checkoutErrorMessage =
+    checkoutState === "failed" ? getCheckoutErrorMessage(params?.reason) : null;
 
   return (
     <AppShell>
@@ -56,6 +59,12 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         {checkoutState === "cancelled" ? (
           <div className="rounded-md border border-amber-300/35 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
             Checkout was cancelled. Your workspace is unchanged.
+          </div>
+        ) : null}
+
+        {checkoutErrorMessage ? (
+          <div className="rounded-md border border-rose-300/35 bg-rose-300/10 px-4 py-3 text-sm text-rose-100">
+            {checkoutErrorMessage}
           </div>
         ) : null}
 
@@ -181,4 +190,12 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       </div>
     </AppShell>
   );
+}
+
+function getCheckoutErrorMessage(reason: string | undefined) {
+  if (reason === "configuration") {
+    return "Stripe could not find that plan price. Double-check the saved Stripe Price ID for this plan.";
+  }
+
+  return "Stripe checkout is unavailable right now. Please try again in a moment.";
 }

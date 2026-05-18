@@ -54,6 +54,32 @@ describe("billing API routes", () => {
     });
   });
 
+  test("checkout redirects direct visits back to billing", async () => {
+    const { GET } = await import("../../src/app/api/stripe/checkout/route");
+
+    const response = GET();
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://app.example.com/billing");
+  });
+
+  test("checkout redirects Stripe price errors to billing with a clear state", async () => {
+    createSubscriptionCheckoutSession.mockRejectedValue({
+      code: "resource_missing",
+      message: "No such price",
+    });
+    const { POST } = await import("../../src/app/api/stripe/checkout/route");
+
+    const response = await (POST as (request: Request) => Promise<Response>)(
+      new Request("https://app.example.com/api/stripe/checkout", { method: "POST" }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "https://app.example.com/billing?checkout=failed&reason=configuration",
+    );
+  });
+
   test("portal ignores the request origin when building Stripe return URLs", async () => {
     createBillingPortalSession.mockResolvedValue({
       url: "https://billing.stripe.test/session",
