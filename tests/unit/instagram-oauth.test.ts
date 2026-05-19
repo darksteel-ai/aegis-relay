@@ -27,8 +27,8 @@ describe("Instagram OAuth scaffold", () => {
     }
 
     const url = new URL(result.url);
-    expect(url.origin).toBe("https://www.instagram.com");
-    expect(url.pathname).toBe("/oauth/authorize");
+    expect(url.origin).toBe("https://www.facebook.com");
+    expect(url.pathname).toBe("/v24.0/dialog/oauth");
     expect(url.searchParams.get("client_id")).toBe("1287544116889796");
     expect(url.searchParams.get("redirect_uri")).toBe(
       "https://app.example.com/api/auth/instagram/callback",
@@ -36,10 +36,8 @@ describe("Instagram OAuth scaffold", () => {
     expect(url.searchParams.get("response_type")).toBe("code");
     expect(url.searchParams.get("state")).toBe("signed-state");
     expect(url.searchParams.get("scope")).toBe(
-      "instagram_business_basic,instagram_business_content_publish",
+      "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
     );
-    expect(url.searchParams.get("enable_fb_login")).toBe("0");
-    expect(url.searchParams.get("force_authentication")).toBe("1");
     expect(url.search).not.toContain("meta-secret");
     expect(url.search).not.toContain("instagram-secret");
   });
@@ -137,6 +135,7 @@ describe("Instagram OAuth scaffold", () => {
         {
           instagramAccountId: "ig_123",
           accountName: "Demo Instagram",
+          accessToken: "page-access-token",
         },
       ]),
     });
@@ -150,7 +149,7 @@ describe("Instagram OAuth scaffold", () => {
       accessToken: expect.stringMatching(/^enc:v1:/),
       refreshToken: undefined,
       expiresAt: expect.any(Number),
-      scopes: "instagram_business_basic,instagram_business_content_publish",
+      scopes: "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
       status: "SCHEDULED",
     });
   });
@@ -207,6 +206,7 @@ describe("Instagram OAuth scaffold", () => {
         {
           instagramAccountId: "ig_123",
           accountName: "Demo Instagram",
+          accessToken: "page-access-token",
         },
       ]),
     });

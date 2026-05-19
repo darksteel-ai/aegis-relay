@@ -42,6 +42,7 @@ type MetaTokenResponse = {
 export type InstagramAccountCandidate = {
   instagramAccountId: string;
   accountName: string;
+  accessToken?: string;
 };
 
 type InstagramOAuthCredentials = {
@@ -52,8 +53,10 @@ type InstagramOAuthCredentials = {
 
 const graphApiVersion = "v24.0";
 const instagramOAuthScopes = [
-  "instagram_business_basic",
-  "instagram_business_content_publish",
+  "instagram_basic",
+  "instagram_content_publish",
+  "pages_show_list",
+  "pages_read_engagement",
 ] as const;
 const instagramDefaultScope = instagramOAuthScopes.join(",");
 export const instagramOAuthStateCookieName = "instagram_oauth_state";
@@ -127,13 +130,11 @@ export function buildInstagramOAuthStartUrl(
     };
   }
 
-  const url = new URL("https://www.instagram.com/oauth/authorize");
+  const url = new URL(`https://www.facebook.com/${graphApiVersion}/dialog/oauth`);
   url.searchParams.set("client_id", credentials.clientId);
   url.searchParams.set("redirect_uri", credentials.redirectUri);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", instagramDefaultScope);
-  url.searchParams.set("enable_fb_login", "0");
-  url.searchParams.set("force_authentication", "1");
 
   if (options.state) {
     url.searchParams.set("state", options.state);
@@ -340,7 +341,7 @@ export async function completeInstagramOAuthCallback({
     platform: Platform.INSTAGRAM,
     accountName: account.accountName,
     externalId: account.instagramAccountId,
-    accessToken: encryptConnectedAccountToken(token.access_token, env),
+    accessToken: encryptConnectedAccountToken(account.accessToken ?? token.access_token, env),
     refreshToken: undefined,
     expiresAt: token.expires_in ? Date.now() + token.expires_in * 1000 : null,
     scopes: instagramDefaultScope,
@@ -374,13 +375,6 @@ async function exchangeInstagramCodeForToken(
     throw new Error("Instagram OAuth is not configured.");
   }
 
-  const body = new FormData();
-  body.set("client_id", credentials.clientId);
-  body.set("client_secret", credentials.clientSecret);
-  body.set("grant_type", "authorization_code");
-  body.set("redirect_uri", redirectUri);
-  body.set("code", code);
-
   logger.info("Instagram short-lived token exchange started.", {
     clientIdLength: credentials.clientId.length,
     clientIdKind: isMetaAppId(credentials.clientId) ? "numeric" : "invalid",
@@ -390,10 +384,12 @@ async function exchangeInstagramCodeForToken(
     codeLength: code.length,
   });
 
-  const response = await fetch("https://api.instagram.com/oauth/access_token", {
-    method: "POST",
-    body,
-  });
+  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/oauth/access_token`);
+  url.searchParams.set("client_id", credentials.clientId);
+  url.searchParams.set("client_secret", credentials.clientSecret);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("code", code);
+  const response = await fetch(url);
 
   const token = (await response.json()) as MetaTokenResponse;
 
@@ -405,26 +401,33 @@ async function exchangeInstagramCodeForToken(
     return token;
   }
 
-  return exchangeInstagramShortLivedToken(token, credentials.clientSecret, logger);
+  return exchangeFacebookShortLivedToken(
+    token,
+    credentials.clientId,
+    credentials.clientSecret,
+    logger,
+  );
 }
 
-async function exchangeInstagramShortLivedToken(
+async function exchangeFacebookShortLivedToken(
   token: MetaTokenResponse,
+  clientId: string,
   clientSecret: string,
   logger: ConsoleLike = console,
 ) {
-  const url = new URL("https://graph.instagram.com/access_token");
-  url.searchParams.set("grant_type", "ig_exchange_token");
+  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/oauth/access_token`);
+  url.searchParams.set("grant_type", "fb_exchange_token");
+  url.searchParams.set("client_id", clientId);
   url.searchParams.set("client_secret", clientSecret);
-  url.searchParams.set("access_token", token.access_token ?? "");
+  url.searchParams.set("fb_exchange_token", token.access_token ?? "");
 
   const response = await fetch(url, {
-    method: "POST",
+    method: "GET",
   });
   const longLivedToken = (await response.json()) as MetaTokenResponse;
 
   if (!longLivedToken.access_token) {
-    logger.error("Instagram long-lived token exchange failed.", {
+    logger.error("Instagram Facebook token extension failed.", {
       status: response.status,
       error: redactInstagramTokenError(longLivedToken),
     });
@@ -451,19 +454,29 @@ function safeUrlPath(value: string) {
 }
 
 async function fetchInstagramAccountsForToken(accessToken: string) {
-  const url = new URL(`https://graph.instagram.com/${graphApiVersion}/me`);
-  url.searchParams.set("fields", "user_id,username,name,account_type");
+  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/me/accounts`);
+  url.searchParams.set(
+    "fields",
+    "id,name,access_token,instagram_business_account{id,username,name}",
+  );
   url.searchParams.set("access_token", accessToken);
   const response = await fetch(url);
   const body = (await response.json()) as {
-    id?: string;
-    user_id?: string;
-    username?: string;
-    name?: string;
-    account_type?: string;
+    data?: Array<{
+      id?: string;
+      name?: string;
+      access_token?: string;
+      instagram_business_account?: {
+        id?: string;
+        username?: string;
+        name?: string;
+      };
+    }>;
   };
 
-  const instagramAccountId = body.user_id ?? body.id;
+  const page = body.data?.find((item) => item.instagram_business_account?.id);
+  const instagramAccount = page?.instagram_business_account;
+  const instagramAccountId = instagramAccount?.id;
 
   if (!instagramAccountId) {
     return [];
@@ -472,7 +485,8 @@ async function fetchInstagramAccountsForToken(accessToken: string) {
   return [
     {
       instagramAccountId,
-      accountName: body.username ?? body.name ?? "Instagram account",
+      accountName: instagramAccount.username ?? instagramAccount.name ?? page?.name ?? "Instagram account",
+      accessToken: page?.access_token ?? accessToken,
     },
   ];
 }

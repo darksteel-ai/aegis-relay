@@ -21,7 +21,7 @@ const requiredScopes: Record<string, string[]> = {
     "https://www.googleapis.com/auth/youtube.readonly",
   ],
   [Platform.TIKTOK]: ["user.info.basic", "video.upload", "video.list"],
-  [Platform.INSTAGRAM]: ["instagram_business_basic", "instagram_business_content_publish"],
+  [Platform.INSTAGRAM]: ["instagram_basic", "instagram_content_publish"],
 };
 
 const expiresSoonMs = 7 * 24 * 60 * 60 * 1000;

@@ -26,7 +26,7 @@ describe("connection health", () => {
     expect(getConnectionHealth({
       platform: "INSTAGRAM",
       accountName: "Brand IG",
-      scopes: "instagram_business_basic,instagram_business_content_publish",
+      scopes: "instagram_basic,instagram_content_publish",
       expiresAt: Date.parse("2026-05-10T00:00:00.000Z"),
     }, new Date("2026-05-17T00:00:00.000Z"))).toMatchObject({
       status: "expired",
