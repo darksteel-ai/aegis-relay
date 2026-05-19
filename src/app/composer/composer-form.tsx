@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, CalendarPlus, CheckCircle2, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   PlatformSelector,
@@ -61,16 +61,15 @@ export function ComposerForm({
   const youtubeTitleCharacters = youtubeTitle.length;
   const hashtagCharacters = hashtags.length;
   const hasRequiredMetadata = Boolean(video?.width && video.height && video.durationSeconds);
-  const canSubmit = useMemo(() => {
-    return Boolean(
-      video &&
-        hasRequiredMetadata &&
-        baseCaption.trim() &&
-        scheduledAt &&
-        timezone &&
-        platforms.length,
-    );
-  }, [baseCaption, hasRequiredMetadata, platforms.length, scheduledAt, timezone, video]);
+  const submitBlockedReason = getSubmitBlockedReason({
+    video,
+    hasRequiredMetadata,
+    baseCaption,
+    scheduledAt,
+    timezone,
+    platforms,
+  });
+  const canSubmit = !submitBlockedReason;
 
   async function submitPost(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -84,6 +83,16 @@ export function ComposerForm({
     setSubmitState({ type: "idle" });
 
     try {
+      const scheduleDate = new Date(scheduledAt);
+
+      if (Number.isNaN(scheduleDate.getTime())) {
+        throw new Error("Schedule time must be a valid date and time.");
+      }
+
+      if (scheduleDate <= new Date()) {
+        throw new Error("Schedule time must be in the future.");
+      }
+
       const response = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,7 +100,7 @@ export function ComposerForm({
           baseCaption,
           youtubeTitle,
           hashtags,
-          scheduledAt: new Date(scheduledAt).toISOString(),
+          scheduledAt: scheduleDate.toISOString(),
           timezone,
           platforms,
           accountIdsByPlatform,
@@ -401,10 +410,16 @@ export function ComposerForm({
         className="studio-button-primary w-fit disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!canSubmit || isSubmitting}
         type="submit"
+        title={!canSubmit ? submitBlockedReason : undefined}
       >
         <CalendarPlus className="h-4 w-4" aria-hidden="true" />
         {isSubmitting ? "Scheduling..." : "Schedule post"}
       </button>
+      {!canSubmit && submitBlockedReason ? (
+        <p className="-mt-4 text-sm text-slate-400" role="status">
+          {submitBlockedReason}
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -432,4 +447,56 @@ function getInitialAccountSelections(accounts: ComposerConnectedAccount[]) {
   }
 
   return selections;
+}
+
+function getSubmitBlockedReason({
+  video,
+  hasRequiredMetadata,
+  baseCaption,
+  scheduledAt,
+  timezone,
+  platforms,
+}: {
+  video: UploadedVideo | null;
+  hasRequiredMetadata: boolean;
+  baseCaption: string;
+  scheduledAt: string;
+  timezone: string;
+  platforms: ComposerPlatform[];
+}) {
+  if (!video) {
+    return "Upload a video before scheduling.";
+  }
+
+  if (!hasRequiredMetadata) {
+    return "Upload a video with readable width, height, and duration.";
+  }
+
+  if (!baseCaption.trim()) {
+    return "Add a caption before scheduling.";
+  }
+
+  if (!platforms.length) {
+    return "Select at least one platform.";
+  }
+
+  if (!scheduledAt) {
+    return "Choose a schedule time.";
+  }
+
+  const scheduleDate = new Date(scheduledAt);
+
+  if (Number.isNaN(scheduleDate.getTime())) {
+    return "Schedule time must be a valid date and time.";
+  }
+
+  if (scheduleDate <= new Date()) {
+    return "Choose a schedule time in the future.";
+  }
+
+  if (!timezone) {
+    return "Choose a timezone.";
+  }
+
+  return "";
 }

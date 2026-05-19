@@ -308,7 +308,7 @@ export async function optimizeMetadataWithOpenAI({
     },
   ],
   apiKey = process.env.OPENAI_API_KEY,
-  model = process.env.OPENAI_METADATA_MODEL ?? "chat-latest",
+  model = process.env.OPENAI_METADATA_MODEL ?? "gpt-4.1-mini",
 }: {
   caption: string;
   currentTitle?: string;
