@@ -23,7 +23,6 @@ const requiredScopes: Record<string, string[]> = {
   [Platform.TIKTOK]: ["user.info.basic", "video.upload", "video.list"],
   [Platform.INSTAGRAM]: [
     "instagram_business_basic",
-    "instagram_business_manage_messages",
     "instagram_business_content_publish",
   ],
 };

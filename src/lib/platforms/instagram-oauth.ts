@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 import { ZodError } from "zod";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -55,11 +55,9 @@ type InstagramOAuthCredentials = {
 const graphApiVersion = "v24.0";
 const instagramOAuthScopes = [
   "instagram_business_basic",
-  "instagram_business_manage_messages",
   "instagram_business_content_publish",
 ] as const;
 const instagramDefaultScope = instagramOAuthScopes.join(",");
-const instagramConsentScope = instagramOAuthScopes.join("-");
 export const instagramOAuthStateCookieName = "instagram_oauth_state";
 const instagramOAuthStateTtlMs = 10 * 60 * 1000;
 
@@ -134,21 +132,17 @@ export function buildInstagramOAuthStartUrl(
     };
   }
 
-  const consentParams = {
-    client_id: credentials.clientId,
-    redirect_uri: credentials.redirectUri,
-    response_type: "code",
-    state: options.state,
-    scope: instagramConsentScope,
-    logger_id: randomUUID(),
-    app_id: credentials.clientId,
-    platform_app_id: credentials.clientId,
-  };
+  const url = new URL("https://www.instagram.com/oauth/authorize");
+  url.searchParams.set("enable_fb_login", "0");
+  url.searchParams.set("force_authentication", "1");
+  url.searchParams.set("client_id", credentials.clientId);
+  url.searchParams.set("redirect_uri", credentials.redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", instagramDefaultScope);
 
-  const url = new URL("https://www.instagram.com/consent/");
-  url.searchParams.set("flow", "ig_biz_login_oauth");
-  url.searchParams.set("params_json", JSON.stringify(consentParams));
-  url.searchParams.set("source", "oauth_permissions_page_www");
+  if (options.state) {
+    url.searchParams.set("state", options.state);
+  }
 
   return {
     success: true,
