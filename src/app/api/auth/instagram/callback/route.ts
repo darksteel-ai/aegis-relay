@@ -40,19 +40,31 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const error = url.searchParams.get("error");
+  const metaErrorMessage = getMetaCallbackErrorMessage(url.searchParams);
 
-  if (error) {
+  if (error || metaErrorMessage) {
     console.error("Instagram OAuth callback returned an error.", {
       error,
+      reason: url.searchParams.get("error_reason"),
       description: url.searchParams.get("error_description"),
+      message: metaErrorMessage,
     });
-    return clearStateCookie(redirectToConnections(request, "oauth-failed"));
+    return clearStateCookie(
+      redirectToConnections(
+        request,
+        "oauth-failed",
+        metaErrorMessage ?? "Meta did not approve the Instagram connection.",
+      ),
+    );
   }
 
   const code = cleanInstagramAuthorizationCode(url.searchParams.get("code"));
 
   if (!code) {
-    return redirectToConnections(request, "missing-code");
+    console.error("Instagram OAuth callback did not include a code.", {
+      keys: Array.from(url.searchParams.keys()).sort(),
+    });
+    return redirectToConnections(request, "missing-code", "Meta did not return a connection code. Check the Login for Business configuration response type.");
   }
 
   const secret = process.env.NEXTAUTH_SECRET;
@@ -101,6 +113,15 @@ export async function GET(request: Request) {
 
 function cleanInstagramAuthorizationCode(code: string | null) {
   return code?.split("#")[0]?.trim() ?? null;
+}
+
+function getMetaCallbackErrorMessage(searchParams: URLSearchParams) {
+  return (
+    searchParams.get("error_message") ??
+    searchParams.get("error_description") ??
+    searchParams.get("error_reason") ??
+    searchParams.get("message")
+  );
 }
 
 function redirectToConnections(
