@@ -62,7 +62,11 @@ const instagramOAuthStateTtlMs = 10 * 60 * 1000;
 function getInstagramOAuthCredentials(source: EnvSource): InstagramOAuthCredentials {
   const instagramEnv = getInstagramEnv(source);
 
-  if (instagramEnv.INSTAGRAM_APP_ID && instagramEnv.INSTAGRAM_APP_SECRET) {
+  if (
+    instagramEnv.INSTAGRAM_APP_ID &&
+    instagramEnv.INSTAGRAM_APP_SECRET &&
+    isMetaAppId(instagramEnv.INSTAGRAM_APP_ID)
+  ) {
     return {
       clientId: instagramEnv.INSTAGRAM_APP_ID,
       clientSecret: instagramEnv.INSTAGRAM_APP_SECRET,
@@ -70,7 +74,11 @@ function getInstagramOAuthCredentials(source: EnvSource): InstagramOAuthCredenti
     };
   }
 
-  if (instagramEnv.META_APP_ID && instagramEnv.META_APP_SECRET) {
+  if (
+    instagramEnv.META_APP_ID &&
+    instagramEnv.META_APP_SECRET &&
+    isMetaAppId(instagramEnv.META_APP_ID)
+  ) {
     return {
       clientId: instagramEnv.META_APP_ID,
       clientSecret: instagramEnv.META_APP_SECRET,
@@ -83,6 +91,10 @@ function getInstagramOAuthCredentials(source: EnvSource): InstagramOAuthCredenti
     clientSecret: undefined,
     redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
   };
+}
+
+function isMetaAppId(value: string) {
+  return /^\d+$/.test(value);
 }
 
 export function getInstagramOAuthRedirectUri(source: EnvSource = process.env) {
@@ -371,6 +383,7 @@ async function exchangeInstagramCodeForToken(
 
   logger.info("Instagram short-lived token exchange started.", {
     clientIdLength: credentials.clientId.length,
+    clientIdKind: isMetaAppId(credentials.clientId) ? "numeric" : "invalid",
     redirectUriHost: safeUrlHost(redirectUri),
     redirectUriPath: safeUrlPath(redirectUri),
     redirectUriLength: redirectUri.length,

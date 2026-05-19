@@ -11,9 +11,9 @@ describe("Instagram OAuth scaffold", () => {
   test("builds an Instagram authorization URL when configuration is present", () => {
     const result = buildInstagramOAuthStartUrl(
       {
-        META_APP_ID: "meta-app-id",
+        META_APP_ID: "1234567890123456",
         META_APP_SECRET: "meta-secret",
-        INSTAGRAM_APP_ID: "instagram-app-id",
+        INSTAGRAM_APP_ID: "1287544116889796",
         INSTAGRAM_APP_SECRET: "instagram-secret",
         INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
       },
@@ -29,7 +29,7 @@ describe("Instagram OAuth scaffold", () => {
     const url = new URL(result.url);
     expect(url.origin).toBe("https://www.instagram.com");
     expect(url.pathname).toBe("/oauth/authorize");
-    expect(url.searchParams.get("client_id")).toBe("instagram-app-id");
+    expect(url.searchParams.get("client_id")).toBe("1287544116889796");
     expect(url.searchParams.get("redirect_uri")).toBe(
       "https://app.example.com/api/auth/instagram/callback",
     );
@@ -47,9 +47,9 @@ describe("Instagram OAuth scaffold", () => {
   test("does not mix an Instagram app ID with a Meta app secret", () => {
     const result = buildInstagramOAuthStartUrl(
       {
-        META_APP_ID: "meta-app-id",
+        META_APP_ID: "1287544116889796",
         META_APP_SECRET: "meta-secret",
-        INSTAGRAM_APP_ID: "instagram-app-id",
+        INSTAGRAM_APP_ID: "1234567890123456",
         INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
       },
       { state: "signed-state" },
@@ -62,7 +62,29 @@ describe("Instagram OAuth scaffold", () => {
     }
 
     const url = new URL(result.url);
-    expect(url.searchParams.get("client_id")).toBe("meta-app-id");
+    expect(url.searchParams.get("client_id")).toBe("1287544116889796");
+  });
+
+  test("falls back from a non-Meta Instagram app ID to the Meta app pair", () => {
+    const result = buildInstagramOAuthStartUrl(
+      {
+        META_APP_ID: "1287544116889796",
+        META_APP_SECRET: "meta-secret",
+        INSTAGRAM_APP_ID: "aw9dzf5t3snpsdwh",
+        INSTAGRAM_APP_SECRET: "instagram-secret",
+        INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
+      },
+      { state: "signed-state" },
+    );
+
+    expect(result.success).toBe(true);
+
+    if (!result.success) {
+      return;
+    }
+
+    const url = new URL(result.url);
+    expect(url.searchParams.get("client_id")).toBe("1287544116889796");
   });
 
   test("creates and verifies signed OAuth state tied to user and workspace", () => {
