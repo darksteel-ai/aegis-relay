@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 
 import { ZodError } from "zod";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -54,12 +54,12 @@ type InstagramOAuthCredentials = {
 
 const graphApiVersion = "v24.0";
 const instagramOAuthScopes = [
-  "instagram_basic",
-  "instagram_content_publish",
-  "pages_show_list",
-  "pages_read_engagement",
+  "instagram_business_basic",
+  "instagram_business_manage_messages",
+  "instagram_business_content_publish",
 ] as const;
 const instagramDefaultScope = instagramOAuthScopes.join(",");
+const instagramConsentScope = instagramOAuthScopes.join("-");
 export const instagramOAuthStateCookieName = "instagram_oauth_state";
 const instagramOAuthStateTtlMs = 10 * 60 * 1000;
 
@@ -134,21 +134,21 @@ export function buildInstagramOAuthStartUrl(
     };
   }
 
-  const url = new URL(`https://www.facebook.com/${graphApiVersion}/dialog/oauth`);
-  url.searchParams.set("client_id", credentials.clientId);
-  url.searchParams.set("redirect_uri", credentials.redirectUri);
-  url.searchParams.set("response_type", "code");
+  const consentParams = {
+    client_id: credentials.clientId,
+    redirect_uri: credentials.redirectUri,
+    response_type: "code",
+    state: options.state,
+    scope: instagramConsentScope,
+    logger_id: randomUUID(),
+    app_id: credentials.clientId,
+    platform_app_id: credentials.clientId,
+  };
 
-  if (credentials.loginConfigId) {
-    url.searchParams.set("config_id", credentials.loginConfigId);
-    url.searchParams.set("override_default_response_type", "true");
-  } else {
-    url.searchParams.set("scope", instagramDefaultScope);
-  }
-
-  if (options.state) {
-    url.searchParams.set("state", options.state);
-  }
+  const url = new URL("https://www.instagram.com/consent/");
+  url.searchParams.set("flow", "ig_biz_login_oauth");
+  url.searchParams.set("params_json", JSON.stringify(consentParams));
+  url.searchParams.set("source", "oauth_permissions_page_www");
 
   return {
     success: true,
@@ -342,7 +342,7 @@ export async function completeInstagramOAuthCallback({
       success: false,
       reason: "missing-account",
       message:
-        "Meta did not return a professional Instagram account linked to a Facebook Page.",
+        "Instagram did not return a professional account for this authorization.",
     };
   }
 
@@ -394,12 +394,17 @@ async function exchangeInstagramCodeForToken(
     codeLength: code.length,
   });
 
-  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/oauth/access_token`);
-  url.searchParams.set("client_id", credentials.clientId);
-  url.searchParams.set("client_secret", credentials.clientSecret);
-  url.searchParams.set("redirect_uri", redirectUri);
-  url.searchParams.set("code", code);
-  const response = await fetch(url);
+  const formData = new FormData();
+  formData.set("client_id", credentials.clientId);
+  formData.set("client_secret", credentials.clientSecret);
+  formData.set("grant_type", "authorization_code");
+  formData.set("redirect_uri", redirectUri);
+  formData.set("code", code);
+
+  const response = await fetch("https://api.instagram.com/oauth/access_token", {
+    method: "POST",
+    body: formData,
+  });
 
   const token = (await response.json()) as MetaTokenResponse;
 
@@ -411,25 +416,22 @@ async function exchangeInstagramCodeForToken(
     return token;
   }
 
-  return exchangeFacebookShortLivedToken(
+  return exchangeInstagramShortLivedToken(
     token,
-    credentials.clientId,
     credentials.clientSecret,
     logger,
   );
 }
 
-async function exchangeFacebookShortLivedToken(
+async function exchangeInstagramShortLivedToken(
   token: MetaTokenResponse,
-  clientId: string,
   clientSecret: string,
   logger: ConsoleLike = console,
 ) {
-  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/oauth/access_token`);
-  url.searchParams.set("grant_type", "fb_exchange_token");
-  url.searchParams.set("client_id", clientId);
+  const url = new URL("https://graph.instagram.com/access_token");
+  url.searchParams.set("grant_type", "ig_exchange_token");
   url.searchParams.set("client_secret", clientSecret);
-  url.searchParams.set("fb_exchange_token", token.access_token ?? "");
+  url.searchParams.set("access_token", token.access_token ?? "");
 
   const response = await fetch(url, {
     method: "GET",
@@ -437,7 +439,7 @@ async function exchangeFacebookShortLivedToken(
   const longLivedToken = (await response.json()) as MetaTokenResponse;
 
   if (!longLivedToken.access_token) {
-    logger.error("Instagram Facebook token extension failed.", {
+    logger.error("Instagram long-lived token exchange failed.", {
       status: response.status,
       error: redactInstagramTokenError(longLivedToken),
     });
@@ -464,29 +466,19 @@ function safeUrlPath(value: string) {
 }
 
 async function fetchInstagramAccountsForToken(accessToken: string) {
-  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/me/accounts`);
-  url.searchParams.set(
-    "fields",
-    "id,name,access_token,instagram_business_account{id,username,name}",
-  );
+  const url = new URL(`https://graph.instagram.com/${graphApiVersion}/me`);
+  url.searchParams.set("fields", "user_id,username,name,account_type");
   url.searchParams.set("access_token", accessToken);
   const response = await fetch(url);
   const body = (await response.json()) as {
-    data?: Array<{
-      id?: string;
-      name?: string;
-      access_token?: string;
-      instagram_business_account?: {
-        id?: string;
-        username?: string;
-        name?: string;
-      };
-    }>;
+    id?: string;
+    user_id?: string;
+    username?: string;
+    name?: string;
+    account_type?: string;
   };
 
-  const page = body.data?.find((item) => item.instagram_business_account?.id);
-  const instagramAccount = page?.instagram_business_account;
-  const instagramAccountId = instagramAccount?.id;
+  const instagramAccountId = body.user_id ?? body.id;
 
   if (!instagramAccountId) {
     return [];
@@ -495,8 +487,8 @@ async function fetchInstagramAccountsForToken(accessToken: string) {
   return [
     {
       instagramAccountId,
-      accountName: instagramAccount.username ?? instagramAccount.name ?? page?.name ?? "Instagram account",
-      accessToken: page?.access_token ?? accessToken,
+      accountName: body.username ?? body.name ?? "Instagram account",
+      accessToken,
     },
   ];
 }
@@ -505,7 +497,7 @@ function getInstagramTokenErrorMessage(token: MetaTokenResponse) {
   return (
     token.error?.message ??
     token.error_message ??
-    "Meta did not return an access token."
+    "Instagram did not return an access token."
   );
 }
 

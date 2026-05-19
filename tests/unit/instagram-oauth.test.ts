@@ -27,22 +27,29 @@ describe("Instagram OAuth scaffold", () => {
     }
 
     const url = new URL(result.url);
-    expect(url.origin).toBe("https://www.facebook.com");
-    expect(url.pathname).toBe("/v24.0/dialog/oauth");
-    expect(url.searchParams.get("client_id")).toBe("1287544116889796");
-    expect(url.searchParams.get("redirect_uri")).toBe(
+    expect(url.origin).toBe("https://www.instagram.com");
+    expect(url.pathname).toBe("/consent/");
+    expect(url.searchParams.get("flow")).toBe("ig_biz_login_oauth");
+    expect(url.searchParams.get("source")).toBe("oauth_permissions_page_www");
+
+    const params = JSON.parse(url.searchParams.get("params_json") ?? "{}") as Record<string, string>;
+    expect(params.client_id).toBe("1287544116889796");
+    expect(params.redirect_uri).toBe(
       "https://app.example.com/api/auth/instagram/callback",
     );
-    expect(url.searchParams.get("response_type")).toBe("code");
-    expect(url.searchParams.get("state")).toBe("signed-state");
-    expect(url.searchParams.get("scope")).toBe(
-      "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
+    expect(params.response_type).toBe("code");
+    expect(params.state).toBe("signed-state");
+    expect(params.scope).toBe(
+      "instagram_business_basic-instagram_business_manage_messages-instagram_business_content_publish",
     );
+    expect(params.app_id).toBe("1287544116889796");
+    expect(params.platform_app_id).toBe("1287544116889796");
+    expect(params.logger_id).toEqual(expect.any(String));
     expect(url.search).not.toContain("meta-secret");
     expect(url.search).not.toContain("instagram-secret");
   });
 
-  test("uses Facebook Login for Business config id instead of raw scopes when configured", () => {
+  test("uses Instagram business consent even when an old config id is configured", () => {
     const result = buildInstagramOAuthStartUrl(
       {
         META_APP_ID: "1287544116889796",
@@ -60,9 +67,13 @@ describe("Instagram OAuth scaffold", () => {
     }
 
     const url = new URL(result.url);
-    expect(url.searchParams.get("config_id")).toBe("1234567890");
-    expect(url.searchParams.get("override_default_response_type")).toBe("true");
-    expect(url.searchParams.has("scope")).toBe(false);
+    const params = JSON.parse(url.searchParams.get("params_json") ?? "{}") as Record<string, string>;
+    expect(url.origin).toBe("https://www.instagram.com");
+    expect(url.pathname).toBe("/consent/");
+    expect(params.scope).toBe(
+      "instagram_business_basic-instagram_business_manage_messages-instagram_business_content_publish",
+    );
+    expect(params).not.toHaveProperty("config_id");
   });
 
   test("does not mix an Instagram app ID with a Meta app secret", () => {
@@ -83,7 +94,8 @@ describe("Instagram OAuth scaffold", () => {
     }
 
     const url = new URL(result.url);
-    expect(url.searchParams.get("client_id")).toBe("1287544116889796");
+    const params = JSON.parse(url.searchParams.get("params_json") ?? "{}") as Record<string, string>;
+    expect(params.client_id).toBe("1287544116889796");
   });
 
   test("falls back from a non-Meta Instagram app ID to the Meta app pair", () => {
@@ -105,7 +117,8 @@ describe("Instagram OAuth scaffold", () => {
     }
 
     const url = new URL(result.url);
-    expect(url.searchParams.get("client_id")).toBe("1287544116889796");
+    const params = JSON.parse(url.searchParams.get("params_json") ?? "{}") as Record<string, string>;
+    expect(params.client_id).toBe("1287544116889796");
   });
 
   test("creates and verifies signed OAuth state tied to user and workspace", () => {
@@ -172,7 +185,7 @@ describe("Instagram OAuth scaffold", () => {
       accessToken: expect.stringMatching(/^enc:v1:/),
       refreshToken: undefined,
       expiresAt: expect.any(Number),
-      scopes: "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
+      scopes: "instagram_business_basic,instagram_business_manage_messages,instagram_business_content_publish",
       status: "SCHEDULED",
     });
   });
