@@ -307,8 +307,10 @@ export async function optimizeMetadataWithOpenAI({
       notes: ["Using recent public YouTube titles."],
     },
   ],
-  apiKey = process.env.OPENAI_API_KEY,
-  model = process.env.OPENAI_METADATA_MODEL ?? "gpt-4.1-mini",
+  apiKey,
+  model,
+  endpoint,
+  headers,
 }: {
   caption: string;
   currentTitle?: string;
@@ -318,20 +320,30 @@ export async function optimizeMetadataWithOpenAI({
   platformSignals?: PlatformDataSignal[];
   apiKey?: string;
   model?: string;
+  endpoint?: string;
+  headers?: Record<string, string>;
 }): Promise<MetadataOptimizationResult> {
-  if (!apiKey) {
+  const provider = getMetadataProvider({
+    apiKey,
+    model,
+    endpoint,
+    headers,
+  });
+
+  if (!provider.apiKey) {
     throw new Error("AI optimization is not configured yet.");
   }
 
   const recentTitles = recentUploads.map((upload) => upload.title);
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch(provider.endpoint, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${provider.apiKey}`,
       "Content-Type": "application/json",
+      ...provider.headers,
     },
     body: JSON.stringify({
-      model,
+      model: provider.model,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -390,6 +402,41 @@ export async function optimizeMetadataWithOpenAI({
       recentTitles,
       platforms: platformSignals,
     },
+  };
+}
+
+function getMetadataProvider(overrides: {
+  apiKey?: string;
+  model?: string;
+  endpoint?: string;
+  headers?: Record<string, string>;
+} = {}) {
+  if (overrides.apiKey || overrides.model || overrides.endpoint || overrides.headers) {
+    return {
+      apiKey: overrides.apiKey ?? process.env.OPENAI_API_KEY,
+      model: overrides.model ?? process.env.OPENAI_METADATA_MODEL ?? "gpt-4.1-mini",
+      endpoint: overrides.endpoint ?? "https://api.openai.com/v1/chat/completions",
+      headers: overrides.headers ?? {},
+    };
+  }
+
+  if (process.env.OPENROUTER_API_KEY) {
+    return {
+      apiKey: process.env.OPENROUTER_API_KEY,
+      model: process.env.OPENROUTER_METADATA_MODEL ?? "openai/gpt-4.1-mini",
+      endpoint: "https://openrouter.ai/api/v1/chat/completions",
+      headers: {
+        "HTTP-Referer": process.env.NEXTAUTH_URL ?? "https://www.aegisrelay.app",
+        "X-Title": "Aegis Relay",
+      },
+    };
+  }
+
+  return {
+    apiKey: process.env.OPENAI_API_KEY,
+    model: process.env.OPENAI_METADATA_MODEL ?? "gpt-4.1-mini",
+    endpoint: "https://api.openai.com/v1/chat/completions",
+    headers: {},
   };
 }
 

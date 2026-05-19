@@ -71,6 +71,8 @@ const inngestEnvSchema = z.object({
 const openAiEnvSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_METADATA_MODEL: z.string().min(1).optional(),
+  OPENROUTER_API_KEY: z.string().min(1).optional(),
+  OPENROUTER_METADATA_MODEL: z.string().min(1).optional(),
 });
 
 const convexEnvSchema = z.object({

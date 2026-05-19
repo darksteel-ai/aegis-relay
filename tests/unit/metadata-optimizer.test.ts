@@ -12,6 +12,7 @@ import {
 describe("metadata optimizer", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   test("normalizes hashtag suggestions", () => {
@@ -181,5 +182,45 @@ describe("metadata optimizer", () => {
         ],
       },
     });
+  });
+
+  test("uses OpenRouter when an OpenRouter key is configured", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "or-test");
+    vi.stubEnv("OPENROUTER_METADATA_MODEL", "openai/gpt-4.1-mini");
+    vi.stubEnv("NEXTAUTH_URL", "https://www.aegisrelay.app");
+    const fetchMock = vi.fn(async () => Response.json({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              suggestions: [
+                {
+                  title: "One Commander Nobody Saw Coming",
+                  hashtags: ["#MTG", "#Commander", "#Shorts"],
+                  rationale: "Targets commander curiosity and short-form discovery.",
+                },
+              ],
+            }),
+          },
+        },
+      ],
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await optimizeMetadataWithOpenAI({
+      caption: "Commander of the Day.",
+      recentUploads: [],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://openrouter.ai/api/v1/chat/completions",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer or-test",
+          "HTTP-Referer": "https://www.aegisrelay.app",
+          "X-Title": "Aegis Relay",
+        }),
+      }),
+    );
   });
 });
