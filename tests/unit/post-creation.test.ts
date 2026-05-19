@@ -105,6 +105,29 @@ describe("scheduled post creation rules", () => {
     ]);
   });
 
+  test("keeps multiple selected accounts for the same platform", () => {
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      platforms: ["INSTAGRAM"],
+      accountIdsByPlatform: {
+        INSTAGRAM: ["account_1", "account_2", "account_1"],
+      },
+    }, {
+      workspaceId: "workspace_123",
+      userId: "user_123",
+      now: new Date("2026-05-12T12:00:00.000Z"),
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.accountIdsByPlatform).toEqual({
+      INSTAGRAM: ["account_1", "account_2"],
+    });
+  });
+
   test("rejects missing caption, timezone, platforms, and video", () => {
     const result = parseCreateScheduledPostInput({
       baseCaption: "",

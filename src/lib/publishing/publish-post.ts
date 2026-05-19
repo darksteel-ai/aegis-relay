@@ -14,6 +14,7 @@ import {
 type LoadedPlatformPost = {
   id: string;
   platform: Platform;
+  connectedAccountId?: string | null;
   title?: string | null;
   caption: string;
   privacy?: string | null;
@@ -94,7 +95,10 @@ export async function publishPlatformPost(
 
   const connectedAccount =
     platformPost.scheduledPost.workspace.connectedAccounts.find(
-      (account) => account.platform === platformPost.platform,
+      (account) =>
+        platformPost.connectedAccountId
+          ? account.id === platformPost.connectedAccountId
+          : account.platform === platformPost.platform,
     ) ?? null;
 
   if (!connectedAccount) {
@@ -197,7 +201,10 @@ async function publishPlatformPostFromConvex(
 
   const connectedAccount =
     platformPost.scheduledPost.workspace.connectedAccounts.find(
-      (account: { platform: Platform }) => account.platform === platformPost.platform,
+      (account: { id: string; platform: Platform }) =>
+        platformPost.connectedAccountId
+          ? account.id === platformPost.connectedAccountId
+          : account.platform === platformPost.platform,
     ) ?? null;
 
   if (!connectedAccount) {

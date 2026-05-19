@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import { getAuthSession } from "@/lib/auth";
+import { convexApi } from "@/lib/convex-api";
+import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 import { ComposerForm } from "./composer-form";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +14,12 @@ export default async function ComposerPage() {
   if (!session?.user?.id) {
     redirect("/sign-in");
   }
+
+  const connectedAccounts = isConvexConfigured()
+    ? await getConvexClient().query(convexApi.connections.listForUser, {
+        userId: session.user.id,
+      })
+    : [];
 
   return (
     <AppShell>
@@ -25,7 +33,7 @@ export default async function ComposerPage() {
         </div>
 
         <section className="studio-panel max-w-5xl rounded-md p-5">
-          <ComposerForm />
+          <ComposerForm connectedAccounts={connectedAccounts} />
         </section>
       </div>
     </AppShell>

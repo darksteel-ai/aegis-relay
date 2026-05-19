@@ -84,6 +84,7 @@ export default defineSchema({
     scheduledPostId: v.id("scheduledPosts"),
     workspaceId: v.id("workspaces"),
     platform,
+    connectedAccountId: v.optional(v.id("connectedAccounts")),
     title: v.optional(v.string()),
     caption: v.string(),
     privacy: v.string(),

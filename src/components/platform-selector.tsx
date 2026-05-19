@@ -29,14 +29,26 @@ export const composerPlatforms = [
 export type ComposerPlatform = (typeof composerPlatforms)[number]["id"];
 
 type PlatformSelectorProps = {
+  accounts?: Array<{
+    id: string;
+    platform: ComposerPlatform;
+    accountName: string;
+    externalId: string;
+    status: string;
+  }>;
+  accountIdsByPlatform?: Partial<Record<ComposerPlatform, string[]>>;
   disabled?: boolean;
   selected: ComposerPlatform[];
+  onAccountChange?: (accountIdsByPlatform: Partial<Record<ComposerPlatform, string[]>>) => void;
   onChange: (platforms: ComposerPlatform[]) => void;
 };
 
 export function PlatformSelector({
+  accounts = [],
+  accountIdsByPlatform = {},
   disabled = false,
   selected,
+  onAccountChange,
   onChange,
 }: PlatformSelectorProps) {
   function togglePlatform(platform: ComposerPlatform) {
@@ -52,12 +64,34 @@ export function PlatformSelector({
     onChange([...selected, platform]);
   }
 
+  function toggleAccount(platform: ComposerPlatform, accountId: string) {
+    if (disabled || !onAccountChange) {
+      return;
+    }
+
+    const selectedAccounts = accountIdsByPlatform[platform] ?? [];
+    const nextPlatformAccounts = selectedAccounts.includes(accountId)
+      ? selectedAccounts.filter((id) => id !== accountId)
+      : [...selectedAccounts, accountId];
+
+    onAccountChange({
+      ...accountIdsByPlatform,
+      [platform]: nextPlatformAccounts,
+    });
+
+    if (!selected.includes(platform) && nextPlatformAccounts.length > 0) {
+      onChange([...selected, platform]);
+    }
+  }
+
   return (
     <fieldset className="grid gap-3">
       <legend className="text-sm font-medium text-white">Platforms</legend>
       <div className="grid gap-3 md:grid-cols-3">
         {composerPlatforms.map((platform) => {
           const checked = selected.includes(platform.id);
+          const platformAccounts = accounts.filter((account) => account.platform === platform.id);
+          const selectedAccounts = accountIdsByPlatform[platform.id] ?? [];
 
           return (
             <label
@@ -85,6 +119,29 @@ export function PlatformSelector({
                 </span>
               </span>
               <span className="text-sm leading-5 text-slate-400">{platform.note}</span>
+              {platformAccounts.length > 0 ? (
+                <span className="grid gap-2 border-t border-white/10 pt-3">
+                  {platformAccounts.map((account) => (
+                    <span
+                      className="flex items-center gap-2 text-xs text-slate-300"
+                      key={account.id}
+                    >
+                      <input
+                        checked={selectedAccounts.includes(account.id)}
+                        className="h-4 w-4 rounded border-white/20 bg-black/40 accent-cyan-300"
+                        disabled={disabled}
+                        type="checkbox"
+                        onChange={(event) => {
+                          event.stopPropagation();
+                          toggleAccount(platform.id, account.id);
+                        }}
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                      <span className="min-w-0 truncate">{account.accountName}</span>
+                    </span>
+                  ))}
+                </span>
+              ) : null}
             </label>
           );
         })}

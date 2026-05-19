@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { convexApi } from "@/lib/convex-api";
 import { getConvexClient } from "@/lib/convex-server";
+import { Platform } from "@/lib/domain";
 import { parseCreateScheduledPostInput } from "@/lib/posts/create";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 export const runtime = "nodejs";
 
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
       scheduledAt: input.scheduledAt.getTime(),
       timezone: input.timezone,
       platforms: input.platforms,
+      accountIdsByPlatform: castConnectedAccountSelections(input.accountIdsByPlatform),
       video: input.video,
     });
   } catch (error) {
@@ -67,8 +70,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 402 });
     }
 
+    if (error instanceof Error && error.message.includes("Selected account")) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     throw error;
   }
 
   return NextResponse.json({ post }, { status: 201 });
+}
+
+function castConnectedAccountSelections(
+  selections: Partial<Record<Platform, string[]>>,
+) {
+  return {
+    YOUTUBE: selections.YOUTUBE as Id<"connectedAccounts">[] | undefined,
+    TIKTOK: selections.TIKTOK as Id<"connectedAccounts">[] | undefined,
+    INSTAGRAM: selections.INSTAGRAM as Id<"connectedAccounts">[] | undefined,
+  };
 }

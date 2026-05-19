@@ -48,6 +48,7 @@ export const loadForPublish = query({
     return {
       id: platformPost._id,
       platform: platformPost.platform,
+      connectedAccountId: platformPost.connectedAccountId ?? null,
       title: platformPost.title ?? null,
       caption: platformPost.caption,
       privacy: platformPost.privacy,

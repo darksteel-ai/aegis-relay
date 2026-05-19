@@ -24,6 +24,13 @@ const createScheduledPostPayloadSchema = z
     scheduledAt: z.string().trim().optional(),
     timezone: z.string().trim().max(100).optional(),
     platforms: z.array(z.string()).optional(),
+    accountIdsByPlatform: z
+      .object({
+        YOUTUBE: z.array(z.string().trim().min(1)).optional(),
+        TIKTOK: z.array(z.string().trim().min(1)).optional(),
+        INSTAGRAM: z.array(z.string().trim().min(1)).optional(),
+      })
+      .optional(),
     video: z
       .object({
         storageKey: z.string().trim().min(1).max(1_024),
@@ -46,6 +53,7 @@ export type CreateScheduledPostInput = {
   scheduledAt: Date;
   timezone: string;
   platforms: Platform[];
+  accountIdsByPlatform: Partial<Record<Platform, string[]>>;
   video: {
     storageKey: string;
     fileName: string;
@@ -86,6 +94,7 @@ export function parseCreateScheduledPostInput(
   const timezone = data.timezone?.trim() ?? "";
   const scheduledAt = parseScheduledAt(data.scheduledAt);
   const platforms = normalizePlatforms(data.platforms, errors);
+  const accountIdsByPlatform = normalizeAccountSelections(data.accountIdsByPlatform);
 
   if (!baseCaption) {
     errors.push("Caption is required.");
@@ -166,6 +175,7 @@ export function parseCreateScheduledPostInput(
       scheduledAt,
       timezone,
       platforms,
+      accountIdsByPlatform,
       video: {
         storageKey: data.video.storageKey,
         fileName: data.video.fileName,
@@ -244,6 +254,30 @@ function normalizePlatforms(value: string[] | undefined, errors: string[]) {
   }
 
   return uniquePlatforms;
+}
+
+function normalizeAccountSelections(
+  value:
+    | {
+        YOUTUBE?: string[];
+        TIKTOK?: string[];
+        INSTAGRAM?: string[];
+      }
+    | undefined,
+) {
+  const selections: Partial<Record<Platform, string[]>> = {};
+
+  for (const platform of supportedPlatforms) {
+    const ids = value?.[platform]
+      ?.map((id) => id.trim())
+      .filter(Boolean);
+
+    if (ids?.length) {
+      selections[platform] = Array.from(new Set(ids));
+    }
+  }
+
+  return selections;
 }
 
 function isSupportedPlatform(platform: string): platform is Platform {

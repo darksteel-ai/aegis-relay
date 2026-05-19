@@ -27,9 +27,24 @@ type AiPlatformSignal = {
   notes: string[];
 };
 
-export function ComposerForm() {
+type ComposerConnectedAccount = {
+  id: string;
+  platform: ComposerPlatform;
+  accountName: string;
+  externalId: string;
+  status: string;
+};
+
+export function ComposerForm({
+  connectedAccounts = [],
+}: {
+  connectedAccounts?: ComposerConnectedAccount[];
+}) {
   const [video, setVideo] = useState<UploadedVideo | null>(null);
   const [platforms, setPlatforms] = useState<ComposerPlatform[]>(["YOUTUBE"]);
+  const [accountIdsByPlatform, setAccountIdsByPlatform] = useState<
+    Partial<Record<ComposerPlatform, string[]>>
+  >(() => getInitialAccountSelections(connectedAccounts));
   const [baseCaption, setBaseCaption] = useState("");
   const [youtubeTitle, setYoutubeTitle] = useState("");
   const [hashtags, setHashtags] = useState("");
@@ -79,6 +94,7 @@ export function ComposerForm() {
           scheduledAt: new Date(scheduledAt).toISOString(),
           timezone,
           platforms,
+          accountIdsByPlatform,
           video: {
             storageKey: video.key,
             fileName: video.fileName,
@@ -105,6 +121,7 @@ export function ComposerForm() {
       setHashtags("");
       setScheduledAt("");
       setPlatforms(["YOUTUBE"]);
+      setAccountIdsByPlatform(getInitialAccountSelections(connectedAccounts));
       setVideo(null);
     } catch (error) {
       setSubmitState({
@@ -327,8 +344,11 @@ export function ComposerForm() {
       </div>
 
       <PlatformSelector
+        accounts={connectedAccounts}
+        accountIdsByPlatform={accountIdsByPlatform}
         disabled={isSubmitting}
         selected={platforms}
+        onAccountChange={setAccountIdsByPlatform}
         onChange={setPlatforms}
       />
 
@@ -400,4 +420,16 @@ async function readErrorMessage(response: Response) {
 
 function getDefaultTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+function getInitialAccountSelections(accounts: ComposerConnectedAccount[]) {
+  const selections: Partial<Record<ComposerPlatform, string[]>> = {};
+
+  for (const account of accounts) {
+    if (!selections[account.platform]?.length) {
+      selections[account.platform] = [account.id];
+    }
+  }
+
+  return selections;
 }

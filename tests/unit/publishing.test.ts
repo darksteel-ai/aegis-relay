@@ -193,6 +193,48 @@ describe("publishPlatformPost", () => {
     );
   });
 
+  test("publishes through the selected connected account when one is assigned", async () => {
+    const db = createPublishDb({
+      ...platformPost,
+      connectedAccountId: "connected_account_2",
+      scheduledPost: {
+        ...platformPost.scheduledPost,
+        workspace: {
+          ...platformPost.scheduledPost.workspace,
+          connectedAccounts: [
+            ...platformPost.scheduledPost.workspace.connectedAccounts,
+            {
+              id: "connected_account_2",
+              platform: Platform.YOUTUBE,
+              accessToken: "selected-access",
+              refreshToken: "selected-refresh",
+              expiresAt: new Date("2026-07-01T00:00:00.000Z"),
+            },
+          ],
+        },
+      },
+    });
+    const adapter: PlatformAdapter = {
+      publish: vi.fn(async () => ({
+        platformPostId: "youtube_456",
+      })),
+    };
+
+    await publishPlatformPost("platform_post_1", {
+      db,
+      adapters: { [Platform.YOUTUBE]: adapter },
+    });
+
+    expect(adapter.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectedAccount: expect.objectContaining({
+          id: "connected_account_2",
+          accessToken: "selected-access",
+        }),
+      }),
+    );
+  });
+
   test("marks adapter failures with a safe message and records a failed attempt", async () => {
     const db = createPublishDb();
     const adapter: PlatformAdapter = {

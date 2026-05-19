@@ -38,6 +38,11 @@ export const createScheduledPost = mutation({
     scheduledAt: v.number(),
     timezone: v.string(),
     platforms: v.array(platform),
+    accountIdsByPlatform: v.optional(v.object({
+      YOUTUBE: v.optional(v.array(v.id("connectedAccounts"))),
+      TIKTOK: v.optional(v.array(v.id("connectedAccounts"))),
+      INSTAGRAM: v.optional(v.array(v.id("connectedAccounts"))),
+    })),
     video: v.object({
       storageKey: v.string(),
       fileName: v.string(),
@@ -121,18 +126,36 @@ export const createScheduledPost = mutation({
       : args.baseCaption;
 
     for (const item of args.platforms) {
-      await ctx.db.insert("platformPosts", {
-        scheduledPostId: postId,
-        workspaceId: args.workspaceId,
-        platform: item,
-        title: item === "YOUTUBE" ? args.youtubeTitle : undefined,
-        caption: platformCaption,
-        privacy: "public",
-        scheduledAt: args.scheduledAt,
-        status: item === "YOUTUBE" ? "SCHEDULED" : "APPROVAL_PENDING",
-        createdAt: now,
-        updatedAt: now,
-      });
+      const selectedAccountIds = args.accountIdsByPlatform?.[item] ?? [];
+      const targetAccountIds = selectedAccountIds.length > 0 ? selectedAccountIds : [undefined];
+
+      for (const connectedAccountId of targetAccountIds) {
+        if (connectedAccountId) {
+          const account = await ctx.db.get(connectedAccountId);
+
+          if (
+            !account ||
+            account.workspaceId !== args.workspaceId ||
+            account.platform !== item
+          ) {
+            throw new Error("Selected account is not available for this workspace.");
+          }
+        }
+
+        await ctx.db.insert("platformPosts", {
+          scheduledPostId: postId,
+          workspaceId: args.workspaceId,
+          platform: item,
+          connectedAccountId,
+          title: item === "YOUTUBE" ? args.youtubeTitle : undefined,
+          caption: platformCaption,
+          privacy: "public",
+          scheduledAt: args.scheduledAt,
+          status: item === "YOUTUBE" ? "SCHEDULED" : "APPROVAL_PENDING",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
     }
 
     return getPostById(ctx, postId);
@@ -316,6 +339,7 @@ async function getPostById(ctx: any, postId: any) {
     platformPosts: platformPosts.map((item: any) => ({
       id: item._id,
       platform: item.platform,
+      connectedAccountId: item.connectedAccountId ?? null,
       title: item.title ?? null,
       caption: item.caption,
       privacy: item.privacy,

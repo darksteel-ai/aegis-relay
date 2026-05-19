@@ -16,7 +16,7 @@ import { getConnectionHealth } from "@/lib/connections/health";
 import { convexApi } from "@/lib/convex-api";
 import { getConvexClient, isConvexConfigured } from "@/lib/convex-server";
 import {
-  selectNewestAccountsByPlatform,
+  formatPlatformLabel,
 } from "@/lib/posts/display";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +55,7 @@ const platformRows = [
 ] as const;
 
 type ConnectedAccountView = {
+  id: string;
   platform: string;
   status: string;
   accountName: string;
@@ -103,6 +104,7 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
     : [];
 
   const normalizedAccounts: ConnectedAccountView[] = connectedAccounts.map((account: {
+      id: string;
       platform: string;
       status: string;
       accountName: string;
@@ -116,9 +118,12 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
       expiresAt: account.expiresAt ? new Date(account.expiresAt) : null,
       updatedAt: new Date(account.updatedAt),
     }));
-  const accountsByPlatform = selectNewestAccountsByPlatform<ConnectedAccountView>(
-    normalizedAccounts,
-  );
+  const accountsByPlatform = normalizedAccounts.reduce((map, account) => {
+    const accounts = map.get(account.platform) ?? [];
+    accounts.push(account);
+    map.set(account.platform, accounts);
+    return map;
+  }, new Map<string, ConnectedAccountView[]>());
 
   return (
     <AppShell>
@@ -167,9 +172,9 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
           </div>
           <ul className="grid gap-3">
             {platformRows.map((row) => {
-              const account = accountsByPlatform.get(row.platform);
-              const status = account?.status ?? "APPROVAL_PENDING";
-              const health = getConnectionHealth(account);
+              const accounts = accountsByPlatform.get(row.platform) ?? [];
+              const primaryAccount = accounts[0];
+              const status = primaryAccount?.status ?? "APPROVAL_PENDING";
               const needsDatabase =
                 (row.platform === "YOUTUBE" ||
                   row.platform === "TIKTOK" ||
@@ -191,40 +196,43 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
                       <StatusBadge status={status} />
                     </div>
                     <p className="text-sm leading-6 text-slate-400">
-                      {account
-                        ? health.message
+                      {accounts.length
+                        ? `${accounts.length} ${formatPlatformLabel(row.platform)} ${accounts.length === 1 ? "account" : "accounts"} connected.`
                         : needsDatabase
                           ? `${row.name} OAuth is ready, but account storage must be connected first.`
                           : row.description}
                     </p>
-                    {account ? (
-                      <dl className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
-                        <div>
-                          <dt className="sr-only">External account id</dt>
-                          <dd>ID {account.externalId}</dd>
-                        </div>
-                        <div>
-                          <dt className="sr-only">Connection health</dt>
-                          <dd>{health.label}</dd>
-                        </div>
-                        <div>
-                          <dt className="sr-only">Token expiration</dt>
-                          <dd>
-                            {account.expiresAt
-                              ? `Expires ${account.expiresAt.toLocaleDateString("en")}`
-                              : "No token expiration stored"}
-                          </dd>
-                        </div>
-                      </dl>
+                    {accounts.length ? (
+                      <ul className="grid gap-2 pt-1">
+                        {accounts.map((account) => {
+                          const health = getConnectionHealth(account);
+
+                          return (
+                            <li
+                              className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2"
+                              key={account.id}
+                            >
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-white">{account.accountName}</span>
+                                <span className="text-xs text-slate-500">ID {account.externalId}</span>
+                                <span className="text-xs text-cyan-100">{health.label}</span>
+                              </div>
+                              <p className="mt-1 text-xs leading-5 text-slate-500">
+                                {health.message}
+                              </p>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     ) : null}
                   </div>
 
                   {canConnect ? (
                     <a
-                      className={account ? "studio-button-secondary w-fit" : "studio-button-primary w-fit"}
+                      className={accounts.length ? "studio-button-secondary w-fit" : "studio-button-primary w-fit"}
                       href={row.href}
                     >
-                      {account ? "Reconnect" : row.action}
+                      {accounts.length ? "Add another" : row.action}
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
                     </a>
                   ) : (
