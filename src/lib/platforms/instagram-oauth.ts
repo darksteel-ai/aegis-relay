@@ -48,6 +48,7 @@ export type InstagramAccountCandidate = {
 type InstagramOAuthCredentials = {
   clientId?: string;
   clientSecret?: string;
+  loginConfigId?: string;
   redirectUri?: string;
 };
 
@@ -73,6 +74,7 @@ function getInstagramOAuthCredentials(source: EnvSource): InstagramOAuthCredenti
     return {
       clientId: instagramEnv.INSTAGRAM_APP_ID,
       clientSecret: instagramEnv.INSTAGRAM_APP_SECRET,
+      loginConfigId: instagramEnv.INSTAGRAM_LOGIN_CONFIG_ID,
       redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
     };
   }
@@ -85,6 +87,7 @@ function getInstagramOAuthCredentials(source: EnvSource): InstagramOAuthCredenti
     return {
       clientId: instagramEnv.META_APP_ID,
       clientSecret: instagramEnv.META_APP_SECRET,
+      loginConfigId: instagramEnv.INSTAGRAM_LOGIN_CONFIG_ID,
       redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
     };
   }
@@ -92,6 +95,7 @@ function getInstagramOAuthCredentials(source: EnvSource): InstagramOAuthCredenti
   return {
     clientId: undefined,
     clientSecret: undefined,
+    loginConfigId: instagramEnv.INSTAGRAM_LOGIN_CONFIG_ID,
     redirectUri: instagramEnv.INSTAGRAM_REDIRECT_URI,
   };
 }
@@ -134,7 +138,13 @@ export function buildInstagramOAuthStartUrl(
   url.searchParams.set("client_id", credentials.clientId);
   url.searchParams.set("redirect_uri", credentials.redirectUri);
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", instagramDefaultScope);
+
+  if (credentials.loginConfigId) {
+    url.searchParams.set("config_id", credentials.loginConfigId);
+    url.searchParams.set("override_default_response_type", "true");
+  } else {
+    url.searchParams.set("scope", instagramDefaultScope);
+  }
 
   if (options.state) {
     url.searchParams.set("state", options.state);

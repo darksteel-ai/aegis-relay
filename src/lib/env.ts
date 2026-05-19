@@ -56,6 +56,7 @@ const instagramEnvSchema = z.object({
   META_APP_SECRET: z.string().min(1).optional(),
   INSTAGRAM_APP_ID: z.string().min(1).optional(),
   INSTAGRAM_APP_SECRET: z.string().min(1).optional(),
+  INSTAGRAM_LOGIN_CONFIG_ID: z.string().min(1).optional(),
   INSTAGRAM_REDIRECT_URI: z.string().url().optional(),
 });
 

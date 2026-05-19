@@ -42,6 +42,29 @@ describe("Instagram OAuth scaffold", () => {
     expect(url.search).not.toContain("instagram-secret");
   });
 
+  test("uses Facebook Login for Business config id instead of raw scopes when configured", () => {
+    const result = buildInstagramOAuthStartUrl(
+      {
+        META_APP_ID: "1287544116889796",
+        META_APP_SECRET: "meta-secret",
+        INSTAGRAM_LOGIN_CONFIG_ID: "1234567890",
+        INSTAGRAM_REDIRECT_URI: "https://app.example.com/api/auth/instagram/callback",
+      },
+      { state: "signed-state" },
+    );
+
+    expect(result.success).toBe(true);
+
+    if (!result.success) {
+      return;
+    }
+
+    const url = new URL(result.url);
+    expect(url.searchParams.get("config_id")).toBe("1234567890");
+    expect(url.searchParams.get("override_default_response_type")).toBe("true");
+    expect(url.searchParams.has("scope")).toBe(false);
+  });
+
   test("does not mix an Instagram app ID with a Meta app secret", () => {
     const result = buildInstagramOAuthStartUrl(
       {
