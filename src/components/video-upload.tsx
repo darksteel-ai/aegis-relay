@@ -185,7 +185,7 @@ export function VideoUpload({
         ...metadata,
       });
     } catch (error) {
-      reportError(error instanceof Error ? error.message : "Upload failed. Please try again.");
+      reportError(toUploadErrorMessage(error));
       setStatus("ready");
     }
   }
@@ -294,6 +294,14 @@ function formatBytes(bytes: number) {
   }
 
   return `${Math.round(bytes / (1024 * 1024))}MB`;
+}
+
+function toUploadErrorMessage(error: unknown) {
+  if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) {
+    return "Upload could not reach storage. Check the bucket CORS settings and try again.";
+  }
+
+  return error instanceof Error ? error.message : "Upload failed. Please try again.";
 }
 
 function getSelectedFileValidationError(file: File, metadata: VideoMetadata) {
