@@ -70,6 +70,8 @@ export function ComposerForm({
     platforms,
   });
   const canSubmit = !submitBlockedReason;
+  const scheduleBlockedCopy =
+    submitState.type === "success" ? "Ready for the next post." : submitBlockedReason;
 
   async function submitPost(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -410,14 +412,14 @@ export function ComposerForm({
         className="studio-button-primary w-fit disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!canSubmit || isSubmitting}
         type="submit"
-        title={!canSubmit ? submitBlockedReason : undefined}
+        title={!canSubmit ? scheduleBlockedCopy : undefined}
       >
         <CalendarPlus className="h-4 w-4" aria-hidden="true" />
         {isSubmitting ? "Scheduling..." : "Schedule post"}
       </button>
-      {!canSubmit && submitBlockedReason ? (
+      {!canSubmit && scheduleBlockedCopy ? (
         <p className="-mt-4 text-sm text-slate-400" role="status">
-          {submitState.type === "success" ? "Ready for the next post." : submitBlockedReason}
+          {scheduleBlockedCopy}
         </p>
       ) : null}
     </form>
