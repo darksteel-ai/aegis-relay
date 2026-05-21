@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   Camera,
+  CircleMinus,
   ExternalLink,
   LockKeyhole,
   Music2,
@@ -70,6 +71,7 @@ type ConnectionsPageProps = {
   searchParams?: Promise<{
     instagram?: string;
     instagram_message?: string;
+    connection?: string;
     tiktok?: string;
     youtube?: string;
   }>;
@@ -81,6 +83,10 @@ const connectionMessages: Record<string, string> = {
   "missing-code": "The platform did not return a connection code. Please try again.",
   "invalid-state": "The connection session expired. Please try again.",
   "missing-state": "The connection session expired. Please try again.",
+};
+
+const accountMessages: Record<string, string> = {
+  disconnected: "Account disconnected.",
 };
 
 export default async function ConnectionsPage({ searchParams }: ConnectionsPageProps) {
@@ -162,6 +168,15 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
           </div>
         ) : null}
 
+        {params?.connection && accountMessages[params.connection] ? (
+          <div
+            className="rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+            role="status"
+          >
+            {accountMessages[params.connection]}
+          </div>
+        ) : null}
+
         <section className="studio-panel rounded-md p-5">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
@@ -209,17 +224,28 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
 
                           return (
                             <li
-                              className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2"
+                              className="grid gap-3 rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 md:grid-cols-[1fr_auto] md:items-center"
                               key={account.id}
                             >
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-medium text-white">{account.accountName}</span>
-                                <span className="text-xs text-slate-500">ID {account.externalId}</span>
-                                <span className="text-xs text-cyan-100">{health.label}</span>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-medium text-white">{account.accountName}</span>
+                                  <span className="text-xs text-slate-500">ID {account.externalId}</span>
+                                  <span className="text-xs text-cyan-100">{health.label}</span>
+                                </div>
+                                <p className="mt-1 text-xs leading-5 text-slate-500">
+                                  {health.message}
+                                </p>
                               </div>
-                              <p className="mt-1 text-xs leading-5 text-slate-500">
-                                {health.message}
-                              </p>
+                              <form action={`/api/connections/${account.id}/disconnect`} method="post">
+                                <button
+                                  className="inline-flex h-9 w-fit items-center justify-center gap-2 rounded-md border border-red-300/30 bg-red-400/10 px-3 text-sm font-semibold text-red-100 transition hover:border-red-200/60 hover:bg-red-400/15"
+                                  type="submit"
+                                >
+                                  <CircleMinus className="h-4 w-4" aria-hidden="true" />
+                                  Disconnect
+                                </button>
+                              </form>
                             </li>
                           );
                         })}

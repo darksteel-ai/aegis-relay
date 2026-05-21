@@ -159,3 +159,22 @@ export const updateTokens = mutation({
     });
   },
 });
+
+export const disconnectForUser = mutation({
+  args: {
+    userId: v.string(),
+    accountId: v.id("connectedAccounts"),
+  },
+  handler: async (ctx, args) => {
+    const workspaceId = await requireWorkspaceForUser(ctx, args.userId);
+    const account = await ctx.db.get(args.accountId);
+
+    if (!account || account.workspaceId !== workspaceId) {
+      return { disconnected: false };
+    }
+
+    await ctx.db.delete(args.accountId);
+
+    return { disconnected: true };
+  },
+});
