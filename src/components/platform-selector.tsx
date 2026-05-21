@@ -13,7 +13,7 @@ export const composerPlatforms = [
   {
     id: "TIKTOK",
     label: "TikTok",
-    note: "Saved for approval while platform access is pending.",
+    note: "Auto-publish when the scheduled time arrives.",
     icon: Music2,
     accent: "text-cyan-200",
   },

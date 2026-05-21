@@ -15,6 +15,7 @@ export type PlatformPublishInput = {
   video: {
     storageKey: string;
     mimeType: string;
+    sizeBytes?: number | null;
   };
 };
 

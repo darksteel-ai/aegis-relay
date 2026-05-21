@@ -23,6 +23,7 @@ type LoadedPlatformPost = {
     video: {
       storageKey: string;
       mimeType: string;
+      sizeBytes?: number | null;
     };
     workspace: {
       connectedAccounts: Array<{
@@ -142,6 +143,7 @@ export async function publishPlatformPost(
       video: {
         storageKey: platformPost.scheduledPost.video.storageKey,
         mimeType: platformPost.scheduledPost.video.mimeType,
+        sizeBytes: platformPost.scheduledPost.video.sizeBytes,
       },
     });
   } catch (error) {
@@ -247,6 +249,7 @@ async function publishPlatformPostFromConvex(
       video: {
         storageKey: platformPost.scheduledPost.video.storageKey,
         mimeType: platformPost.scheduledPost.video.mimeType,
+        sizeBytes: platformPost.scheduledPost.video.sizeBytes,
       },
     });
   } catch (error) {

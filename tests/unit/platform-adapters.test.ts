@@ -21,6 +21,7 @@ const publishInput = {
   video: {
     storageKey: "uploads/workspaces/workspace_1/users/user_1/demo.mp4",
     mimeType: "video/mp4",
+    sizeBytes: 11,
   },
 };
 
@@ -198,12 +199,90 @@ describe("platform adapters", () => {
     );
   });
 
-  test("TikTok and Instagram adapters remain approval-pending placeholders", async () => {
-    await expect(createTikTokAdapter().publish(publishInput)).rejects.toMatchObject({
-      platform: Platform.TIKTOK,
-      code: "APPROVAL_PENDING",
-      message: "TikTok publishing is pending platform approval.",
+  test("TikTok adapter initializes direct post and uploads the video", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({
+          data: {
+            privacy_level_options: ["PUBLIC_TO_EVERYONE", "SELF_ONLY"],
+            comment_disabled: false,
+            duet_disabled: false,
+            stitch_disabled: true,
+          },
+          error: { code: "ok", message: "" },
+        })),
+      })
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({
+          data: {
+            publish_id: "v_pub_file~demo",
+            upload_url: "https://open-upload.tiktokapis.com/video/upload",
+          },
+          error: { code: "ok", message: "" },
+        })),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+      });
+    const stream = new PassThrough();
+    stream.end("hello world");
+    const adapter = createTikTokAdapter({
+      fetchFn,
+      getVideoReadStream: vi.fn(async () => stream),
     });
+
+    const result = await adapter.publish(publishInput);
+
+    expect(result).toEqual({ platformPostId: "v_pub_file~demo" });
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      1,
+      "https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Bearer access-token",
+        }),
+      }),
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      2,
+      "https://open.tiktokapis.com/v2/post/publish/video/init/",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"privacy_level":"SELF_ONLY"'),
+      }),
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      3,
+      "https://open-upload.tiktokapis.com/video/upload",
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          "Content-Length": "11",
+          "Content-Range": "bytes 0-10/11",
+          "Content-Type": "video/mp4",
+        }),
+      }),
+    );
+  });
+
+  test("TikTok adapter surfaces missing publish scope errors", async () => {
+    const fetchFn = vi.fn().mockResolvedValueOnce({
+      json: vi.fn(async () => ({
+        error: {
+          code: "scope_not_authorized",
+          message: "The access_token does not bear user's grant on video.publish scope.",
+        },
+      })),
+    });
+    const adapter = createTikTokAdapter({ fetchFn });
+
+    await expect(adapter.publish(publishInput)).rejects.toThrow("video.publish scope");
+  });
+
+  test("Instagram adapter remains an approval-pending placeholder", async () => {
     await expect(createInstagramAdapter().publish(publishInput)).rejects.toMatchObject({
       platform: Platform.INSTAGRAM,
       code: "APPROVAL_PENDING",

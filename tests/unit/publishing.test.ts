@@ -33,6 +33,7 @@ const platformPost = {
     video: {
       storageKey: "uploads/workspace_1/demo.mp4",
       mimeType: "video/mp4",
+      sizeBytes: 1024,
     },
     workspace: {
       id: "workspace_1",
@@ -128,6 +129,7 @@ describe("publishPlatformPost", () => {
       video: {
         storageKey: "uploads/workspace_1/demo.mp4",
         mimeType: "video/mp4",
+        sizeBytes: 1024,
       },
     });
     expect(db.platformPost.update).toHaveBeenCalledWith({

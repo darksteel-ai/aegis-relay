@@ -36,7 +36,7 @@ const platformRows = [
   {
     platform: "TIKTOK",
     name: "TikTok",
-    description: "Connect an account for TikTok video upload access.",
+    description: "Connect an account for scheduled TikTok publishing.",
     action: "Connect TikTok",
     href: "/api/auth/tiktok/start",
     connectable: true,

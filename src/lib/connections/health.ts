@@ -20,7 +20,7 @@ const requiredScopes: Record<string, string[]> = {
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube.readonly",
   ],
-  [Platform.TIKTOK]: ["user.info.basic", "video.upload"],
+  [Platform.TIKTOK]: ["user.info.basic", "video.publish"],
   [Platform.INSTAGRAM]: [
     "instagram_business_basic",
     "instagram_business_content_publish",
