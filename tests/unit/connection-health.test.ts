@@ -14,11 +14,23 @@ describe("connection health", () => {
     expect(getConnectionHealth({
       platform: "TIKTOK",
       accountName: "Brand TikTok",
-      scopes: "user.info.basic,video.upload",
+      scopes: "user.info.basic",
       expiresAt: Date.parse("2026-06-10T00:00:00.000Z"),
     }, new Date("2026-05-17T00:00:00.000Z"))).toMatchObject({
       status: "missing-permissions",
       label: "Missing permissions",
+    });
+  });
+
+  test("does not require TikTok video list access for publishing health", () => {
+    expect(getConnectionHealth({
+      platform: "TIKTOK",
+      accountName: "Brand TikTok",
+      scopes: "user.info.basic,video.upload",
+      expiresAt: Date.parse("2026-06-10T00:00:00.000Z"),
+    }, new Date("2026-05-17T00:00:00.000Z"))).toMatchObject({
+      status: "connected",
+      label: "Connected",
     });
   });
 

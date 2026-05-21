@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getAuthSession } from "@/lib/auth";
 import { convexApi } from "@/lib/convex-api";
 import { getConvexClient } from "@/lib/convex-server";
+import { getStorageEnv } from "@/lib/env";
 import {
   UPLOAD_URL_TTL_SECONDS,
   createSignedUploadUrl,
@@ -34,6 +35,16 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    getStorageEnv();
+  } catch (error) {
+    console.error("Upload storage is not configured.", error);
+    return NextResponse.json(
+      { error: "Video upload storage is not configured yet." },
+      { status: 503 },
+    );
   }
 
   const client = getConvexClient();
@@ -87,11 +98,21 @@ export async function POST(request: Request) {
     fileName: parsed.data.fileName,
     contentType,
   });
-  const signedUpload = await createSignedUploadUrl({
-    key,
-    contentType,
-    sizeBytes: parsed.data.sizeBytes,
-  });
+  let signedUpload;
+
+  try {
+    signedUpload = await createSignedUploadUrl({
+      key,
+      contentType,
+      sizeBytes: parsed.data.sizeBytes,
+    });
+  } catch (error) {
+    console.error("Upload URL could not be prepared.", error);
+    return NextResponse.json(
+      { error: "Video upload storage could not prepare an upload URL." },
+      { status: 503 },
+    );
+  }
   const expiresAt = new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * 1000);
 
   await client.mutation(convexApi.uploads.createReservation, {
