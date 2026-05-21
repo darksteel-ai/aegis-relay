@@ -417,7 +417,7 @@ export function ComposerForm({
       </button>
       {!canSubmit && submitBlockedReason ? (
         <p className="-mt-4 text-sm text-slate-400" role="status">
-          {submitBlockedReason}
+          {submitState.type === "success" ? "Ready for the next post." : submitBlockedReason}
         </p>
       ) : null}
     </form>
