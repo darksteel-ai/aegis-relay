@@ -282,6 +282,54 @@ describe("platform adapters", () => {
     await expect(adapter.publish(publishInput)).rejects.toThrow("video.publish scope");
   });
 
+  test("TikTok adapter defaults public requests to private while direct post audit is pending", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({
+          data: {
+            privacy_level_options: ["PUBLIC_TO_EVERYONE", "SELF_ONLY"],
+          },
+          error: { code: "ok", message: "" },
+        })),
+      })
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({
+          data: {
+            publish_id: "v_pub_file~private",
+            upload_url: "https://open-upload.tiktokapis.com/video/upload",
+          },
+          error: { code: "ok", message: "" },
+        })),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+      });
+    const stream = new PassThrough();
+    stream.end("hello world");
+    const adapter = createTikTokAdapter({
+      fetchFn,
+      getVideoReadStream: vi.fn(async () => stream),
+    });
+
+    await adapter.publish({
+      ...publishInput,
+      platformPost: {
+        ...publishInput.platformPost,
+        privacy: "public",
+      },
+    });
+
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      2,
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.stringContaining('"privacy_level":"SELF_ONLY"'),
+      }),
+    );
+  });
+
   test("Instagram adapter creates, waits for, and publishes a Reel media container", async () => {
     const fetchFn = vi
       .fn()

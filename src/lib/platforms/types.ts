@@ -43,3 +43,15 @@ export class PlatformApprovalPendingError extends Error {
     this.name = "PlatformApprovalPendingError";
   }
 }
+
+export class PlatformPublishProviderError extends Error {
+  readonly code = "PROVIDER_ERROR";
+
+  constructor(
+    readonly platform: Platform,
+    message: string,
+  ) {
+    super(message);
+    this.name = "PlatformPublishProviderError";
+  }
+}

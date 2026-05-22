@@ -1,8 +1,10 @@
-import type {
-  PlatformAdapter,
-  PlatformPublishInput,
-  PlatformPublishResult,
+import {
+  PlatformPublishProviderError,
+  type PlatformAdapter,
+  type PlatformPublishInput,
+  type PlatformPublishResult,
 } from "@/lib/platforms/types";
+import { Platform } from "@/lib/domain";
 import { decryptConnectedAccountToken } from "@/lib/platforms/token-crypto";
 import { createSignedDownloadUrl } from "@/lib/storage";
 
@@ -224,5 +226,8 @@ function assertInstagramOk(error: InstagramApiError | undefined, fallbackMessage
     return;
   }
 
-  throw new Error(error.message || fallbackMessage);
+  throw new PlatformPublishProviderError(
+    Platform.INSTAGRAM,
+    error.message || fallbackMessage,
+  );
 }

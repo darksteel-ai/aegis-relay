@@ -1,10 +1,12 @@
 import { Readable } from "node:stream";
 
-import type {
-  PlatformAdapter,
-  PlatformPublishInput,
-  PlatformPublishResult,
+import {
+  PlatformPublishProviderError,
+  type PlatformAdapter,
+  type PlatformPublishInput,
+  type PlatformPublishResult,
 } from "@/lib/platforms/types";
+import { Platform } from "@/lib/domain";
 import { decryptConnectedAccountToken } from "@/lib/platforms/token-crypto";
 import { getObjectReadStream } from "@/lib/storage";
 
@@ -75,7 +77,7 @@ async function publishTikTokVideo(
 
   const creatorInfo = await queryCreatorInfo(accessToken, deps.fetchFn);
   const privacyLevel = normalizePrivacyLevel(
-    input.platformPost.privacy,
+    getRequestedPrivacyLevel(input.platformPost.privacy, deps.env),
     creatorInfo.data?.privacy_level_options ?? [],
   );
   const initResponse = await initializeDirectPost({
@@ -219,6 +221,16 @@ function mapPrivacyToTikTokLevel(privacy: string | null | undefined) {
   return null;
 }
 
+function getRequestedPrivacyLevel(privacy: string | null | undefined, env: EnvSource) {
+  const configuredPrivacy = env.TIKTOK_DIRECT_POST_PRIVACY_LEVEL;
+
+  if (configuredPrivacy) {
+    return configuredPrivacy;
+  }
+
+  return env.TIKTOK_ALLOW_PUBLIC_DIRECT_POSTS === "true" ? privacy : "private";
+}
+
 function normalizeCaption(caption: string) {
   return caption.trim().slice(0, 2200);
 }
@@ -236,7 +248,13 @@ function assertTikTokOk(error: TikTokApiError | undefined, fallbackMessage: stri
     return;
   }
 
-  throw new Error(error.message || error.code || fallbackMessage);
+  const details = [error.message, error.code ? `Code: ${error.code}.` : null]
+    .filter(Boolean)
+    .join(" ");
+  throw new PlatformPublishProviderError(
+    Platform.TIKTOK,
+    details || fallbackMessage,
+  );
 }
 
 async function streamToBuffer(stream: NodeJS.ReadableStream) {

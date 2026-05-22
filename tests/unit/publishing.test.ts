@@ -13,6 +13,7 @@ import {
 } from "@/lib/publishing/scheduler";
 import {
   PlatformApprovalPendingError,
+  PlatformPublishProviderError,
   type PlatformAdapter,
 } from "@/lib/platforms/types";
 
@@ -280,6 +281,17 @@ describe("publishPlatformPost", () => {
     );
     expect(toPublishErrorMessage(error, Platform.TIKTOK)).toBe(
       "TikTok publishing is pending platform approval.",
+    );
+  });
+
+  test("keeps provider rejection messages actionable without exposing tokens", () => {
+    const error = new PlatformPublishProviderError(
+      Platform.TIKTOK,
+      "Video duration exceeds creator limit. access_token=secret-token",
+    );
+
+    expect(toPublishErrorMessage(error, Platform.TIKTOK)).toBe(
+      "TikTok rejected the publish request: Video duration exceeds creator limit. access_token=[redacted]",
     );
   });
 

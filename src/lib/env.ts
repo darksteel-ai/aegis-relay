@@ -49,6 +49,8 @@ const tiktokEnvSchema = z.object({
   TIKTOK_CLIENT_KEY: z.string().min(1).optional(),
   TIKTOK_CLIENT_SECRET: z.string().min(1).optional(),
   TIKTOK_REDIRECT_URI: z.string().url().optional(),
+  TIKTOK_DIRECT_POST_PRIVACY_LEVEL: z.string().min(1).optional(),
+  TIKTOK_ALLOW_PUBLIC_DIRECT_POSTS: z.string().min(1).optional(),
 });
 
 const instagramEnvSchema = z.object({

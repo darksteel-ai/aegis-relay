@@ -7,6 +7,7 @@ import { tiktokAdapter } from "@/lib/platforms/tiktok";
 import { youtubeAdapter } from "@/lib/platforms/youtube";
 import {
   PlatformApprovalPendingError,
+  PlatformPublishProviderError,
   type PlatformAdapter,
   type PlatformPublishResult,
 } from "@/lib/platforms/types";
@@ -285,6 +286,10 @@ export function toPublishErrorMessage(error: unknown, platform: Platform) {
     return error.message;
   }
 
+  if (error instanceof PlatformPublishProviderError) {
+    return `${formatPlatformName(platform)} rejected the publish request: ${sanitizeProviderMessage(error.message)}`;
+  }
+
   const rawMessage = error instanceof Error ? error.message.toLowerCase() : "";
   const platformName = formatPlatformName(platform);
 
@@ -311,6 +316,13 @@ export function toPublishErrorMessage(error: unknown, platform: Platform) {
   }
 
   return `${formatPlatformName(platform)} publishing failed. Please try again or reconnect the account.`;
+}
+
+function sanitizeProviderMessage(message: string) {
+  return message
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]")
+    .replace(/access_token[=:]\s*[A-Za-z0-9._~+/=-]+/gi, "access_token=[redacted]")
+    .slice(0, 500);
 }
 
 async function markPublishAttempt(
