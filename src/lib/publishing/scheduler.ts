@@ -74,7 +74,7 @@ export async function resetRetryablePlatformPosts({
           },
         },
       },
-      status: { in: [PublishStatus.FAILED, PublishStatus.BLOCKED] },
+      status: { in: [PublishStatus.FAILED, PublishStatus.BLOCKED, PublishStatus.APPROVAL_PENDING] },
       platformPostId: null,
     },
     data: {

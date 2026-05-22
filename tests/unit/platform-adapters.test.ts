@@ -1,6 +1,5 @@
 import { PassThrough } from "node:stream";
 
-import { Platform } from "@/lib/domain";
 import { describe, expect, test, vi } from "vitest";
 
 import { createInstagramAdapter } from "@/lib/platforms/instagram";
@@ -9,6 +8,7 @@ import { createYouTubeAdapter } from "@/lib/platforms/youtube";
 
 const publishInput = {
   connectedAccount: {
+    externalId: "17841473706865624",
     accessToken: "access-token",
     refreshToken: "refresh-token",
     expiresAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -282,11 +282,63 @@ describe("platform adapters", () => {
     await expect(adapter.publish(publishInput)).rejects.toThrow("video.publish scope");
   });
 
-  test("Instagram adapter remains an approval-pending placeholder", async () => {
-    await expect(createInstagramAdapter().publish(publishInput)).rejects.toMatchObject({
-      platform: Platform.INSTAGRAM,
-      code: "APPROVAL_PENDING",
-      message: "Instagram publishing is pending platform approval.",
+  test("Instagram adapter creates, waits for, and publishes a Reel media container", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({ id: "ig-container-123" })),
+      })
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({ id: "ig-container-123", status_code: "FINISHED" })),
+      })
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({ id: "ig-media-456" })),
+      });
+    const adapter = createInstagramAdapter({
+      fetchFn,
+      createVideoUrl: vi.fn(async () => "https://cdn.example.com/video.mp4?signature=demo"),
+      waitMs: vi.fn(async () => undefined),
     });
+
+    const result = await adapter.publish(publishInput);
+
+    expect(result).toEqual({
+      platformPostId: "ig-media-456",
+      url: "https://www.instagram.com/reel/ig-media-456/",
+    });
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      1,
+      "https://graph.instagram.com/v24.0/17841473706865624/media",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.any(URLSearchParams),
+      }),
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("https://graph.instagram.com/v24.0/ig-container-123"),
+    );
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      3,
+      "https://graph.instagram.com/v24.0/17841473706865624/media_publish",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.any(URLSearchParams),
+      }),
+    );
+  });
+
+  test("Instagram adapter requires the connected Instagram user id", async () => {
+    const adapter = createInstagramAdapter();
+
+    await expect(
+      adapter.publish({
+        ...publishInput,
+        connectedAccount: {
+          ...publishInput.connectedAccount,
+          externalId: null,
+        },
+      }),
+    ).rejects.toThrow("Instagram account id is missing");
   });
 });

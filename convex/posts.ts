@@ -151,7 +151,7 @@ export const createScheduledPost = mutation({
           caption: platformCaption,
           privacy: "public",
           scheduledAt: args.scheduledAt,
-          status: item === "YOUTUBE" ? "SCHEDULED" : "APPROVAL_PENDING",
+          status: "SCHEDULED",
           createdAt: now,
           updatedAt: now,
         });
@@ -280,7 +280,7 @@ export const retry = mutation({
     let resetCount = 0;
     for (const item of platformPosts) {
       if (
-        (item.status === "FAILED" || item.status === "BLOCKED") &&
+        (item.status === "FAILED" || item.status === "BLOCKED" || item.status === "APPROVAL_PENDING") &&
         !item.platformPostId
       ) {
         await ctx.db.patch(item._id, {

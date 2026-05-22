@@ -100,7 +100,7 @@ describe("scheduled post creation rules", () => {
         platform: "INSTAGRAM",
         caption: "Launch clip for the beta.\n\n#shorts #ai #launch",
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
-        status: "APPROVAL_PENDING",
+        status: "SCHEDULED",
       },
     ]);
   });
@@ -201,7 +201,7 @@ describe("scheduled post creation rules", () => {
     expect(result.errors).toContain("Video must be vertical.");
   });
 
-  test("maps YouTube to scheduled and other platforms to approval pending", () => {
+  test("maps every selected platform to scheduled", () => {
     const result = parseCreateScheduledPostInput({
       ...validPayload,
       platforms: ["YOUTUBE", "TIKTOK", "INSTAGRAM"],
@@ -227,13 +227,13 @@ describe("scheduled post creation rules", () => {
         platform: "TIKTOK",
         caption: "Launch clip for the beta.",
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
-        status: "APPROVAL_PENDING",
+        status: "SCHEDULED",
       },
       {
         platform: "INSTAGRAM",
         caption: "Launch clip for the beta.",
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
-        status: "APPROVAL_PENDING",
+        status: "SCHEDULED",
       },
     ]);
   });

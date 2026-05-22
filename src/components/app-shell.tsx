@@ -54,7 +54,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-cyan-200">
               Relay status
             </p>
-            <p className="mt-2 text-sm text-slate-400">YouTube and TikTok live. Instagram prepared.</p>
+            <p className="mt-2 text-sm text-slate-400">YouTube, TikTok, and Instagram live.</p>
           </div>
           <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
           <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-slate-500">

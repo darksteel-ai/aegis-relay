@@ -3,6 +3,7 @@ import type { Platform } from "@/lib/domain";
 export type PlatformPublishInput = {
   connectedAccount: {
     id?: string;
+    externalId?: string | null;
     accessToken: string;
     refreshToken?: string | null;
     expiresAt?: Date | null;

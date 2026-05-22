@@ -60,8 +60,8 @@ export default function SupportPage() {
           </h2>
           <p className="mt-3">
             YouTube Shorts connection and publishing are the active beta path.
-            TikTok and Instagram Reels are marked approval pending until platform
-            app review and required publishing permissions are approved.
+            TikTok and Instagram Reels require connected accounts with approved
+            publishing permissions before scheduled posts can publish.
           </p>
         </section>
       </div>

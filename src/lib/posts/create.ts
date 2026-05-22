@@ -197,10 +197,7 @@ export function buildPlatformPostCreateInputs(input: CreateScheduledPostInput) {
     ...(platform === Platform.YOUTUBE && input.youtubeTitle ? { title: input.youtubeTitle } : {}),
     caption,
     scheduledAt: input.scheduledAt,
-    status:
-      platform === Platform.YOUTUBE
-        ? PublishStatus.SCHEDULED
-        : PublishStatus.APPROVAL_PENDING,
+    status: PublishStatus.SCHEDULED,
   }));
 }
 

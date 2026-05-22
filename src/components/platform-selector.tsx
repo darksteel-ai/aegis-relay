@@ -20,7 +20,7 @@ export const composerPlatforms = [
   {
     id: "INSTAGRAM",
     label: "Instagram Reels",
-    note: "Saved for approval while platform access is pending.",
+    note: "Auto-publish when the scheduled time arrives.",
     icon: Camera,
     accent: "text-red-300",
   },

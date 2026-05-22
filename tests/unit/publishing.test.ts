@@ -41,6 +41,7 @@ const platformPost = {
         {
           id: "connected_account_1",
           platform: Platform.YOUTUBE,
+          externalId: "external_channel_1",
           accessToken: "encrypted-access",
           refreshToken: "encrypted-refresh",
           expiresAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -111,12 +112,16 @@ describe("publishPlatformPost", () => {
 
     expect(result.status).toBe(PublishStatus.PUBLISHED);
     expect(db.platformPost.updateMany).toHaveBeenCalledWith({
-      where: { id: "platform_post_1", status: PublishStatus.SCHEDULED },
+      where: {
+        id: "platform_post_1",
+        status: { in: [PublishStatus.SCHEDULED, PublishStatus.APPROVAL_PENDING] },
+      },
       data: { status: PublishStatus.PROCESSING, lastError: null },
     });
     expect(adapter.publish).toHaveBeenCalledWith({
       connectedAccount: {
         id: "connected_account_1",
+        externalId: "external_channel_1",
         accessToken: "encrypted-access",
         refreshToken: "encrypted-refresh",
         expiresAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -208,6 +213,7 @@ describe("publishPlatformPost", () => {
             {
               id: "connected_account_2",
               platform: Platform.YOUTUBE,
+              externalId: "external_channel_2",
               accessToken: "selected-access",
               refreshToken: "selected-refresh",
               expiresAt: new Date("2026-07-01T00:00:00.000Z"),
@@ -345,7 +351,9 @@ describe("resetRetryablePlatformPosts", () => {
             },
           },
         },
-        status: { in: [PublishStatus.FAILED, PublishStatus.BLOCKED] },
+        status: {
+          in: [PublishStatus.FAILED, PublishStatus.BLOCKED, PublishStatus.APPROVAL_PENDING],
+        },
         platformPostId: null,
       },
       data: {

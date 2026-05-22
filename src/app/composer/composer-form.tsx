@@ -125,7 +125,8 @@ export function ComposerForm({
 
       setSubmitState({
         type: "success",
-        message: "Post scheduled. YouTube and TikTok will publish automatically; Instagram is saved for approval.",
+        message:
+          "Post scheduled. Selected connected accounts will publish automatically when the scheduled time arrives.",
       });
       setBaseCaption("");
       setYoutubeTitle("");

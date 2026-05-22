@@ -16,16 +16,39 @@ const publishStatus = v.union(
 export const duePosts = query({
   args: { now: v.number(), batchSize: v.number() },
   handler: async (ctx, args) => {
-    const posts = await ctx.db
-      .query("platformPosts")
-      .withIndex("by_status_scheduled", (q: any) =>
-        q.eq("status", "SCHEDULED").lte("scheduledAt", args.now),
-      )
-      .order("asc")
-      .take(args.batchSize);
+    const scheduledPosts = await duePostsForStatus(ctx, "SCHEDULED", args.now, args.batchSize);
+    const approvalPendingPosts = await duePostsForStatus(
+      ctx,
+      "APPROVAL_PENDING",
+      args.now,
+      args.batchSize,
+    );
+    const posts = [...scheduledPosts, ...approvalPendingPosts]
+      .sort((left, right) => {
+        if (left.scheduledAt !== right.scheduledAt) {
+          return left.scheduledAt - right.scheduledAt;
+        }
+        return left.updatedAt - right.updatedAt;
+      })
+      .slice(0, args.batchSize);
     return posts.map((post) => ({ id: post._id }));
   },
 });
+
+async function duePostsForStatus(
+  ctx: any,
+  status: "SCHEDULED" | "APPROVAL_PENDING",
+  now: number,
+  batchSize: number,
+) {
+  return ctx.db
+    .query("platformPosts")
+    .withIndex("by_status_scheduled", (q: any) =>
+      q.eq("status", status).lte("scheduledAt", now),
+    )
+    .order("asc")
+    .take(batchSize);
+}
 
 export const loadForPublish = query({
   args: { platformPostId: v.id("platformPosts") },
@@ -63,6 +86,7 @@ export const loadForPublish = query({
           connectedAccounts: accounts.map((account) => ({
             id: account._id,
             platform: account.platform,
+            externalId: account.externalId,
             accessToken: account.accessToken,
             refreshToken: account.refreshToken ?? null,
             expiresAt: account.expiresAt ?? null,
@@ -77,7 +101,7 @@ export const claim = mutation({
   args: { platformPostId: v.id("platformPosts") },
   handler: async (ctx, args) => {
     const post = await ctx.db.get(args.platformPostId);
-    if (!post || post.status !== "SCHEDULED") {
+    if (!post || (post.status !== "SCHEDULED" && post.status !== "APPROVAL_PENDING")) {
       return { count: 0 };
     }
     await ctx.db.patch(args.platformPostId, {

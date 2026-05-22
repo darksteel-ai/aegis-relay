@@ -34,6 +34,11 @@ export type CreateSignedUploadUrlInput = {
   expiresInSeconds?: number;
 };
 
+export type CreateSignedDownloadUrlInput = {
+  key: string;
+  expiresInSeconds?: number;
+};
+
 export function createUploadObjectKey({
   userId,
   workspaceId,
@@ -114,6 +119,21 @@ export async function getObjectReadStream(key: string) {
   }
 
   throw new Error("Storage object body is not a Node.js readable stream.");
+}
+
+export async function createSignedDownloadUrl({
+  key,
+  expiresInSeconds = 60 * 60,
+}: CreateSignedDownloadUrlInput) {
+  const storageEnv = getStorageEnv();
+  const command = new GetObjectCommand({
+    Bucket: storageEnv.S3_BUCKET,
+    Key: key,
+  });
+
+  return getSignedUrl(getStorageClient(), command, {
+    expiresIn: expiresInSeconds,
+  });
 }
 
 function getStorageClient() {

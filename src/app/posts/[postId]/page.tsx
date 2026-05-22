@@ -52,7 +52,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   }
 
   const hasRetryablePost = post.platformPosts.some((platformPost: PostPlatformPost) =>
-    ["FAILED", "BLOCKED"].includes(platformPost.status),
+    ["FAILED", "BLOCKED", "APPROVAL_PENDING"].includes(platformPost.status),
   );
 
   return (

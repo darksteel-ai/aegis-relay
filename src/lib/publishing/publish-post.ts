@@ -29,6 +29,7 @@ type LoadedPlatformPost = {
       connectedAccounts: Array<{
         id: string;
         platform: Platform;
+        externalId?: string | null;
         accessToken: string;
         refreshToken?: string | null;
         expiresAt?: Date | null;
@@ -58,6 +59,7 @@ const defaultAdapters: Record<Platform, PlatformAdapter> = {
   [Platform.TIKTOK]: tiktokAdapter,
   [Platform.INSTAGRAM]: instagramAdapter,
 };
+const publishableStatuses = [PublishStatus.SCHEDULED, PublishStatus.APPROVAL_PENDING] as const;
 
 export async function publishPlatformPost(
   platformPostId: string,
@@ -90,7 +92,7 @@ export async function publishPlatformPost(
     throw new Error("Platform post not found.");
   }
 
-  if (platformPost.status !== PublishStatus.SCHEDULED) {
+  if (!isPublishableStatus(platformPost.status)) {
     return { status: platformPost.status };
   }
 
@@ -109,7 +111,7 @@ export async function publishPlatformPost(
   }
 
   const claim = await db.platformPost.updateMany({
-    where: { id: platformPost.id, status: PublishStatus.SCHEDULED },
+    where: { id: platformPost.id, status: { in: [...publishableStatuses] } },
     data: { status: PublishStatus.PROCESSING, lastError: null },
   });
 
@@ -131,6 +133,7 @@ export async function publishPlatformPost(
     result = await adapter.publish({
       connectedAccount: {
         id: connectedAccount.id,
+        externalId: connectedAccount.externalId,
         accessToken: connectedAccount.accessToken,
         refreshToken: connectedAccount.refreshToken,
         expiresAt: connectedAccount.expiresAt,
@@ -197,13 +200,13 @@ async function publishPlatformPostFromConvex(
     throw new Error("Platform post not found.");
   }
 
-  if (platformPost.status !== PublishStatus.SCHEDULED) {
+  if (!isPublishableStatus(platformPost.status as PublishStatus)) {
     return { status: platformPost.status };
   }
 
   const connectedAccount =
     platformPost.scheduledPost.workspace.connectedAccounts.find(
-      (account: { id: string; platform: Platform }) =>
+      (account: { id: string; platform: Platform; externalId?: string | null }) =>
         platformPost.connectedAccountId
           ? account.id === platformPost.connectedAccountId
           : account.platform === platformPost.platform,
@@ -237,6 +240,7 @@ async function publishPlatformPostFromConvex(
     result = await adapter.publish({
       connectedAccount: {
         id: connectedAccount.id,
+        externalId: connectedAccount.externalId,
         accessToken: connectedAccount.accessToken,
         refreshToken: connectedAccount.refreshToken,
         expiresAt: connectedAccount.expiresAt ? new Date(connectedAccount.expiresAt) : null,
@@ -367,6 +371,10 @@ function formatPlatformName(platform: Platform) {
   };
 
   return labels[platform];
+}
+
+function isPublishableStatus(status: PublishStatus) {
+  return publishableStatuses.includes(status as (typeof publishableStatuses)[number]);
 }
 
 async function markConvexPublishAttempt(
