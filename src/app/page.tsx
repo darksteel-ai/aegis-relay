@@ -1,473 +1,617 @@
 import {
   ArrowRight,
+  BadgeCheck,
   CalendarClock,
   CheckCircle2,
+  CircleDollarSign,
+  FileVideo,
   KeyRound,
-  LockKeyhole,
-  Play,
   RadioTower,
+  RefreshCw,
   Shield,
   ShieldCheck,
-  Unplug,
-  Workflow,
+  Sparkles,
+  UploadCloud,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 
 import { pricingPlans } from "@/lib/billing/pricing";
 
-const platformNodes = [
-  { name: "TikTok", accent: "border-cyan-400/40 text-cyan-200", dot: "bg-cyan-300" },
-  { name: "YouTube Shorts", accent: "border-rose-400/40 text-rose-200", dot: "bg-rose-300" },
-  { name: "Instagram Reels", accent: "border-fuchsia-400/40 text-fuchsia-200", dot: "bg-fuchsia-300" },
+const heroStats = [
+  { label: "Connected platforms", value: "3" },
+  { label: "Creator plan posts", value: "150/mo" },
+  { label: "Studio plan posts", value: "750/mo" },
 ];
 
-const trustCards = [
+const outcomes = [
   {
-    title: "Encrypted tokens",
-    description: "Connected account tokens are encrypted before storage.",
-    icon: LockKeyhole,
+    title: "Stop rebuilding the same post",
+    description:
+      "Upload once, select the accounts, tune the metadata, and schedule the same short-form video across the channels that matter.",
+    icon: UploadCloud,
   },
   {
-    title: "Scoped access",
-    description: "Customers connect only the accounts their workspace needs.",
-    icon: Shield,
+    title: "Keep every account owner in control",
+    description:
+      "Customers connect their own YouTube, TikTok, and Instagram accounts through OAuth, with encrypted credentials and disconnect controls.",
+    icon: ShieldCheck,
   },
   {
-    title: "Revoke anytime",
-    description: "Disconnect platform access whenever a channel changes.",
-    icon: KeyRound,
-  },
-];
-
-const statusRows = [
-  {
-    post: "Launch clip",
-    date: "May 16, 2026",
-    time: "9:00 AM",
-    platforms: ["TikTok", "YouTube", "Reels"],
-    status: "Scheduled",
-  },
-  {
-    post: "Studio walkthrough",
-    date: "May 16, 2026",
-    time: "1:00 PM",
-    platforms: ["YouTube", "Reels"],
-    status: "Ready",
-  },
-  {
-    post: "Behind the scenes",
-    date: "May 17, 2026",
-    time: "10:30 AM",
-    platforms: ["TikTok", "YouTube", "Reels"],
-    status: "Queued",
+    title: "Know what happened after publish",
+    description:
+      "Track queued, published, failed, and retryable posts with plain-English platform status instead of vague background jobs.",
+    icon: RadioTower,
   },
 ];
 
 const workflow = [
   {
-    title: "Upload once",
-    description: "Add a vertical MP4 or MOV and keep the source file tied to one workspace.",
-    icon: Workflow,
+    eyebrow: "01",
+    title: "Connect accounts",
+    description:
+      "Each workspace connects its own TikTok, YouTube Shorts, and Instagram Reels accounts.",
+    icon: KeyRound,
   },
   {
-    title: "Connect securely",
-    description: "Customers connect their own platform accounts with encrypted token storage.",
-    icon: ShieldCheck,
+    eyebrow: "02",
+    title: "Prepare the short",
+    description:
+      "Upload a vertical video, add caption copy, title options, hashtags, and platform-specific settings.",
+    icon: FileVideo,
   },
   {
-    title: "Schedule with control",
-    description: "Choose the publish time, track platform status, and retry failed posts.",
+    eyebrow: "03",
+    title: "Schedule once",
+    description:
+      "Choose the time zone and schedule time. Aegis Relay queues each selected account automatically.",
     icon: CalendarClock,
+  },
+  {
+    eyebrow: "04",
+    title: "Monitor and retry",
+    description:
+      "See publish status by platform, retry failures, and reconnect accounts when access changes.",
+    icon: RefreshCw,
+  },
+];
+
+const platformFeatures = [
+  "YouTube Shorts auto-publishing with title and description support",
+  "TikTok creator settings, privacy choice, interaction controls, and music usage confirmation",
+  "Instagram Reels publishing through connected professional accounts",
+  "AI-assisted titles and hashtags using connected platform context",
+];
+
+const faqs = [
+  {
+    question: "Can customers connect their own accounts?",
+    answer:
+      "Yes. Aegis Relay is built around customer-connected OAuth accounts, so each workspace can connect and manage its own publishing channels.",
+  },
+  {
+    question: "Does it publish to TikTok automatically?",
+    answer:
+      "The app supports TikTok Direct Post flows, including required TikTok UX controls. Public Direct Post access depends on TikTok approval.",
+  },
+  {
+    question: "What happens when a platform fails?",
+    answer:
+      "Failed posts show a readable status message, and retryable posts can be retried after the account or platform issue is fixed.",
+  },
+  {
+    question: "Are tokens stored securely?",
+    answer:
+      "Connected account tokens are encrypted before storage and can be revoked by disconnecting the account from the workspace.",
   },
 ];
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#03080b] text-white">
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.06)_1px,transparent_1px)] bg-[size:56px_56px]" />
-        <div className="absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-cyan-400/10 to-transparent" />
-
-        <header className="relative z-10">
-          <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
-            <Link href="/" className="flex items-center gap-3 text-sm font-semibold">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
-                <Shield className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <span>Aegis Relay</span>
-            </Link>
-            <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
-              <a href="#features" className="hover:text-white">
-                Features
-              </a>
-              <a href="#pricing" className="hover:text-white">
-                Pricing
-              </a>
-              <Link href="/privacy" className="hover:text-white">
-                Privacy
-              </Link>
-              <Link href="/terms" className="hover:text-white">
-                Terms
-              </Link>
-              <Link href="/sign-in" className="hover:text-white">
-                Sign in
-              </Link>
-            </div>
-            <Link
-              href="/sign-in"
-              className="inline-flex h-10 items-center justify-center rounded-md bg-cyan-200 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-white"
-            >
-              Start scheduling
-            </Link>
-          </nav>
-        </header>
-
-        <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-12 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_34rem] lg:items-center lg:pb-24 lg:pt-20">
-          <div className="max-w-3xl space-y-8">
-            <div className="flex w-fit items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-cyan-100">
-              <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-              Secure short-form scheduling
-            </div>
-            <div className="space-y-5">
-              <h1 className="text-5xl font-semibold leading-tight tracking-normal text-white sm:text-6xl lg:text-7xl">
-                Schedule one video across every short-form channel.
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-slate-300">
-                Aegis Relay gives creators and agencies one controlled workflow
-                to upload, schedule, and monitor posts across TikTok, YouTube
-                Shorts, and Instagram Reels.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/sign-in"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-cyan-200 px-5 text-sm font-semibold text-slate-950 transition-colors hover:bg-white"
-              >
-                Start scheduling
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link
-                href="#workflow"
-                className="inline-flex h-11 items-center justify-center rounded-md border border-white/15 bg-white/[0.03] px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-              >
-                See how it works
-              </Link>
-            </div>
-            <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-cyan-200" aria-hidden="true" />
-                Encrypted by default
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-cyan-200" aria-hidden="true" />
-                No auto-posting surprises
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-cyan-200" aria-hidden="true" />
-                Workspace-level control
-              </div>
-            </div>
-          </div>
-
-          <RelayGraphic />
-        </div>
-      </section>
-
-      <section id="features" className="border-b border-white/10 bg-[#061015]">
-        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-          <div className="mx-auto max-w-3xl space-y-3 text-center">
-            <h2 className="text-3xl font-semibold tracking-normal text-white">
-              Secure connections. Your data stays yours.
-            </h2>
-            <p className="text-base leading-7 text-slate-300">
-              Aegis Relay is designed for customer-connected accounts, encrypted
-              publishing credentials, and visible platform status.
-            </p>
-          </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {trustCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <article
-                  key={card.title}
-                  className="rounded-md border border-white/10 bg-white/[0.035] p-6 shadow-2xl shadow-black/20"
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-md border border-cyan-300/25 bg-cyan-300/10 text-cyan-100">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-5 text-lg font-semibold text-white">{card.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">{card.description}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section id="workflow" className="border-b border-white/10 bg-[#03080b]">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_34rem] lg:items-start">
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <h2 className="text-3xl font-semibold tracking-normal text-white">
-                Everything in one place.
-              </h2>
-              <p className="max-w-2xl text-base leading-7 text-slate-300">
-                Schedule, customize, and track every post across platforms from
-                one operational view built for repeat publishing.
-              </p>
-            </div>
-            <div className="grid gap-4">
-              {workflow.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <article
-                    key={item.title}
-                    className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
-                  >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-md bg-white/10 text-cyan-100">
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-white">{item.title}</h3>
-                      <p className="mt-1 text-sm leading-6 text-slate-300">{item.description}</p>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-
-          <DashboardPreview />
-        </div>
-      </section>
-
-      <section id="pricing" className="border-b border-white/10 bg-[#061015]">
-        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-          <div className="max-w-3xl space-y-3">
-            <h2 className="text-3xl font-semibold tracking-normal text-white">
-              Pricing for steady short-form output.
-            </h2>
-            <p className="text-base leading-7 text-slate-300">
-              Start in beta, then upgrade when you are ready to schedule repeat
-              publishing across connected customer accounts.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {pricingPlans.map((plan) => (
-              <article
-                className={
-                  plan.featured
-                    ? "rounded-md border border-cyan-300/35 bg-cyan-300/[0.055] p-6 shadow-2xl shadow-cyan-950/20"
-                    : "rounded-md border border-white/10 bg-white/[0.035] p-6"
-                }
-                key={plan.id}
-              >
-                <p className="text-xs font-semibold uppercase text-cyan-200">
-                  {plan.eyebrow}
-                </p>
-                <h3 className="mt-2 text-2xl font-semibold text-white">{plan.name}</h3>
-                <div className="mt-5 flex items-end gap-2">
-                  <span className="text-4xl font-semibold text-white">{plan.price}</span>
-                  <span className="pb-1 text-sm text-slate-400">{plan.period}</span>
-                </div>
-                <p className="mt-4 min-h-16 text-sm leading-6 text-slate-300">
-                  {plan.description}
-                </p>
-                <ul className="mt-5 grid gap-2 text-sm text-slate-200">
-                  {plan.features.slice(0, 4).map((feature) => (
-                    <li className="flex gap-2" key={feature}>
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  className={
-                    plan.id === "beta"
-                      ? "mt-6 inline-flex h-10 w-full items-center justify-center rounded-md border border-white/15 bg-white/[0.03] px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-                      : "mt-6 inline-flex h-10 w-full items-center justify-center rounded-md bg-cyan-200 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-white"
-                  }
-                  href={plan.id === "beta" ? "/sign-in" : "/billing"}
-                >
-                  {plan.id === "beta" ? "Start free" : plan.cta}
-                </Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <footer className="bg-[#061015]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-sm space-y-3">
-            <div className="flex items-center gap-3 text-sm font-semibold text-white">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
-                <Shield className="h-4 w-4" aria-hidden="true" />
-              </span>
-              Aegis Relay
-            </div>
-            <p className="text-sm leading-6 text-slate-400">
-              Secure short-form scheduling for creators, agencies, and customer
-              workspaces.
-            </p>
-          </div>
-          <div className="grid gap-8 text-sm sm:grid-cols-3">
-            <div className="space-y-3">
-              <p className="font-semibold text-white">Product</p>
-              <a href="#features" className="block text-slate-400 hover:text-white">
-                Features
-              </a>
-              <a href="#pricing" className="block text-slate-400 hover:text-white">
-                Pricing
-              </a>
-            </div>
-            <div className="space-y-3">
-              <p className="font-semibold text-white">Legal</p>
-              <Link href="/privacy" className="block text-slate-400 hover:text-white">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="block text-slate-400 hover:text-white">
-                Terms of Service
-              </Link>
-            </div>
-            <div className="space-y-3">
-              <p className="font-semibold text-white">Access</p>
-              <Link href="/sign-in" className="block text-slate-400 hover:text-white">
-                Sign in
-              </Link>
-              <Link href="/support" className="block text-slate-400 hover:text-white">
-                Support
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+    <main className="min-h-screen bg-[#050608] text-white">
+      <HeroSection />
+      <OutcomeSection />
+      <WorkflowSection />
+      <PlatformSection />
+      <PricingSection />
+      <FaqSection />
+      <FinalCta />
+      <SiteFooter />
     </main>
   );
 }
 
-function RelayGraphic() {
+function HeroSection() {
   return (
-    <div className="relative mx-auto w-full max-w-xl rounded-md border border-white/10 bg-[#061015]/90 p-5 shadow-2xl shadow-cyan-950/30">
-      <div className="absolute inset-0 rounded-md bg-[linear-gradient(135deg,rgba(34,211,238,0.12),transparent_35%,rgba(217,70,239,0.10))]" />
-      <div className="relative grid gap-5 sm:grid-cols-[9rem_minmax(0,1fr)_9rem] sm:items-center">
-        <div className="space-y-4">
-          {platformNodes.map((platform) => (
-            <div
-              key={platform.name}
-              className={`rounded-md border bg-black/20 p-3 ${platform.accent}`}
+    <section className="relative min-h-[92vh] overflow-hidden border-b border-white/10">
+      <HeroScene />
+      <header className="relative z-20">
+        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
+          <Link href="/" className="flex items-center gap-3 text-sm font-semibold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
+              <Shield className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span>Aegis Relay</span>
+          </Link>
+          <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
+            <a href="#workflow" className="hover:text-white">
+              Workflow
+            </a>
+            <a href="#platforms" className="hover:text-white">
+              Platforms
+            </a>
+            <a href="#pricing" className="hover:text-white">
+              Pricing
+            </a>
+            <Link href="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-white">
+              Terms
+            </Link>
+          </div>
+          <Link
+            href="/sign-in"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-[#ff3347] px-4 text-sm font-semibold text-white shadow-lg shadow-red-950/30 transition-colors hover:bg-[#ff4f60]"
+          >
+            Start free
+          </Link>
+        </nav>
+      </header>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pb-10 pt-16 sm:px-6 lg:min-h-[calc(92vh-5rem)] lg:pb-16">
+        <div className="max-w-4xl">
+          <div className="mb-5 flex w-fit items-center gap-2 rounded-md border border-white/10 bg-black/35 px-3 py-1.5 text-sm font-medium text-cyan-100 backdrop-blur">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            Built for short-form operators, creators, and agencies
+          </div>
+          <h1 className="max-w-[43rem] text-5xl font-semibold leading-[1.02] tracking-normal text-white sm:text-6xl lg:text-6xl">
+            One upload. One schedule. Every short-form channel.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
+            Aegis Relay turns scattered posting work into one secure publishing
+            command center for TikTok, YouTube Shorts, and Instagram Reels.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/sign-in"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#ff3347] px-5 text-sm font-semibold text-white shadow-xl shadow-red-950/30 transition-colors hover:bg-[#ff4f60]"
             >
-              <div className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-full ${platform.dot}`} />
-                <p className="text-sm font-semibold">{platform.name}</p>
-              </div>
+              Start scheduling
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <a
+              href="#pricing"
+              className="inline-flex h-12 items-center justify-center rounded-md border border-white/15 bg-white/[0.06] px-5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
+            >
+              View pricing
+            </a>
+          </div>
+        </div>
+
+        <div className="mt-10 grid max-w-3xl gap-3 sm:grid-cols-3">
+          {heroStats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-md border border-white/10 bg-black/35 p-4 backdrop-blur"
+            >
+              <p className="text-2xl font-semibold text-white">{stat.value}</p>
+              <p className="mt-1 text-sm text-slate-300">{stat.label}</p>
             </div>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
 
-        <div className="relative flex min-h-72 items-center justify-center">
-          <div className="absolute left-0 right-0 top-1/2 hidden h-px bg-gradient-to-r from-cyan-300/0 via-cyan-200/50 to-fuchsia-300/0 sm:block" />
-          <div className="absolute bottom-9 top-9 hidden w-px bg-gradient-to-b from-cyan-300/0 via-fuchsia-200/50 to-cyan-300/0 sm:block" />
-          <div className="relative z-10 w-36 rounded-[1.75rem] border border-white/15 bg-slate-950 p-2 shadow-2xl shadow-black/50">
-            <div className="rounded-[1.25rem] border border-white/10 bg-gradient-to-b from-slate-700 to-slate-950 p-3">
-              <div className="aspect-[9/16] rounded-xl border border-white/10 bg-[linear-gradient(160deg,#e5e7eb,#475569_50%,#020617)] p-3">
-                <div className="flex h-full flex-col justify-between">
-                  <div className="h-5 w-16 rounded bg-white/20" />
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-950">
-                    <Play className="ml-0.5 h-5 w-5 fill-current" aria-hidden="true" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="h-1.5 rounded bg-white/35" />
-                    <div className="h-1.5 w-2/3 rounded bg-white/20" />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-center gap-2 text-cyan-100">
-                <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                <span className="text-xs font-medium">Encrypted</span>
-              </div>
+function HeroScene() {
+  return (
+    <div className="absolute inset-0">
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.06)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_12%,rgba(255,51,71,0.28),transparent_30%),radial-gradient(circle_at_15%_18%,rgba(34,211,238,0.2),transparent_32%),linear-gradient(180deg,rgba(5,6,8,0.34),rgba(5,6,8,0.94)_82%)]" />
+      <div className="absolute right-[-16rem] top-24 hidden w-[44rem] opacity-80 lg:block">
+        <ProductStage />
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-[#050608] to-transparent" />
+    </div>
+  );
+}
+
+function ProductStage() {
+  return (
+    <div className="rotate-[-4deg] rounded-md border border-white/10 bg-[#0a1118]/90 p-4 shadow-2xl shadow-black/40">
+      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
+            Studio command
+          </p>
+          <p className="mt-1 text-xl font-semibold text-white">Publishing queue</p>
+        </div>
+        <div className="rounded-md border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-sm font-semibold text-emerald-100">
+          Live
+        </div>
+      </div>
+      <div className="grid gap-4 pt-4">
+        {[
+          ["Commander drop", "TikTok, Shorts, Reels", "Scheduled", "10:30 AM"],
+          ["Studio walkthrough", "Shorts, Reels", "Ready", "1:00 PM"],
+          ["Launch clip", "TikTok, Shorts", "Queued", "4:15 PM"],
+        ].map(([title, channels, status, time]) => (
+          <div
+            key={title}
+            className="grid grid-cols-[1fr_auto] gap-4 rounded-md border border-white/10 bg-black/25 p-4"
+          >
+            <div>
+              <p className="font-semibold text-white">{title}</p>
+              <p className="mt-1 text-sm text-slate-400">{channels}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-cyan-100">{status}</p>
+              <p className="mt-1 text-xs text-slate-500">{time}</p>
             </div>
           </div>
-        </div>
-
-        <div className="rounded-md border border-emerald-300/30 bg-emerald-300/10 p-4 text-emerald-100">
-          <p className="text-sm font-semibold">Scheduled</p>
-          <div className="mt-4 space-y-3">
-            {platformNodes.map((platform) => (
-              <div key={platform.name} className="flex items-center gap-2 text-xs">
-                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                <span>{platform.name}</span>
-              </div>
-            ))}
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {["TikTok", "YouTube", "Instagram"].map((platform) => (
+          <div
+            key={platform}
+            className="rounded-md border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-sm font-semibold text-cyan-100"
+          >
+            {platform}
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function DashboardPreview() {
+function OutcomeSection() {
   return (
-    <div className="rounded-md border border-white/10 bg-[#071217] p-4 shadow-2xl shadow-black/30">
-      <div className="rounded-md border border-white/10 bg-slate-950/70">
-        <div className="flex items-center justify-between border-b border-white/10 p-4">
+    <section className="border-b border-white/10 bg-[#080b10]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-end">
           <div>
-            <p className="text-sm font-semibold text-white">Upcoming posts</p>
-            <p className="mt-1 text-xs text-slate-400">Workspace publishing queue</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
+              The operator advantage
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
+              Replace tab-hopping with a repeatable publishing system.
+            </h2>
           </div>
-          <RadioTower className="h-5 w-5 text-cyan-200" aria-hidden="true" />
+          <p className="text-base leading-7 text-slate-300">
+            Aegis Relay is designed for people who publish more than occasional
+            clips. Keep uploads, account access, platform readiness, scheduled
+            posts, usage limits, and retry history in one quiet workflow.
+          </p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[28rem] text-left text-sm">
-            <thead className="border-b border-white/10 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Post</th>
-                <th className="px-4 py-3 font-medium">Date and time</th>
-                <th className="px-4 py-3 font-medium">Platforms</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {statusRows.map((row) => (
-                <tr key={row.post}>
-                  <td className="px-4 py-4 font-medium text-white">{row.post}</td>
-                  <td className="px-4 py-4 text-slate-300">
-                    {row.date} · {row.time}
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex gap-1.5">
-                      {row.platforms.map((platform) => (
-                        <span
-                          key={platform}
-                          className="rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-300"
-                        >
-                          {platform}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-xs font-medium text-emerald-200">
-                      <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      {row.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex items-center justify-between border-t border-white/10 p-4 text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <Unplug className="h-4 w-4" aria-hidden="true" />
-            Connected accounts are scoped to each workspace.
-          </div>
-          <Link href="/privacy" className="font-medium text-cyan-100 hover:text-white">
-            Privacy Policy
-          </Link>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {outcomes.map((outcome) => {
+            const Icon = outcome.icon;
+            return (
+              <article
+                key={outcome.title}
+                className="rounded-md border border-white/10 bg-white/[0.035] p-6"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-md border border-cyan-300/25 bg-cyan-300/10 text-cyan-100">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <h3 className="mt-5 text-lg font-semibold text-white">{outcome.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{outcome.description}</p>
+              </article>
+            );
+          })}
         </div>
       </div>
+    </section>
+  );
+}
+
+function WorkflowSection() {
+  return (
+    <section id="workflow" className="border-b border-white/10 bg-[#050608]">
+      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:py-20">
+        <div className="space-y-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#ffb86b]">
+            How it works
+          </p>
+          <h2 className="text-3xl font-semibold tracking-normal text-white sm:text-4xl">
+            A scheduler that acts like an operations desk.
+          </h2>
+          <p className="max-w-xl text-base leading-7 text-slate-300">
+            Every scheduled post is broken into platform-specific jobs, so your
+            team can see exactly where each account stands.
+          </p>
+          <Link
+            href="/sign-in"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-white/15 bg-white/[0.06] px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+          >
+            Open the app
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+
+        <div className="grid gap-4">
+          {workflow.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article
+                key={item.title}
+                className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#ff3347]/15 text-[#ff9aa6]">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    {item.eyebrow}
+                  </p>
+                  <h3 className="mt-1 text-base font-semibold text-white">{item.title}</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-300">{item.description}</p>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PlatformSection() {
+  return (
+    <section id="platforms" className="border-b border-white/10 bg-[#081113]">
+      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:items-start lg:py-20">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
+            Platform-ready
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
+            Built around the details platforms actually review.
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+            Aegis Relay keeps platform settings visible before posting: TikTok
+            privacy and music usage confirmation, YouTube title and description,
+            Instagram professional account publishing, and account health checks.
+          </p>
+          <div className="mt-7 grid gap-3">
+            {platformFeatures.map((feature) => (
+              <div className="flex items-start gap-3 text-sm leading-6 text-slate-200" key={feature}>
+                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-300" />
+                <span>{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-md border border-white/10 bg-[#050608] p-5">
+          <div className="grid gap-3">
+            <PlatformRow name="TikTok" status="Creator settings required" tone="cyan" />
+            <PlatformRow name="YouTube Shorts" status="Auto-publish ready" tone="red" />
+            <PlatformRow name="Instagram Reels" status="Professional account" tone="pink" />
+          </div>
+          <div className="mt-5 rounded-md border border-emerald-300/25 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">
+            <BadgeCheck className="mb-3 h-5 w-5" aria-hidden="true" />
+            Tokens are encrypted, workspace-scoped, and removable from the
+            connection manager.
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PlatformRow({
+  name,
+  status,
+  tone,
+}: {
+  name: string;
+  status: string;
+  tone: "cyan" | "red" | "pink";
+}) {
+  const tones = {
+    cyan: "border-cyan-300/25 bg-cyan-300/[0.06] text-cyan-100",
+    red: "border-red-300/25 bg-red-300/[0.06] text-red-100",
+    pink: "border-fuchsia-300/25 bg-fuchsia-300/[0.06] text-fuchsia-100",
+  };
+
+  return (
+    <div className={`rounded-md border p-4 ${tones[tone]}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-semibold text-white">{name}</p>
+        <span className="rounded-md border border-white/10 bg-black/25 px-2 py-1 text-xs">
+          {status}
+        </span>
+      </div>
     </div>
+  );
+}
+
+function PricingSection() {
+  return (
+    <section id="pricing" className="border-b border-white/10 bg-[#050608]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#ffb86b]">
+            Pricing
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
+            Start lean. Scale when posting volume grows.
+          </h2>
+          <p className="mt-4 text-base leading-7 text-slate-300">
+            Plans are tied to scheduled post volume so customers can match cost
+            to how much content they actually move through the relay.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          {pricingPlans.map((plan) => (
+            <article
+              className={
+                plan.featured
+                  ? "rounded-md border border-[#ff3347]/45 bg-[#ff3347]/10 p-6 shadow-2xl shadow-red-950/20"
+                  : "rounded-md border border-white/10 bg-white/[0.035] p-6"
+              }
+              key={plan.id}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
+                  {plan.eyebrow}
+                </p>
+                {plan.featured ? (
+                  <span className="rounded-md bg-[#ff3347] px-2 py-1 text-xs font-semibold text-white">
+                    Popular
+                  </span>
+                ) : null}
+              </div>
+              <h3 className="mt-3 text-2xl font-semibold text-white">{plan.name}</h3>
+              <div className="mt-5 flex items-end gap-2">
+                <span className="text-4xl font-semibold text-white">{plan.price}</span>
+                <span className="pb-1 text-sm text-slate-400">{plan.period}</span>
+              </div>
+              <p className="mt-4 min-h-16 text-sm leading-6 text-slate-300">
+                {plan.description}
+              </p>
+              <div className="mt-5 flex items-center gap-2 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-white">
+                <CircleDollarSign className="h-4 w-4 text-[#ffb86b]" aria-hidden="true" />
+                {plan.monthlyScheduledPostLimit} scheduled posts per month
+              </div>
+              <ul className="mt-5 grid gap-2 text-sm text-slate-200">
+                {plan.features.map((feature) => (
+                  <li className="flex gap-2" key={feature}>
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                className={
+                  plan.featured
+                    ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-[#ff3347] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#ff4f60]"
+                    : "mt-6 inline-flex h-11 w-full items-center justify-center rounded-md border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                }
+                href={plan.id === "beta" ? "/sign-in" : "/billing"}
+              >
+                {plan.id === "beta" ? "Start free" : plan.cta}
+              </Link>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FaqSection() {
+  return (
+    <section className="border-b border-white/10 bg-[#080b10]">
+      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:py-20">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
+            Questions
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white">
+            Built for the practical parts of publishing.
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {faqs.map((faq) => (
+            <article key={faq.question} className="rounded-md border border-white/10 bg-white/[0.035] p-5">
+              <h3 className="text-base font-semibold text-white">{faq.question}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{faq.answer}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCta() {
+  return (
+    <section className="bg-[#050608]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="relative overflow-hidden rounded-md border border-white/10 bg-[#0a1118] p-8 sm:p-10">
+          <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(34,211,238,0.12),transparent_36%,rgba(255,51,71,0.14))]" />
+          <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                Ready when the queue is
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
+                Build your short-form publishing command center.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+                Start with free beta access, connect your first account, and
+                schedule your first video through Aegis Relay.
+              </p>
+            </div>
+            <Link
+              href="/sign-in"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#ff3347] px-5 text-sm font-semibold text-white shadow-xl shadow-red-950/30 transition-colors hover:bg-[#ff4f60]"
+            >
+              Start scheduling
+              <Zap className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="border-t border-white/10 bg-[#080b10]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-sm space-y-3">
+          <div className="flex items-center gap-3 text-sm font-semibold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
+              <Shield className="h-4 w-4" aria-hidden="true" />
+            </span>
+            Aegis Relay
+          </div>
+          <p className="text-sm leading-6 text-slate-400">
+            Secure short-form scheduling for creators, agencies, and customer
+            workspaces.
+          </p>
+        </div>
+        <div className="grid gap-8 text-sm sm:grid-cols-3">
+          <div className="space-y-3">
+            <p className="font-semibold text-white">Product</p>
+            <a href="#workflow" className="block text-slate-400 hover:text-white">
+              Workflow
+            </a>
+            <a href="#platforms" className="block text-slate-400 hover:text-white">
+              Platforms
+            </a>
+            <a href="#pricing" className="block text-slate-400 hover:text-white">
+              Pricing
+            </a>
+          </div>
+          <div className="space-y-3">
+            <p className="font-semibold text-white">Legal</p>
+            <Link href="/privacy" className="block text-slate-400 hover:text-white">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="block text-slate-400 hover:text-white">
+              Terms of Service
+            </Link>
+          </div>
+          <div className="space-y-3">
+            <p className="font-semibold text-white">Access</p>
+            <Link href="/sign-in" className="block text-slate-400 hover:text-white">
+              Sign in
+            </Link>
+            <Link href="/support" className="block text-slate-400 hover:text-white">
+              Support
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }
