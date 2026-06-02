@@ -8,7 +8,6 @@ import {
   KeyRound,
   RadioTower,
   RefreshCw,
-  Shield,
   ShieldCheck,
   Sparkles,
   UploadCloud,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { AegisRelayLogo } from "@/components/aegis-relay-logo";
 import { pricingPlans } from "@/lib/billing/pricing";
 
 const heroStats = [
@@ -127,11 +127,8 @@ function HeroSection() {
       <HeroScene />
       <header className="relative z-20">
         <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
-          <Link href="/" className="flex items-center gap-3 text-sm font-semibold">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
-              <Shield className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <span>Aegis Relay</span>
+          <Link href="/" className="text-sm font-semibold">
+            <AegisRelayLogo markClassName="h-10 w-10" />
           </Link>
           <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
             <a href="#workflow" className="hover:text-white">
@@ -568,12 +565,7 @@ function SiteFooter() {
     <footer className="border-t border-white/10 bg-[#080b10]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-sm space-y-3">
-          <div className="flex items-center gap-3 text-sm font-semibold text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
-              <Shield className="h-4 w-4" aria-hidden="true" />
-            </span>
-            Aegis Relay
-          </div>
+          <AegisRelayLogo markClassName="h-9 w-9" />
           <p className="text-sm leading-6 text-slate-400">
             Secure short-form scheduling for creators, agencies, and customer
             workspaces.
