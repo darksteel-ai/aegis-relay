@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       timezone: input.timezone,
       platforms: input.platforms,
       accountIdsByPlatform: castConnectedAccountSelections(input.accountIdsByPlatform),
+      tiktokSettings: input.tiktokSettings,
       video: input.video,
     });
   } catch (error) {

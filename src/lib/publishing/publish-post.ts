@@ -19,6 +19,11 @@ type LoadedPlatformPost = {
   title?: string | null;
   caption: string;
   privacy?: string | null;
+  allowComments?: boolean | null;
+  allowDuet?: boolean | null;
+  allowStitch?: boolean | null;
+  brandContent?: boolean | null;
+  brandOrganic?: boolean | null;
   status: PublishStatus;
   scheduledPost: {
     video: {
@@ -143,6 +148,11 @@ export async function publishPlatformPost(
         title: platformPost.title,
         caption: platformPost.caption,
         privacy: platformPost.privacy,
+        allowComments: platformPost.allowComments,
+        allowDuet: platformPost.allowDuet,
+        allowStitch: platformPost.allowStitch,
+        brandContent: platformPost.brandContent,
+        brandOrganic: platformPost.brandOrganic,
       },
       video: {
         storageKey: platformPost.scheduledPost.video.storageKey,
@@ -250,6 +260,11 @@ async function publishPlatformPostFromConvex(
         title: platformPost.title,
         caption: platformPost.caption,
         privacy: platformPost.privacy,
+        allowComments: platformPost.allowComments,
+        allowDuet: platformPost.allowDuet,
+        allowStitch: platformPost.allowStitch,
+        brandContent: platformPost.brandContent,
+        brandOrganic: platformPost.brandOrganic,
       },
       video: {
         storageKey: platformPost.scheduledPost.video.storageKey,

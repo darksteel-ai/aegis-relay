@@ -12,6 +12,11 @@ export type PlatformPublishInput = {
     title?: string | null;
     caption: string;
     privacy?: string | null;
+    allowComments?: boolean | null;
+    allowDuet?: boolean | null;
+    allowStitch?: boolean | null;
+    brandContent?: boolean | null;
+    brandOrganic?: boolean | null;
   };
   video: {
     storageKey: string;

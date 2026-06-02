@@ -10,6 +10,16 @@ const validPayload = {
   scheduledAt: "2026-06-01T14:30:00.000Z",
   timezone: "America/New_York",
   platforms: ["YOUTUBE", "TIKTOK"],
+  tiktokSettings: {
+    title: "Launch clip for TikTok",
+    privacyLevel: "SELF_ONLY",
+    allowComments: true,
+    allowDuet: false,
+    allowStitch: false,
+    brandContent: false,
+    brandOrganic: false,
+    musicUsageConfirmed: true,
+  },
   video: {
     storageKey: "uploads/workspaces/workspace_123/users/user_123/clip.mp4",
     fileName: "clip.mp4",
@@ -39,6 +49,16 @@ describe("scheduled post creation rules", () => {
       scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
       timezone: "America/New_York",
       platforms: ["YOUTUBE", "TIKTOK"],
+      tiktokSettings: {
+        title: "Launch clip for TikTok",
+        privacyLevel: "SELF_ONLY",
+        allowComments: true,
+        allowDuet: false,
+        allowStitch: false,
+        brandContent: false,
+        brandOrganic: false,
+        musicUsageConfirmed: true,
+      },
       video: {
         storageKey: "uploads/workspaces/workspace_123/users/user_123/clip.mp4",
         mimeType: "video/mp4",
@@ -95,12 +115,14 @@ describe("scheduled post creation rules", () => {
         caption: "Launch clip for the beta.\n\n#shorts #ai #launch",
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "SCHEDULED",
+        privacy: "public",
       },
       {
         platform: "INSTAGRAM",
         caption: "Launch clip for the beta.\n\n#shorts #ai #launch",
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "SCHEDULED",
+        privacy: "public",
       },
     ]);
   });
@@ -222,10 +244,18 @@ describe("scheduled post creation rules", () => {
         caption: "Launch clip for the beta.",
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "SCHEDULED",
+        privacy: "public",
       },
       {
         platform: "TIKTOK",
+        title: "Launch clip for TikTok",
         caption: "Launch clip for the beta.",
+        privacy: "SELF_ONLY",
+        allowComments: true,
+        allowDuet: false,
+        allowStitch: false,
+        brandContent: false,
+        brandOrganic: false,
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "SCHEDULED",
       },
@@ -234,8 +264,40 @@ describe("scheduled post creation rules", () => {
         caption: "Launch clip for the beta.",
         scheduledAt: new Date("2026-06-01T14:30:00.000Z"),
         status: "SCHEDULED",
+        privacy: "public",
       },
     ]);
+  });
+
+  test("requires TikTok privacy and music usage confirmation", () => {
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      tiktokSettings: {
+        privacyLevel: "",
+        allowComments: false,
+        allowDuet: false,
+        allowStitch: false,
+        brandContent: false,
+        brandOrganic: false,
+        musicUsageConfirmed: false,
+      },
+    }, {
+      workspaceId: "workspace_123",
+      userId: "user_123",
+      now: new Date("2026-05-12T12:00:00.000Z"),
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        "Choose a TikTok privacy option before scheduling.",
+        "Confirm TikTok music usage rights before scheduling.",
+      ]),
+    );
   });
 
   test("rejects storage keys outside the current workspace upload prefix", () => {

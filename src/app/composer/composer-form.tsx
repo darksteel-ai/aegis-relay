@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, CalendarPlus, CheckCircle2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   PlatformSelector,
@@ -35,6 +35,16 @@ type ComposerConnectedAccount = {
   status: string;
 };
 
+type TikTokCreatorInfo = {
+  accountName: string;
+  externalId: string;
+  privacyLevelOptions: string[];
+  commentDisabled: boolean;
+  duetDisabled: boolean;
+  stitchDisabled: boolean;
+  maxVideoPostDurationSec: number | null;
+};
+
 export function ComposerForm({
   connectedAccounts = [],
 }: {
@@ -48,6 +58,18 @@ export function ComposerForm({
   const [baseCaption, setBaseCaption] = useState("");
   const [youtubeTitle, setYoutubeTitle] = useState("");
   const [hashtags, setHashtags] = useState("");
+  const [tiktokTitle, setTikTokTitle] = useState("");
+  const [tiktokPrivacyLevel, setTikTokPrivacyLevel] = useState("");
+  const [tiktokAllowComments, setTikTokAllowComments] = useState(false);
+  const [tiktokAllowDuet, setTikTokAllowDuet] = useState(false);
+  const [tiktokAllowStitch, setTikTokAllowStitch] = useState(false);
+  const [tiktokBrandContent, setTikTokBrandContent] = useState(false);
+  const [tiktokBrandOrganic, setTikTokBrandOrganic] = useState(false);
+  const [tiktokMusicUsageConfirmed, setTikTokMusicUsageConfirmed] = useState(false);
+  const [tiktokCreatorInfo, setTikTokCreatorInfo] = useState<TikTokCreatorInfo | null>(null);
+  const [tiktokCreatorInfoState, setTikTokCreatorInfoState] = useState<SubmitState>({
+    type: "idle",
+  });
   const [scheduledAt, setScheduledAt] = useState("");
   const [timezone, setTimezone] = useState(getDefaultTimezone);
   const [submitState, setSubmitState] = useState<SubmitState>({ type: "idle" });
@@ -60,6 +82,16 @@ export function ComposerForm({
   const captionCharacters = baseCaption.length;
   const youtubeTitleCharacters = youtubeTitle.length;
   const hashtagCharacters = hashtags.length;
+  const selectedTikTokAccountId = accountIdsByPlatform.TIKTOK?.[0] ?? "";
+  const selectedTikTokAccount = useMemo(
+    () => connectedAccounts.find((account) => account.id === selectedTikTokAccountId),
+    [connectedAccounts, selectedTikTokAccountId],
+  );
+  const isTikTokSelected = platforms.includes("TIKTOK");
+  const visibleTikTokCreatorInfo =
+    isTikTokSelected && tiktokCreatorInfo?.externalId === selectedTikTokAccount?.externalId
+      ? tiktokCreatorInfo
+      : null;
   const hasRequiredMetadata = Boolean(video?.width && video.height && video.durationSeconds);
   const submitBlockedReason = getSubmitBlockedReason({
     video,
@@ -68,10 +100,55 @@ export function ComposerForm({
     scheduledAt,
     timezone,
     platforms,
+    tiktokPrivacyLevel,
+    tiktokMusicUsageConfirmed,
   });
   const canSubmit = !submitBlockedReason;
   const scheduleBlockedCopy =
     submitState.type === "success" ? "Ready for the next post." : submitBlockedReason;
+
+  useEffect(() => {
+    if (!isTikTokSelected || !selectedTikTokAccountId) {
+      return;
+    }
+
+    let isCurrent = true;
+
+    fetch(`/api/tiktok/creator-info?accountId=${encodeURIComponent(selectedTikTokAccountId)}`)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(await readErrorMessage(response));
+        }
+        return response.json() as Promise<TikTokCreatorInfo>;
+      })
+      .then((body) => {
+        if (!isCurrent) {
+          return;
+        }
+        setTikTokCreatorInfo(body);
+        setTikTokCreatorInfoState({
+          type: "success",
+          message: `Latest TikTok creator settings loaded for ${body.accountName}.`,
+        });
+      })
+      .catch((error) => {
+        if (!isCurrent) {
+          return;
+        }
+        setTikTokCreatorInfo(null);
+        setTikTokCreatorInfoState({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "TikTok creator settings could not be loaded.",
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [isTikTokSelected, selectedTikTokAccountId]);
 
   async function submitPost(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -106,6 +183,18 @@ export function ComposerForm({
           timezone,
           platforms,
           accountIdsByPlatform,
+          tiktokSettings: isTikTokSelected
+            ? {
+                title: tiktokTitle || baseCaption,
+                privacyLevel: tiktokPrivacyLevel,
+                allowComments: tiktokAllowComments,
+                allowDuet: tiktokAllowDuet,
+                allowStitch: tiktokAllowStitch,
+                brandContent: tiktokBrandContent,
+                brandOrganic: tiktokBrandOrganic,
+                musicUsageConfirmed: tiktokMusicUsageConfirmed,
+              }
+            : undefined,
           video: {
             storageKey: video.key,
             fileName: video.fileName,
@@ -131,6 +220,14 @@ export function ComposerForm({
       setBaseCaption("");
       setYoutubeTitle("");
       setHashtags("");
+      setTikTokTitle("");
+      setTikTokPrivacyLevel("");
+      setTikTokAllowComments(false);
+      setTikTokAllowDuet(false);
+      setTikTokAllowStitch(false);
+      setTikTokBrandContent(false);
+      setTikTokBrandOrganic(false);
+      setTikTokMusicUsageConfirmed(false);
       setScheduledAt("");
       setPlatforms(["YOUTUBE"]);
       setAccountIdsByPlatform(getInitialAccountSelections(connectedAccounts));
@@ -364,6 +461,144 @@ export function ComposerForm({
         onChange={setPlatforms}
       />
 
+      {isTikTokSelected ? (
+        <section className="grid gap-4 rounded-md border border-cyan-300/25 bg-cyan-300/[0.045] p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-white">TikTok posting settings</p>
+              <p className="mt-1 text-sm leading-6 text-slate-400">
+                Confirm creator, privacy, interaction, and rights settings before this video is
+                sent to TikTok.
+              </p>
+            </div>
+            <span className="w-fit rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+              {selectedTikTokAccount?.accountName ?? "No TikTok account selected"}
+            </span>
+          </div>
+
+          {tiktokCreatorInfoState.type !== "idle" ? (
+            <div
+              className={
+                tiktokCreatorInfoState.type === "success"
+                  ? "flex items-start gap-2 rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+                  : "flex items-start gap-2 rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+              }
+              role="status"
+            >
+              {tiktokCreatorInfoState.type === "success" ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              ) : (
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              )}
+              <p>{tiktokCreatorInfoState.message}</p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+            <div className="grid gap-3 rounded-md border border-white/10 bg-black/25 p-4">
+              <p className="text-sm font-semibold text-white">Preview</p>
+              <div className="grid aspect-[9/16] max-h-80 place-items-center rounded-md border border-white/10 bg-black/35 px-4 text-center">
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {video?.fileName ?? "Upload a vertical video"}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-400">
+                    {video?.width && video.height && video.durationSeconds
+                      ? `${video.width}x${video.height} - ${Math.round(video.durationSeconds)} seconds`
+                      : "TikTok preview appears after upload metadata is read."}
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs leading-5 text-slate-500">
+                TikTok reviews uploaded videos and may reject, mute, or remove content that
+                violates its posting or music rules.
+              </p>
+            </div>
+
+            <div className="grid gap-4">
+              <label className="grid gap-2 text-sm font-medium text-white" htmlFor="tiktokTitle">
+                TikTok title
+                <textarea
+                  className="studio-input min-h-24 resize-y px-3 py-2 text-sm font-normal leading-6 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                  id="tiktokTitle"
+                  maxLength={2200}
+                  value={tiktokTitle}
+                  onChange={(event) => setTikTokTitle(event.target.value)}
+                  placeholder="Defaults to the caption if left blank."
+                />
+              </label>
+
+              <label className="grid gap-2 text-sm font-medium text-white" htmlFor="tiktokPrivacy">
+                TikTok privacy
+                <select
+                  className="studio-input h-10 px-3 text-sm font-normal disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                  id="tiktokPrivacy"
+                  required
+                  value={tiktokPrivacyLevel}
+                  onChange={(event) => setTikTokPrivacyLevel(event.target.value)}
+                >
+                  <option value="">Choose privacy before posting</option>
+                  {getTikTokPrivacyOptions(visibleTikTokCreatorInfo).map((option) => (
+                    <option key={option} value={option}>
+                      {formatTikTokPrivacy(option)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="grid gap-3">
+                <p className="text-sm font-medium text-white">Interactions</p>
+                <TikTokCheckbox
+                  checked={tiktokAllowComments}
+                  disabled={isSubmitting || visibleTikTokCreatorInfo?.commentDisabled === true}
+                  label="Allow comments"
+                  onChange={setTikTokAllowComments}
+                />
+                <TikTokCheckbox
+                  checked={tiktokAllowDuet}
+                  disabled={isSubmitting || visibleTikTokCreatorInfo?.duetDisabled === true}
+                  label="Allow Duet"
+                  onChange={setTikTokAllowDuet}
+                />
+                <TikTokCheckbox
+                  checked={tiktokAllowStitch}
+                  disabled={isSubmitting || visibleTikTokCreatorInfo?.stitchDisabled === true}
+                  label="Allow Stitch"
+                  onChange={setTikTokAllowStitch}
+                />
+              </div>
+
+              <div className="grid gap-3 border-t border-white/10 pt-4">
+                <p className="text-sm font-medium text-white">Commercial content disclosure</p>
+                <TikTokCheckbox
+                  checked={tiktokBrandOrganic}
+                  disabled={isSubmitting}
+                  label="This video promotes my own brand, product, or service"
+                  onChange={setTikTokBrandOrganic}
+                />
+                <TikTokCheckbox
+                  checked={tiktokBrandContent}
+                  disabled={isSubmitting}
+                  label="This video includes paid partnership or third-party brand content"
+                  onChange={setTikTokBrandContent}
+                />
+              </div>
+
+              <div className="rounded-md border border-white/10 bg-black/25 p-3">
+                <TikTokCheckbox
+                  checked={tiktokMusicUsageConfirmed}
+                  disabled={isSubmitting}
+                  label="I confirm this video uses music, sounds, and creative assets that I own or have permission to use on TikTok"
+                  onChange={setTikTokMusicUsageConfirmed}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <div className="grid gap-4 rounded-md border border-white/10 bg-black/25 p-4 sm:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium text-white" htmlFor="scheduledAt">
           Schedule time
@@ -452,6 +687,57 @@ function getInitialAccountSelections(accounts: ComposerConnectedAccount[]) {
   return selections;
 }
 
+function TikTokCheckbox({
+  checked,
+  disabled,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-start gap-3 text-sm leading-6 text-slate-300">
+      <input
+        className="mt-1 h-4 w-4 accent-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+        checked={checked}
+        disabled={disabled}
+        type="checkbox"
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span>{label}</span>
+    </label>
+  );
+}
+
+function getTikTokPrivacyOptions(creatorInfo: TikTokCreatorInfo | null) {
+  const options = creatorInfo?.privacyLevelOptions?.filter(Boolean);
+
+  if (options?.length) {
+    return options;
+  }
+
+  return [
+    "SELF_ONLY",
+    "MUTUAL_FOLLOW_FRIENDS",
+    "FOLLOWER_OF_CREATOR",
+    "PUBLIC_TO_EVERYONE",
+  ];
+}
+
+function formatTikTokPrivacy(option: string) {
+  const labels: Record<string, string> = {
+    SELF_ONLY: "Only me",
+    MUTUAL_FOLLOW_FRIENDS: "Friends",
+    FOLLOWER_OF_CREATOR: "Followers",
+    PUBLIC_TO_EVERYONE: "Everyone",
+  };
+
+  return labels[option] ?? option;
+}
+
 function getSubmitBlockedReason({
   video,
   hasRequiredMetadata,
@@ -459,6 +745,8 @@ function getSubmitBlockedReason({
   scheduledAt,
   timezone,
   platforms,
+  tiktokPrivacyLevel,
+  tiktokMusicUsageConfirmed,
 }: {
   video: UploadedVideo | null;
   hasRequiredMetadata: boolean;
@@ -466,6 +754,8 @@ function getSubmitBlockedReason({
   scheduledAt: string;
   timezone: string;
   platforms: ComposerPlatform[];
+  tiktokPrivacyLevel: string;
+  tiktokMusicUsageConfirmed: boolean;
 }) {
   if (!video) {
     return "Upload a video before scheduling.";
@@ -481,6 +771,14 @@ function getSubmitBlockedReason({
 
   if (!platforms.length) {
     return "Select at least one platform.";
+  }
+
+  if (platforms.includes("TIKTOK") && !tiktokPrivacyLevel) {
+    return "Choose TikTok privacy before scheduling.";
+  }
+
+  if (platforms.includes("TIKTOK") && !tiktokMusicUsageConfirmed) {
+    return "Confirm TikTok music usage rights before scheduling.";
   }
 
   if (!scheduledAt) {

@@ -43,6 +43,16 @@ export const createScheduledPost = mutation({
       TIKTOK: v.optional(v.array(v.id("connectedAccounts"))),
       INSTAGRAM: v.optional(v.array(v.id("connectedAccounts"))),
     })),
+    tiktokSettings: v.optional(v.object({
+      title: v.optional(v.string()),
+      privacyLevel: v.string(),
+      allowComments: v.boolean(),
+      allowDuet: v.boolean(),
+      allowStitch: v.boolean(),
+      brandContent: v.boolean(),
+      brandOrganic: v.boolean(),
+      musicUsageConfirmed: v.boolean(),
+    })),
     video: v.object({
       storageKey: v.string(),
       fileName: v.string(),
@@ -147,9 +157,19 @@ export const createScheduledPost = mutation({
           workspaceId: args.workspaceId,
           platform: item,
           connectedAccountId,
-          title: item === "YOUTUBE" ? args.youtubeTitle : undefined,
+          title:
+            item === "YOUTUBE"
+              ? args.youtubeTitle
+              : item === "TIKTOK"
+                ? args.tiktokSettings?.title
+                : undefined,
           caption: platformCaption,
-          privacy: "public",
+          privacy: item === "TIKTOK" ? (args.tiktokSettings?.privacyLevel ?? "SELF_ONLY") : "public",
+          allowComments: item === "TIKTOK" ? args.tiktokSettings?.allowComments : undefined,
+          allowDuet: item === "TIKTOK" ? args.tiktokSettings?.allowDuet : undefined,
+          allowStitch: item === "TIKTOK" ? args.tiktokSettings?.allowStitch : undefined,
+          brandContent: item === "TIKTOK" ? args.tiktokSettings?.brandContent : undefined,
+          brandOrganic: item === "TIKTOK" ? args.tiktokSettings?.brandOrganic : undefined,
           scheduledAt: args.scheduledAt,
           status: "SCHEDULED",
           createdAt: now,

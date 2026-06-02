@@ -75,7 +75,7 @@ async function publishTikTokVideo(
     throw new Error("TikTok publishing needs the uploaded video file size.");
   }
 
-  const creatorInfo = await queryCreatorInfo(accessToken, deps.fetchFn);
+  const creatorInfo = await fetchTikTokCreatorInfo(accessToken, deps.fetchFn);
   const privacyLevel = normalizePrivacyLevel(
     getRequestedPrivacyLevel(input.platformPost.privacy, deps.env),
     creatorInfo.data?.privacy_level_options ?? [],
@@ -108,7 +108,7 @@ async function publishTikTokVideo(
   };
 }
 
-async function queryCreatorInfo(accessToken: string, fetchFn: typeof fetch) {
+export async function fetchTikTokCreatorInfo(accessToken: string, fetchFn: typeof fetch = fetch) {
   const response = await fetchFn(`${tiktokApiBaseUrl}/v2/post/publish/creator_info/query/`, {
     method: "POST",
     headers: {
@@ -147,13 +147,15 @@ async function initializeDirectPost({
     },
     body: JSON.stringify({
       post_info: {
-        title: normalizeCaption(input.platformPost.caption),
+        title: normalizeCaption(input.platformPost.title || input.platformPost.caption),
         privacy_level: privacyLevel,
-        disable_duet: Boolean(creatorInfo.data?.duet_disabled),
-        disable_comment: Boolean(creatorInfo.data?.comment_disabled),
-        disable_stitch: Boolean(creatorInfo.data?.stitch_disabled),
-        brand_content_toggle: false,
-        brand_organic_toggle: false,
+        disable_duet: !input.platformPost.allowDuet || Boolean(creatorInfo.data?.duet_disabled),
+        disable_comment:
+          !input.platformPost.allowComments || Boolean(creatorInfo.data?.comment_disabled),
+        disable_stitch:
+          !input.platformPost.allowStitch || Boolean(creatorInfo.data?.stitch_disabled),
+        brand_content_toggle: input.platformPost.brandContent === true,
+        brand_organic_toggle: input.platformPost.brandOrganic === true,
       },
       source_info: {
         source: "FILE_UPLOAD",
@@ -210,6 +212,15 @@ function normalizePrivacyLevel(privacy: string | null | undefined, options: stri
 }
 
 function mapPrivacyToTikTokLevel(privacy: string | null | undefined) {
+  if (
+    privacy === "PUBLIC_TO_EVERYONE" ||
+    privacy === "MUTUAL_FOLLOW_FRIENDS" ||
+    privacy === "FOLLOWER_OF_CREATOR" ||
+    privacy === "SELF_ONLY"
+  ) {
+    return privacy;
+  }
+
   if (privacy === "public") {
     return "PUBLIC_TO_EVERYONE";
   }

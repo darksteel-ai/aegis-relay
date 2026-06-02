@@ -13,8 +13,15 @@ import {
 export const MAX_BASE_CAPTION_LENGTH = 2_200;
 export const MAX_YOUTUBE_TITLE_LENGTH = 100;
 export const MAX_HASHTAGS_LENGTH = 500;
+export const MAX_TIKTOK_TITLE_LENGTH = 2_200;
 
 const supportedPlatforms = [Platform.YOUTUBE, Platform.TIKTOK, Platform.INSTAGRAM] as const;
+const tiktokPrivacyLevels = [
+  "PUBLIC_TO_EVERYONE",
+  "MUTUAL_FOLLOW_FRIENDS",
+  "FOLLOWER_OF_CREATOR",
+  "SELF_ONLY",
+] as const;
 
 const createScheduledPostPayloadSchema = z
   .object({
@@ -29,6 +36,18 @@ const createScheduledPostPayloadSchema = z
         YOUTUBE: z.array(z.string().trim().min(1)).optional(),
         TIKTOK: z.array(z.string().trim().min(1)).optional(),
         INSTAGRAM: z.array(z.string().trim().min(1)).optional(),
+      })
+      .optional(),
+    tiktokSettings: z
+      .object({
+        title: z.string().trim().max(MAX_TIKTOK_TITLE_LENGTH).optional(),
+        privacyLevel: z.string().trim().optional(),
+        allowComments: z.boolean().optional(),
+        allowDuet: z.boolean().optional(),
+        allowStitch: z.boolean().optional(),
+        brandContent: z.boolean().optional(),
+        brandOrganic: z.boolean().optional(),
+        musicUsageConfirmed: z.boolean().optional(),
       })
       .optional(),
     video: z
@@ -54,6 +73,16 @@ export type CreateScheduledPostInput = {
   timezone: string;
   platforms: Platform[];
   accountIdsByPlatform: Partial<Record<Platform, string[]>>;
+  tiktokSettings?: {
+    title?: string;
+    privacyLevel: string;
+    allowComments: boolean;
+    allowDuet: boolean;
+    allowStitch: boolean;
+    brandContent: boolean;
+    brandOrganic: boolean;
+    musicUsageConfirmed: boolean;
+  };
   video: {
     storageKey: string;
     fileName: string;
@@ -95,6 +124,7 @@ export function parseCreateScheduledPostInput(
   const scheduledAt = parseScheduledAt(data.scheduledAt);
   const platforms = normalizePlatforms(data.platforms, errors);
   const accountIdsByPlatform = normalizeAccountSelections(data.accountIdsByPlatform);
+  const tiktokSettings = normalizeTikTokSettings(data.tiktokSettings);
 
   if (!baseCaption) {
     errors.push("Caption is required.");
@@ -124,6 +154,20 @@ export function parseCreateScheduledPostInput(
     errors.push("Timezone is required.");
   } else if (!isValidTimeZone(timezone)) {
     errors.push("Timezone must be a valid IANA timezone.");
+  }
+
+  if (platforms.includes(Platform.TIKTOK)) {
+    if (!tiktokSettings) {
+      errors.push("TikTok publishing settings are required.");
+    } else {
+      if (!tiktokPrivacyLevels.includes(tiktokSettings.privacyLevel as (typeof tiktokPrivacyLevels)[number])) {
+        errors.push("Choose a TikTok privacy option before scheduling.");
+      }
+
+      if (!tiktokSettings.musicUsageConfirmed) {
+        errors.push("Confirm TikTok music usage rights before scheduling.");
+      }
+    }
   }
 
   if (!data.video) {
@@ -176,6 +220,7 @@ export function parseCreateScheduledPostInput(
       timezone,
       platforms,
       accountIdsByPlatform,
+      tiktokSettings: platforms.includes(Platform.TIKTOK) ? tiktokSettings : undefined,
       video: {
         storageKey: data.video.storageKey,
         fileName: data.video.fileName,
@@ -195,10 +240,56 @@ export function buildPlatformPostCreateInputs(input: CreateScheduledPostInput) {
   return input.platforms.map((platform) => ({
     platform,
     ...(platform === Platform.YOUTUBE && input.youtubeTitle ? { title: input.youtubeTitle } : {}),
+    ...(platform === Platform.TIKTOK && input.tiktokSettings?.title
+      ? { title: input.tiktokSettings.title }
+      : {}),
     caption,
+    privacy:
+      platform === Platform.TIKTOK && input.tiktokSettings?.privacyLevel
+        ? input.tiktokSettings.privacyLevel
+        : "public",
+    ...(platform === Platform.TIKTOK && input.tiktokSettings
+      ? {
+          allowComments: input.tiktokSettings.allowComments,
+          allowDuet: input.tiktokSettings.allowDuet,
+          allowStitch: input.tiktokSettings.allowStitch,
+          brandContent: input.tiktokSettings.brandContent,
+          brandOrganic: input.tiktokSettings.brandOrganic,
+        }
+      : {}),
     scheduledAt: input.scheduledAt,
     status: PublishStatus.SCHEDULED,
   }));
+}
+
+function normalizeTikTokSettings(
+  value:
+    | {
+        title?: string;
+        privacyLevel?: string;
+        allowComments?: boolean;
+        allowDuet?: boolean;
+        allowStitch?: boolean;
+        brandContent?: boolean;
+        brandOrganic?: boolean;
+        musicUsageConfirmed?: boolean;
+      }
+    | undefined,
+) {
+  if (!value) {
+    return undefined;
+  }
+
+  return {
+    title: value.title?.trim() || undefined,
+    privacyLevel: value.privacyLevel?.trim() ?? "",
+    allowComments: value.allowComments === true,
+    allowDuet: value.allowDuet === true,
+    allowStitch: value.allowStitch === true,
+    brandContent: value.brandContent === true,
+    brandOrganic: value.brandOrganic === true,
+    musicUsageConfirmed: value.musicUsageConfirmed === true,
+  };
 }
 
 function normalizeHashtags(value: string) {

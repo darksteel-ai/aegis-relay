@@ -17,6 +17,11 @@ const publishInput = {
     title: "Launch demo",
     caption: "A concise launch caption.",
     privacy: "private",
+    allowComments: true,
+    allowDuet: false,
+    allowStitch: true,
+    brandContent: true,
+    brandOrganic: false,
   },
   video: {
     storageKey: "uploads/workspaces/workspace_1/users/user_1/demo.mp4",
@@ -254,6 +259,16 @@ describe("platform adapters", () => {
         body: expect.stringContaining('"privacy_level":"SELF_ONLY"'),
       }),
     );
+    const initBody = JSON.parse(fetchFn.mock.calls[1]?.[1]?.body as string);
+    expect(initBody.post_info).toMatchObject({
+      title: "Launch demo",
+      privacy_level: "SELF_ONLY",
+      disable_duet: true,
+      disable_comment: false,
+      disable_stitch: true,
+      brand_content_toggle: true,
+      brand_organic_toggle: false,
+    });
     expect(fetchFn).toHaveBeenNthCalledWith(
       3,
       "https://open-upload.tiktokapis.com/video/upload",
@@ -317,7 +332,7 @@ describe("platform adapters", () => {
       ...publishInput,
       platformPost: {
         ...publishInput.platformPost,
-        privacy: "public",
+        privacy: "PUBLIC_TO_EVERYONE",
       },
     });
 

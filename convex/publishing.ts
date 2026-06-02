@@ -75,6 +75,11 @@ export const loadForPublish = query({
       title: platformPost.title ?? null,
       caption: platformPost.caption,
       privacy: platformPost.privacy,
+      allowComments: platformPost.allowComments ?? null,
+      allowDuet: platformPost.allowDuet ?? null,
+      allowStitch: platformPost.allowStitch ?? null,
+      brandContent: platformPost.brandContent ?? null,
+      brandOrganic: platformPost.brandOrganic ?? null,
       status: platformPost.status,
       scheduledPost: {
         video: video && {
