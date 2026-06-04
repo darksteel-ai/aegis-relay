@@ -4,6 +4,7 @@ import { Platform, PublishStatus } from "@/lib/domain";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { facebookAdapter } from "@/lib/platforms/facebook";
 import { instagramAdapter } from "@/lib/platforms/instagram";
+import { linkedInAdapter } from "@/lib/platforms/linkedin";
 import { tiktokAdapter } from "@/lib/platforms/tiktok";
 import { youtubeAdapter } from "@/lib/platforms/youtube";
 import {
@@ -66,6 +67,7 @@ const defaultAdapters: Record<Platform, PlatformAdapter> = {
   [Platform.TIKTOK]: tiktokAdapter,
   [Platform.INSTAGRAM]: instagramAdapter,
   [Platform.FACEBOOK]: facebookAdapter,
+  [Platform.LINKEDIN]: linkedInAdapter,
 };
 const publishableStatuses = [PublishStatus.SCHEDULED, PublishStatus.APPROVAL_PENDING] as const;
 
@@ -398,6 +400,7 @@ function formatPlatformName(platform: Platform) {
     [Platform.TIKTOK]: "TikTok",
     [Platform.INSTAGRAM]: "Instagram",
     [Platform.FACEBOOK]: "Facebook",
+    [Platform.LINKEDIN]: "LinkedIn",
   };
 
   return labels[platform];

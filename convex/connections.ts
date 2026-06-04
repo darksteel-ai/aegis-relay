@@ -7,6 +7,7 @@ const platform = v.union(
   v.literal("TIKTOK"),
   v.literal("INSTAGRAM"),
   v.literal("FACEBOOK"),
+  v.literal("LINKEDIN"),
 );
 const publishStatus = v.union(
   v.literal("DRAFT"),

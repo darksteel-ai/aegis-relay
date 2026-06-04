@@ -906,6 +906,7 @@ function formatComposerPlatform(platform: ComposerPlatform) {
     TIKTOK: "TikTok",
     INSTAGRAM: "Instagram Reels",
     FACEBOOK: "Facebook Pages",
+    LINKEDIN: "LinkedIn",
   };
 
   return labels[platform];

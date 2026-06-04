@@ -68,6 +68,13 @@ const facebookEnvSchema = z.object({
   FACEBOOK_REDIRECT_URI: z.string().url().optional(),
 });
 
+const linkedinEnvSchema = z.object({
+  LINKEDIN_CLIENT_ID: z.string().min(1).optional(),
+  LINKEDIN_CLIENT_SECRET: z.string().min(1).optional(),
+  LINKEDIN_REDIRECT_URI: z.string().url().optional(),
+  LINKEDIN_API_VERSION: z.string().min(1).optional(),
+});
+
 const platformTokenEnvSchema = z.object({
   PLATFORM_TOKEN_ENCRYPTION_KEY: z.string().min(32),
 });
@@ -96,6 +103,7 @@ const schedulerEnvSchema = coreEnvSchema
   .extend(tiktokEnvSchema.shape)
   .extend(instagramEnvSchema.shape)
   .extend(facebookEnvSchema.shape)
+  .extend(linkedinEnvSchema.shape)
   .extend(platformTokenEnvSchema.shape)
   .extend(inngestEnvSchema.shape)
   .extend(openAiEnvSchema.shape)
@@ -135,6 +143,10 @@ export function getInstagramEnv(source: EnvSource = process.env) {
 
 export function getFacebookEnv(source: EnvSource = process.env) {
   return facebookEnvSchema.parse(source);
+}
+
+export function getLinkedInEnv(source: EnvSource = process.env) {
+  return linkedinEnvSchema.parse(source);
 }
 
 export function getPlatformTokenEnv(source: EnvSource = process.env) {

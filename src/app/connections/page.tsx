@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  BriefcaseBusiness,
   Camera,
   CircleMinus,
   ExternalLink,
@@ -64,6 +65,16 @@ const platformRows = [
     icon: Megaphone,
     accent: "border-[#00bfff]/40 text-[#67dfff]",
   },
+  {
+    platform: "LINKEDIN",
+    name: "LinkedIn",
+    description: "Connect a member profile for scheduled LinkedIn video posts.",
+    action: "Connect LinkedIn",
+    href: "/api/auth/linkedin/start",
+    connectable: true,
+    icon: BriefcaseBusiness,
+    accent: "border-[#67dfff]/40 text-[#9eeaff]",
+  },
 ] as const;
 
 type ConnectedAccountView = {
@@ -85,6 +96,8 @@ type ConnectionsPageProps = {
     connection?: string;
     facebook?: string;
     facebook_message?: string;
+    linkedin?: string;
+    linkedin_message?: string;
     tiktok?: string;
     youtube?: string;
   }>;
@@ -194,6 +207,19 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
           </div>
         ) : null}
 
+        {params?.linkedin && connectionMessages[params.linkedin] ? (
+          <div
+            className={
+              params.linkedin === "connected"
+                ? "rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+                : "rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+            }
+            role="status"
+          >
+            LinkedIn: {params.linkedin_message ?? connectionMessages[params.linkedin]}
+          </div>
+        ) : null}
+
         {params?.connection && accountMessages[params.connection] ? (
           <div
             className="rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
@@ -220,7 +246,8 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
                 (row.platform === "YOUTUBE" ||
                   row.platform === "TIKTOK" ||
                   row.platform === "INSTAGRAM" ||
-                  row.platform === "FACEBOOK") &&
+                  row.platform === "FACEBOOK" ||
+                  row.platform === "LINKEDIN") &&
                 !client;
               const canConnect = row.connectable && !needsDatabase;
 

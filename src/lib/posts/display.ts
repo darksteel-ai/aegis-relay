@@ -16,6 +16,7 @@ const platformLabels: Record<string, string> = {
   TIKTOK: "TikTok",
   INSTAGRAM: "Instagram",
   FACEBOOK: "Facebook",
+  LINKEDIN: "LinkedIn",
 };
 
 export const CALENDAR_POST_LIMIT = 100;

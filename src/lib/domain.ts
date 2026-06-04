@@ -3,6 +3,7 @@ export const Platform = {
   TIKTOK: "TIKTOK",
   INSTAGRAM: "INSTAGRAM",
   FACEBOOK: "FACEBOOK",
+  LINKEDIN: "LINKEDIN",
 } as const;
 
 export type Platform = (typeof Platform)[keyof typeof Platform];
@@ -12,6 +13,7 @@ export const platforms = [
   Platform.TIKTOK,
   Platform.INSTAGRAM,
   Platform.FACEBOOK,
+  Platform.LINKEDIN,
 ] as const;
 
 export const PublishStatus = {

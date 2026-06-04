@@ -20,6 +20,7 @@ const supportedPlatforms = [
   Platform.TIKTOK,
   Platform.INSTAGRAM,
   Platform.FACEBOOK,
+  Platform.LINKEDIN,
 ] as const;
 const tiktokPrivacyLevels = [
   "PUBLIC_TO_EVERYONE",
@@ -42,6 +43,7 @@ const createScheduledPostPayloadSchema = z
         TIKTOK: z.array(z.string().trim().min(1)).optional(),
         INSTAGRAM: z.array(z.string().trim().min(1)).optional(),
         FACEBOOK: z.array(z.string().trim().min(1)).optional(),
+        LINKEDIN: z.array(z.string().trim().min(1)).optional(),
       })
       .optional(),
     platformCaptions: z
@@ -50,6 +52,7 @@ const createScheduledPostPayloadSchema = z
         TIKTOK: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
         INSTAGRAM: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
         FACEBOOK: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
+        LINKEDIN: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
       })
       .optional(),
     workflowStatus: z
@@ -296,6 +299,7 @@ function normalizePlatformCaptions(
         TIKTOK?: string;
         INSTAGRAM?: string;
         FACEBOOK?: string;
+        LINKEDIN?: string;
       }
     | undefined,
 ) {
@@ -401,6 +405,7 @@ function normalizeAccountSelections(
         TIKTOK?: string[];
         INSTAGRAM?: string[];
         FACEBOOK?: string[];
+        LINKEDIN?: string[];
       }
     | undefined,
 ) {

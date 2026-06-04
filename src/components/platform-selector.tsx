@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Check, Megaphone, Music2, PlaySquare } from "lucide-react";
+import { BriefcaseBusiness, Camera, Check, Megaphone, Music2, PlaySquare } from "lucide-react";
 
 export const composerPlatforms = [
   {
@@ -30,6 +30,13 @@ export const composerPlatforms = [
     note: "Auto-publish when the scheduled time arrives.",
     icon: Megaphone,
     accent: "text-[#00bfff]",
+  },
+  {
+    id: "LINKEDIN",
+    label: "LinkedIn",
+    note: "Auto-publish when the scheduled time arrives.",
+    icon: BriefcaseBusiness,
+    accent: "text-[#67dfff]",
   },
 ] as const;
 
@@ -94,7 +101,7 @@ export function PlatformSelector({
   return (
     <fieldset className="grid gap-3">
       <legend className="text-sm font-medium text-white">Platforms</legend>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {composerPlatforms.map((platform) => {
           const checked = selected.includes(platform.id);
           const platformAccounts = accounts.filter((account) => account.platform === platform.id);

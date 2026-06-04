@@ -7,6 +7,7 @@ const platform = v.union(
   v.literal("TIKTOK"),
   v.literal("INSTAGRAM"),
   v.literal("FACEBOOK"),
+  v.literal("LINKEDIN"),
 );
 const monthlyScheduledPostLimits: Record<string, number> = {
   beta: 10,
@@ -48,6 +49,7 @@ export const createScheduledPost = mutation({
       TIKTOK: v.optional(v.string()),
       INSTAGRAM: v.optional(v.string()),
       FACEBOOK: v.optional(v.string()),
+      LINKEDIN: v.optional(v.string()),
     })),
     workflowStatus: v.optional(
       v.union(v.literal("DRAFT"), v.literal("NEEDS_REVIEW"), v.literal("APPROVED")),
@@ -57,6 +59,7 @@ export const createScheduledPost = mutation({
       TIKTOK: v.optional(v.array(v.id("connectedAccounts"))),
       INSTAGRAM: v.optional(v.array(v.id("connectedAccounts"))),
       FACEBOOK: v.optional(v.array(v.id("connectedAccounts"))),
+      LINKEDIN: v.optional(v.array(v.id("connectedAccounts"))),
     })),
     tiktokSettings: v.optional(v.object({
       title: v.optional(v.string()),

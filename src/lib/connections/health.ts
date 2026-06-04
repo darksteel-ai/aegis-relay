@@ -30,6 +30,7 @@ const requiredScopes: Record<string, string[]> = {
     "pages_read_engagement",
     "pages_manage_posts",
   ],
+  [Platform.LINKEDIN]: ["w_member_social"],
 };
 
 const expiresSoonMs = 7 * 24 * 60 * 60 * 1000;
@@ -114,6 +115,7 @@ function formatPlatformName(platform: string) {
     [Platform.TIKTOK]: "TikTok",
     [Platform.INSTAGRAM]: "Instagram",
     [Platform.FACEBOOK]: "Facebook",
+    [Platform.LINKEDIN]: "LinkedIn",
   };
 
   return labels[platform] ?? platform;
