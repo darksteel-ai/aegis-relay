@@ -76,6 +76,9 @@ export default defineSchema({
     baseCaption: v.string(),
     scheduledAt: v.number(),
     timezone: v.string(),
+    approvalStatus: v.optional(
+      v.union(v.literal("DRAFT"), v.literal("NEEDS_REVIEW"), v.literal("APPROVED")),
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_workspace_scheduled", ["workspaceId", "scheduledAt"]),

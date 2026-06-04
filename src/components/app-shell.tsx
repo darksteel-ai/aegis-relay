@@ -4,6 +4,7 @@ import {
   Bell,
   CalendarDays,
   CreditCard,
+  Images,
   LayoutDashboard,
   Plug,
   WandSparkles,
@@ -14,8 +15,10 @@ import { AegisRelayLogo } from "@/components/aegis-relay-logo";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/composer", label: "Composer", icon: WandSparkles },
+  { href: "/media", label: "Media", icon: Images },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/connections", label: "Connections", icon: Plug },
+  { href: "/alerts", label: "Alerts", icon: Bell },
   { href: "/billing", label: "Billing", icon: CreditCard },
 ];
 
@@ -76,13 +79,13 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
               <WandSparkles className="h-4 w-4" aria-hidden="true" />
               Create
             </Link>
-            <button
+            <Link
+              href="/alerts"
               className="grid h-10 w-10 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-slate-300"
-              type="button"
               aria-label="Notifications"
             >
               <Bell className="h-4 w-4" aria-hidden="true" />
-            </button>
+            </Link>
             <UserButton />
           </div>
         </header>

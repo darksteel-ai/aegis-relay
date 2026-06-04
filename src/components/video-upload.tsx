@@ -17,6 +17,7 @@ type PresignResponse = {
 };
 
 export type UploadedVideo = {
+  id?: string;
   key: string;
   fileName: string;
   contentType: SupportedShortFormVideoType;

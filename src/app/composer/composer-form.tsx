@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertCircle, CalendarPlus, CheckCircle2, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { AlertCircle, Calendar, CalendarPlus, CheckCircle2, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   PlatformSelector,
@@ -35,6 +35,18 @@ type ComposerConnectedAccount = {
   status: string;
 };
 
+type ComposerMediaItem = {
+  id: string;
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width?: number | null;
+  height?: number | null;
+  durationSec?: number | null;
+  createdAt: number;
+};
+
 type TikTokCreatorInfo = {
   accountName: string;
   externalId: string;
@@ -47,15 +59,22 @@ type TikTokCreatorInfo = {
 
 export function ComposerForm({
   connectedAccounts = [],
+  initialMediaId,
+  mediaLibrary = [],
 }: {
   connectedAccounts?: ComposerConnectedAccount[];
+  initialMediaId?: string;
+  mediaLibrary?: ComposerMediaItem[];
 }) {
-  const [video, setVideo] = useState<UploadedVideo | null>(null);
+  const [video, setVideo] = useState<UploadedVideo | null>(() =>
+    initialMediaId ? mediaItemToUploadedVideo(mediaLibrary.find((item) => item.id === initialMediaId)) : null,
+  );
   const [platforms, setPlatforms] = useState<ComposerPlatform[]>(["YOUTUBE"]);
   const [accountIdsByPlatform, setAccountIdsByPlatform] = useState<
     Partial<Record<ComposerPlatform, string[]>>
   >(() => getInitialAccountSelections(connectedAccounts));
   const [baseCaption, setBaseCaption] = useState("");
+  const [platformCaptions, setPlatformCaptions] = useState<Partial<Record<ComposerPlatform, string>>>({});
   const [youtubeTitle, setYoutubeTitle] = useState("");
   const [hashtags, setHashtags] = useState("");
   const [tiktokTitle, setTikTokTitle] = useState("");
@@ -71,6 +90,10 @@ export function ComposerForm({
     type: "idle",
   });
   const [scheduledAt, setScheduledAt] = useState("");
+  const scheduleInputRef = useRef<HTMLInputElement>(null);
+  const [workflowStatus, setWorkflowStatus] = useState<"DRAFT" | "NEEDS_REVIEW" | "APPROVED">(
+    "APPROVED",
+  );
   const [timezone, setTimezone] = useState(getDefaultTimezone);
   const [submitState, setSubmitState] = useState<SubmitState>({ type: "idle" });
   const [aiState, setAiState] = useState<SubmitState>({ type: "idle" });
@@ -183,6 +206,8 @@ export function ComposerForm({
           timezone,
           platforms,
           accountIdsByPlatform,
+          platformCaptions,
+          workflowStatus,
           tiktokSettings: isTikTokSelected
             ? {
                 title: tiktokTitle || baseCaption,
@@ -196,6 +221,7 @@ export function ComposerForm({
               }
             : undefined,
           video: {
+            existingVideoId: video.id,
             storageKey: video.key,
             fileName: video.fileName,
             mimeType: video.contentType,
@@ -218,6 +244,7 @@ export function ComposerForm({
           "Post scheduled. Selected connected accounts will publish automatically when the scheduled time arrives.",
       });
       setBaseCaption("");
+      setPlatformCaptions({});
       setYoutubeTitle("");
       setHashtags("");
       setTikTokTitle("");
@@ -289,6 +316,17 @@ export function ComposerForm({
     }
   }
 
+  function openSchedulePicker() {
+    const input = scheduleInputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+    input.showPicker?.();
+  }
+
   return (
     <form className="grid gap-6" onSubmit={submitPost}>
       <VideoUpload
@@ -304,6 +342,37 @@ export function ComposerForm({
         <div className="flex items-center gap-2 rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">
           <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           <p className="break-all">Ready to schedule {video.fileName}.</p>
+        </div>
+      ) : null}
+
+      {mediaLibrary.length > 0 ? (
+        <div className="grid gap-3 rounded-md border border-white/10 bg-black/25 p-4">
+          <div>
+            <p className="text-sm font-semibold text-white">Media library</p>
+            <p className="mt-1 text-sm text-slate-400">
+              Reuse a previous upload instead of uploading the same video again.
+            </p>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            {mediaLibrary.slice(0, 4).map((item) => (
+              <button
+                className="rounded-md border border-white/10 bg-white/[0.035] p-3 text-left text-sm transition-colors hover:border-cyan-300/30 hover:bg-cyan-300/[0.06]"
+                disabled={isSubmitting}
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setVideo(mediaItemToUploadedVideo(item));
+                  setSubmitState({ type: "idle" });
+                }}
+              >
+                <span className="block truncate font-semibold text-white">{item.fileName}</span>
+                <span className="mt-1 block text-xs text-slate-500">
+                  {item.width && item.height ? `${item.width}x${item.height}` : "Video"}{" "}
+                  {item.durationSec ? `- ${Math.round(item.durationSec)} sec` : ""}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
 
@@ -461,6 +530,35 @@ export function ComposerForm({
         onChange={setPlatforms}
       />
 
+      <div className="grid gap-4 rounded-md border border-white/10 bg-black/25 p-4">
+        <div>
+          <p className="text-sm font-semibold text-white">Platform-specific captions</p>
+          <p className="mt-1 text-sm text-slate-400">
+            Leave a field blank to use the base caption for that platform.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {platforms.map((platform) => (
+            <label className="grid gap-2 text-sm font-medium text-white" key={platform}>
+              {formatComposerPlatform(platform)} caption
+              <textarea
+                className="studio-input min-h-28 resize-y px-3 py-2 text-sm font-normal leading-6 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSubmitting}
+                maxLength={2200}
+                value={platformCaptions[platform] ?? ""}
+                onChange={(event) =>
+                  setPlatformCaptions((current) => ({
+                    ...current,
+                    [platform]: event.target.value,
+                  }))
+                }
+                placeholder="Use base caption"
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+
       {isTikTokSelected ? (
         <section className="grid gap-4 rounded-md border border-cyan-300/25 bg-cyan-300/[0.045] p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -600,18 +698,30 @@ export function ComposerForm({
       ) : null}
 
       <div className="grid gap-4 rounded-md border border-white/10 bg-black/25 p-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium text-white" htmlFor="scheduledAt">
-          Schedule time
-          <input
-            className="studio-input h-10 px-3 text-sm font-normal disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSubmitting}
-            id="scheduledAt"
-            required
-            type="datetime-local"
-            value={scheduledAt}
-            onChange={(event) => setScheduledAt(event.target.value)}
-          />
-        </label>
+        <div className="grid gap-2 text-sm font-medium text-white">
+          <label htmlFor="scheduledAt">Schedule time</label>
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <input
+              className="studio-input h-10 w-full px-3 text-sm font-normal disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSubmitting}
+              id="scheduledAt"
+              ref={scheduleInputRef}
+              required
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(event) => setScheduledAt(event.target.value)}
+            />
+            <button
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-cyan-300/35 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-200/60 hover:bg-cyan-300/15 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isSubmitting}
+              type="button"
+              onClick={openSchedulePicker}
+            >
+              <Calendar className="h-4 w-4" aria-hidden="true" />
+              <span>Pick date</span>
+            </button>
+          </div>
+        </div>
 
         <label className="grid gap-2 text-sm font-medium text-white" htmlFor="timezone">
           Timezone
@@ -625,6 +735,37 @@ export function ComposerForm({
           />
         </label>
       </div>
+
+      <fieldset className="grid gap-3 rounded-md border border-white/10 bg-black/25 p-4">
+        <legend className="text-sm font-semibold text-white">Approval workflow</legend>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            ["APPROVED", "Schedule now", "Ready for automatic publishing."],
+            ["NEEDS_REVIEW", "Needs review", "Save for approval before publishing."],
+            ["DRAFT", "Draft", "Save as an unfinished draft."],
+          ].map(([value, label, description]) => (
+            <label
+              className={
+                workflowStatus === value
+                  ? "rounded-md border border-cyan-300/45 bg-cyan-300/10 p-3"
+                  : "rounded-md border border-white/10 bg-white/[0.035] p-3"
+              }
+              key={value}
+            >
+              <input
+                checked={workflowStatus === value}
+                className="mr-2 accent-cyan-300"
+                name="workflowStatus"
+                type="radio"
+                value={value}
+                onChange={() => setWorkflowStatus(value as typeof workflowStatus)}
+              />
+              <span className="text-sm font-semibold text-white">{label}</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-400">{description}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {submitState.type !== "idle" ? (
         <div
@@ -651,7 +792,11 @@ export function ComposerForm({
         title={!canSubmit ? scheduleBlockedCopy : undefined}
       >
         <CalendarPlus className="h-4 w-4" aria-hidden="true" />
-        {isSubmitting ? "Scheduling..." : "Schedule post"}
+        {isSubmitting
+          ? "Saving..."
+          : workflowStatus === "APPROVED"
+            ? "Schedule post"
+            : "Save post"}
       </button>
       {!canSubmit && scheduleBlockedCopy ? (
         <p className="-mt-4 text-sm text-slate-400" role="status">
@@ -685,6 +830,23 @@ function getInitialAccountSelections(accounts: ComposerConnectedAccount[]) {
   }
 
   return selections;
+}
+
+function mediaItemToUploadedVideo(item: ComposerMediaItem | undefined) {
+  if (!item) {
+    return null;
+  }
+
+  return {
+    id: item.id,
+    key: item.storageKey,
+    fileName: item.fileName,
+    contentType: item.mimeType as UploadedVideo["contentType"],
+    sizeBytes: item.sizeBytes,
+    width: item.width ?? undefined,
+    height: item.height ?? undefined,
+    durationSeconds: item.durationSec ?? undefined,
+  };
 }
 
 function TikTokCheckbox({
@@ -736,6 +898,16 @@ function formatTikTokPrivacy(option: string) {
   };
 
   return labels[option] ?? option;
+}
+
+function formatComposerPlatform(platform: ComposerPlatform) {
+  const labels: Record<ComposerPlatform, string> = {
+    YOUTUBE: "YouTube Shorts",
+    TIKTOK: "TikTok",
+    INSTAGRAM: "Instagram Reels",
+  };
+
+  return labels[platform];
 }
 
 function getSubmitBlockedReason({

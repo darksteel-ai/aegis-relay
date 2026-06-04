@@ -1,4 +1,4 @@
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, CheckCircle2, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -54,6 +54,9 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const hasRetryablePost = post.platformPosts.some((platformPost: PostPlatformPost) =>
     ["FAILED", "BLOCKED", "APPROVAL_PENDING"].includes(platformPost.status),
   );
+  const needsApproval =
+    post.approvalStatus !== "APPROVED" ||
+    post.platformPosts.some((platformPost: PostPlatformPost) => platformPost.status === "DRAFT");
 
   return (
     <AppShell>
@@ -68,6 +71,11 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </Link>
 
           <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md border border-cyan-300/25 bg-cyan-300/10 px-2.5 py-1 text-xs font-semibold text-cyan-100">
+                Approval: {formatApprovalStatus(post.approvalStatus ?? "APPROVED")}
+              </span>
+            </div>
             <h1 className="max-w-4xl text-4xl font-semibold tracking-normal text-white">
               {post.baseCaption}
             </h1>
@@ -145,9 +153,35 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                   {formatScheduledAtForDashboard(new Date(post.createdAt), post.timezone)}
                 </dd>
               </div>
+              <div>
+                <dt className="text-slate-500">Approval</dt>
+                <dd className="mt-1 font-medium text-white">
+                  {formatApprovalStatus(post.approvalStatus ?? "APPROVED")}
+                </dd>
+              </div>
             </dl>
           </div>
         </section>
+
+        {needsApproval ? (
+          <section className="rounded-md border border-amber-300/35 bg-amber-300/10 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-white">Approval required</h2>
+                <p className="mt-1 text-sm leading-6 text-amber-100">
+                  This post is saved as a draft/review item. Approve it to move platform posts into
+                  the scheduled queue.
+                </p>
+              </div>
+              <form action={`/api/posts/${post.id}/approve`} method="post">
+                <button className="studio-button-primary" type="submit">
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                  Approve and schedule
+                </button>
+              </form>
+            </div>
+          </section>
+        ) : null}
 
         <section className="studio-panel overflow-hidden rounded-md">
           <div className="border-b border-white/10 p-4">
@@ -239,4 +273,14 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       </div>
     </AppShell>
   );
+}
+
+function formatApprovalStatus(status: string) {
+  const labels: Record<string, string> = {
+    DRAFT: "Draft",
+    NEEDS_REVIEW: "Needs review",
+    APPROVED: "Approved",
+  };
+
+  return labels[status] ?? status;
 }

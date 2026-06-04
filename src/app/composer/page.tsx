@@ -8,7 +8,11 @@ import { ComposerForm } from "./composer-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function ComposerPage() {
+export default async function ComposerPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ media?: string }>;
+}) {
   const session = await getAuthSession();
 
   if (!session?.user?.id) {
@@ -20,6 +24,13 @@ export default async function ComposerPage() {
         userId: session.user.id,
       })
     : [];
+  const mediaLibrary = isConvexConfigured()
+    ? await getConvexClient().query(convexApi.posts.mediaLibrary, {
+        userId: session.user.id,
+        limit: 12,
+      })
+    : [];
+  const selectedMediaId = (await searchParams)?.media;
 
   return (
     <AppShell>
@@ -33,7 +44,11 @@ export default async function ComposerPage() {
         </div>
 
         <section className="studio-panel max-w-5xl rounded-md p-5">
-          <ComposerForm connectedAccounts={connectedAccounts} />
+          <ComposerForm
+            connectedAccounts={connectedAccounts}
+            initialMediaId={selectedMediaId}
+            mediaLibrary={mediaLibrary}
+          />
         </section>
       </div>
     </AppShell>

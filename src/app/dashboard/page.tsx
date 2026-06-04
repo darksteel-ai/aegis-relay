@@ -67,9 +67,7 @@ export default async function DashboardPage() {
         usageEnd: usageWindow.end,
       })
     : null;
-  const posts: DashboardPost[] = (data?.posts ?? []).filter(
-    (post): post is DashboardPost => post !== null,
-  );
+  const posts = (data?.posts ?? []).filter((post) => post !== null) as DashboardPost[];
   const workspace = data?.workspace;
   const plan = getPricingPlan(workspace?.plan);
   const monthlyLimit = getMonthlyScheduledPostLimit(workspace?.plan);

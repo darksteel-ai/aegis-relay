@@ -47,9 +47,7 @@ export default async function CalendarPage() {
         }),
       ])
     : [null, []];
-  const posts: CalendarPost[] = (postsResult ?? []).filter(
-    (post): post is CalendarPost => post !== null,
-  );
+  const posts = (postsResult ?? []).filter((post) => post !== null) as CalendarPost[];
 
   return (
     <AppShell>

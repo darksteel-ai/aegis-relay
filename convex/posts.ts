@@ -38,6 +38,14 @@ export const createScheduledPost = mutation({
     scheduledAt: v.number(),
     timezone: v.string(),
     platforms: v.array(platform),
+    platformCaptions: v.optional(v.object({
+      YOUTUBE: v.optional(v.string()),
+      TIKTOK: v.optional(v.string()),
+      INSTAGRAM: v.optional(v.string()),
+    })),
+    workflowStatus: v.optional(
+      v.union(v.literal("DRAFT"), v.literal("NEEDS_REVIEW"), v.literal("APPROVED")),
+    ),
     accountIdsByPlatform: v.optional(v.object({
       YOUTUBE: v.optional(v.array(v.id("connectedAccounts"))),
       TIKTOK: v.optional(v.array(v.id("connectedAccounts"))),
@@ -54,6 +62,7 @@ export const createScheduledPost = mutation({
       musicUsageConfirmed: v.boolean(),
     })),
     video: v.object({
+      existingVideoId: v.optional(v.id("uploadedVideos")),
       storageKey: v.string(),
       fileName: v.string(),
       mimeType: v.string(),
@@ -87,40 +96,52 @@ export const createScheduledPost = mutation({
       );
     }
 
-    const reservation = await ctx.db
-      .query("uploadReservations")
-      .withIndex("by_storage_key", (q: any) => q.eq("storageKey", args.video.storageKey))
-      .first();
+    const now = Date.now();
+    const existingVideo = args.video.existingVideoId
+      ? await ctx.db.get(args.video.existingVideoId)
+      : null;
 
-    if (
-      !reservation ||
-      reservation.workspaceId !== args.workspaceId ||
-      reservation.userId !== args.userId ||
-      reservation.status !== "ISSUED" ||
-      reservation.expiresAt <= Date.now()
-    ) {
-      throw new Error("Upload reservation is invalid or expired.");
+    if (args.video.existingVideoId) {
+      if (!existingVideo || existingVideo.workspaceId !== args.workspaceId) {
+        throw new Error("Selected media is not available for this workspace.");
+      }
+    } else {
+      const reservation = await ctx.db
+        .query("uploadReservations")
+        .withIndex("by_storage_key", (q: any) => q.eq("storageKey", args.video.storageKey))
+        .first();
+
+      if (
+        !reservation ||
+        reservation.workspaceId !== args.workspaceId ||
+        reservation.userId !== args.userId ||
+        reservation.status !== "ISSUED" ||
+        reservation.expiresAt <= Date.now()
+      ) {
+        throw new Error("Upload reservation is invalid or expired.");
+      }
+
+      await ctx.db.patch(reservation._id, {
+        status: "CONSUMED",
+        consumedAt: now,
+        updatedAt: now,
+      });
     }
 
-    const now = Date.now();
-    await ctx.db.patch(reservation._id, {
-      status: "CONSUMED",
-      consumedAt: now,
-      updatedAt: now,
-    });
-
-    const videoId = await ctx.db.insert("uploadedVideos", {
-      workspaceId: args.workspaceId,
-      storageKey: args.video.storageKey,
-      fileName: args.video.fileName,
-      mimeType: args.video.mimeType,
-      sizeBytes: args.video.sizeBytes,
-      width: args.video.width,
-      height: args.video.height,
-      durationSec:
-        args.video.durationSeconds == null ? undefined : Math.round(args.video.durationSeconds),
-      createdAt: now,
-    });
+    const videoId = args.video.existingVideoId
+      ? args.video.existingVideoId
+      : await ctx.db.insert("uploadedVideos", {
+          workspaceId: args.workspaceId,
+          storageKey: args.video.storageKey,
+          fileName: args.video.fileName,
+          mimeType: args.video.mimeType,
+          sizeBytes: args.video.sizeBytes,
+          width: args.video.width,
+          height: args.video.height,
+          durationSec:
+            args.video.durationSeconds == null ? undefined : Math.round(args.video.durationSeconds),
+          createdAt: now,
+        });
 
     const postId = await ctx.db.insert("scheduledPosts", {
       workspaceId: args.workspaceId,
@@ -128,12 +149,13 @@ export const createScheduledPost = mutation({
       baseCaption: args.baseCaption,
       scheduledAt: args.scheduledAt,
       timezone: args.timezone,
+      approvalStatus: args.workflowStatus ?? "APPROVED",
       createdAt: now,
       updatedAt: now,
     });
-    const platformCaption = args.hashtags
-      ? `${args.baseCaption.trim()}\n\n${args.hashtags}`.trim()
-      : args.baseCaption;
+    const platformStatus = args.workflowStatus && args.workflowStatus !== "APPROVED"
+      ? "DRAFT"
+      : "SCHEDULED";
 
     for (const item of args.platforms) {
       const selectedAccountIds = args.accountIdsByPlatform?.[item] ?? [];
@@ -163,7 +185,7 @@ export const createScheduledPost = mutation({
               : item === "TIKTOK"
                 ? args.tiktokSettings?.title
                 : undefined,
-          caption: platformCaption,
+          caption: withHashtags(args.platformCaptions?.[item] || args.baseCaption, args.hashtags),
           privacy: item === "TIKTOK" ? (args.tiktokSettings?.privacyLevel ?? "SELF_ONLY") : "public",
           allowComments: item === "TIKTOK" ? args.tiktokSettings?.allowComments : undefined,
           allowDuet: item === "TIKTOK" ? args.tiktokSettings?.allowDuet : undefined,
@@ -171,7 +193,7 @@ export const createScheduledPost = mutation({
           brandContent: item === "TIKTOK" ? args.tiktokSettings?.brandContent : undefined,
           brandOrganic: item === "TIKTOK" ? args.tiktokSettings?.brandOrganic : undefined,
           scheduledAt: args.scheduledAt,
-          status: "SCHEDULED",
+          status: platformStatus,
           createdAt: now,
           updatedAt: now,
         });
@@ -261,6 +283,89 @@ export const dashboard = query({
   },
 });
 
+export const mediaLibrary = query({
+  args: { userId: v.string(), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const workspaceId = await requireWorkspaceForUser(ctx, args.userId);
+    const videos = await ctx.db
+      .query("uploadedVideos")
+      .withIndex("by_workspace_created", (q: any) => q.eq("workspaceId", workspaceId))
+      .order("desc")
+      .take(args.limit ?? 24);
+
+    return videos.map((video: any) => ({
+      id: video._id,
+      storageKey: video.storageKey,
+      fileName: video.fileName,
+      mimeType: video.mimeType,
+      sizeBytes: video.sizeBytes,
+      width: video.width ?? null,
+      height: video.height ?? null,
+      durationSec: video.durationSec ?? null,
+      createdAt: video.createdAt,
+    }));
+  },
+});
+
+export const alerts = query({
+  args: { userId: v.string(), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const workspaceId = await requireWorkspaceForUser(ctx, args.userId);
+    const accounts = await ctx.db
+      .query("connectedAccounts")
+      .withIndex("by_workspace_platform", (q: any) => q.eq("workspaceId", workspaceId))
+      .collect();
+    const platformPosts = await ctx.db
+      .query("platformPosts")
+      .withIndex("by_workspace", (q: any) => q.eq("workspaceId", workspaceId))
+      .collect();
+    const now = Date.now();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const alertItems = [];
+
+    for (const account of accounts) {
+      if (account.expiresAt && account.expiresAt <= now + sevenDaysMs) {
+        alertItems.push({
+          id: `account-${account._id}`,
+          severity: account.expiresAt <= now ? "critical" : "warning",
+          title: `${account.platform} access ${account.expiresAt <= now ? "expired" : "expires soon"}`,
+          message: `${account.accountName} should be reconnected to keep scheduled posts moving.`,
+          createdAt: account.updatedAt,
+          href: "/connections",
+        });
+      }
+    }
+
+    for (const platformPost of platformPosts) {
+      if (["FAILED", "BLOCKED", "APPROVAL_PENDING"].includes(platformPost.status)) {
+        alertItems.push({
+          id: `platform-${platformPost._id}`,
+          severity: platformPost.status === "FAILED" ? "critical" : "warning",
+          title: `${platformPost.platform} post needs attention`,
+          message: platformPost.lastError ?? "Review this platform post before retrying.",
+          createdAt: platformPost.updatedAt,
+          href: `/posts/${platformPost.scheduledPostId}`,
+        });
+      }
+
+      if (platformPost.status === "DRAFT") {
+        alertItems.push({
+          id: `draft-${platformPost._id}`,
+          severity: "info",
+          title: "Post awaiting approval",
+          message: `${platformPost.platform} is saved as a draft and will not publish until approved.`,
+          createdAt: platformPost.updatedAt,
+          href: `/posts/${platformPost.scheduledPostId}`,
+        });
+      }
+    }
+
+    return alertItems
+      .sort((left, right) => right.createdAt - left.createdAt)
+      .slice(0, args.limit ?? 20);
+  },
+});
+
 export const calendar = query({
   args: { userId: v.string(), start: v.number(), end: v.number(), limit: v.number() },
   handler: async (ctx, args) => {
@@ -315,6 +420,37 @@ export const retry = mutation({
   },
 });
 
+export const approve = mutation({
+  args: { userId: v.string(), postId: v.id("scheduledPosts") },
+  handler: async (ctx, args) => {
+    const workspaceId = await requireWorkspaceForUser(ctx, args.userId);
+    const post = await ctx.db.get(args.postId);
+
+    if (!post || post.workspaceId !== workspaceId) {
+      throw new Error("Post not found.");
+    }
+
+    const platformPosts = await platformPostsFor(ctx, args.postId);
+    const now = Date.now();
+
+    await ctx.db.patch(args.postId, {
+      approvalStatus: "APPROVED",
+      updatedAt: now,
+    });
+
+    for (const item of platformPosts) {
+      if (item.status === "DRAFT") {
+        await ctx.db.patch(item._id, {
+          status: "SCHEDULED",
+          updatedAt: now,
+        });
+      }
+    }
+
+    return getPostById(ctx, args.postId);
+  },
+});
+
 async function hydratePosts(ctx: any, posts: any[]) {
   const result = [];
   for (const post of posts) {
@@ -331,6 +467,10 @@ function scheduledMonthWindow(timestamp: number) {
   return { monthStart, monthEnd };
 }
 
+function withHashtags(caption: string, hashtags: string | undefined) {
+  return hashtags ? `${caption.trim()}\n\n${hashtags}`.trim() : caption;
+}
+
 async function getPostById(ctx: any, postId: any) {
   const post = await ctx.db.get(postId);
   if (!post) {
@@ -344,6 +484,7 @@ async function getPostById(ctx: any, postId: any) {
     baseCaption: post.baseCaption,
     scheduledAt: post.scheduledAt,
     timezone: post.timezone,
+    approvalStatus: post.approvalStatus ?? "APPROVED",
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
     video: video && {

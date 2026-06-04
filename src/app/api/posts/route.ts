@@ -59,11 +59,20 @@ export async function POST(request: Request) {
       timezone: input.timezone,
       platforms: input.platforms,
       accountIdsByPlatform: castConnectedAccountSelections(input.accountIdsByPlatform),
+      platformCaptions: input.platformCaptions,
+      workflowStatus: input.workflowStatus,
       tiktokSettings: input.tiktokSettings,
-      video: input.video,
+      video: {
+        ...input.video,
+        existingVideoId: input.video.existingVideoId as Id<"uploadedVideos"> | undefined,
+      },
     });
   } catch (error) {
     if (error instanceof Error && error.message.includes("Upload reservation")) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    if (error instanceof Error && error.message.includes("Selected media")) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 

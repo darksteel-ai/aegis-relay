@@ -38,6 +38,16 @@ const createScheduledPostPayloadSchema = z
         INSTAGRAM: z.array(z.string().trim().min(1)).optional(),
       })
       .optional(),
+    platformCaptions: z
+      .object({
+        YOUTUBE: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
+        TIKTOK: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
+        INSTAGRAM: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
+      })
+      .optional(),
+    workflowStatus: z
+      .union([z.literal("DRAFT"), z.literal("NEEDS_REVIEW"), z.literal("APPROVED")])
+      .optional(),
     tiktokSettings: z
       .object({
         title: z.string().trim().max(MAX_TIKTOK_TITLE_LENGTH).optional(),
@@ -52,6 +62,7 @@ const createScheduledPostPayloadSchema = z
       .optional(),
     video: z
       .object({
+        existingVideoId: z.string().trim().min(1).optional(),
         storageKey: z.string().trim().min(1).max(1_024),
         fileName: z.string().trim().min(1).max(255),
         mimeType: z.string().trim().min(1).max(100),
@@ -73,6 +84,8 @@ export type CreateScheduledPostInput = {
   timezone: string;
   platforms: Platform[];
   accountIdsByPlatform: Partial<Record<Platform, string[]>>;
+  platformCaptions: Partial<Record<Platform, string>>;
+  workflowStatus: "DRAFT" | "NEEDS_REVIEW" | "APPROVED";
   tiktokSettings?: {
     title?: string;
     privacyLevel: string;
@@ -84,6 +97,7 @@ export type CreateScheduledPostInput = {
     musicUsageConfirmed: boolean;
   };
   video: {
+    existingVideoId?: string;
     storageKey: string;
     fileName: string;
     mimeType: string;
@@ -124,6 +138,8 @@ export function parseCreateScheduledPostInput(
   const scheduledAt = parseScheduledAt(data.scheduledAt);
   const platforms = normalizePlatforms(data.platforms, errors);
   const accountIdsByPlatform = normalizeAccountSelections(data.accountIdsByPlatform);
+  const platformCaptions = normalizePlatformCaptions(data.platformCaptions);
+  const workflowStatus = data.workflowStatus ?? "APPROVED";
   const tiktokSettings = normalizeTikTokSettings(data.tiktokSettings);
 
   if (!baseCaption) {
@@ -220,8 +236,11 @@ export function parseCreateScheduledPostInput(
       timezone,
       platforms,
       accountIdsByPlatform,
+      platformCaptions,
+      workflowStatus,
       tiktokSettings: platforms.includes(Platform.TIKTOK) ? tiktokSettings : undefined,
       video: {
+        existingVideoId: data.video.existingVideoId,
         storageKey: data.video.storageKey,
         fileName: data.video.fileName,
         mimeType: normalizeVideoContentType(data.video.mimeType),
@@ -235,7 +254,8 @@ export function parseCreateScheduledPostInput(
 }
 
 export function buildPlatformPostCreateInputs(input: CreateScheduledPostInput) {
-  const caption = appendHashtags(input.baseCaption, input.hashtags);
+  const status =
+    input.workflowStatus === "APPROVED" ? PublishStatus.SCHEDULED : PublishStatus.DRAFT;
 
   return input.platforms.map((platform) => ({
     platform,
@@ -243,7 +263,7 @@ export function buildPlatformPostCreateInputs(input: CreateScheduledPostInput) {
     ...(platform === Platform.TIKTOK && input.tiktokSettings?.title
       ? { title: input.tiktokSettings.title }
       : {}),
-    caption,
+    caption: appendHashtags(input.platformCaptions[platform] || input.baseCaption, input.hashtags),
     privacy:
       platform === Platform.TIKTOK && input.tiktokSettings?.privacyLevel
         ? input.tiktokSettings.privacyLevel
@@ -258,8 +278,30 @@ export function buildPlatformPostCreateInputs(input: CreateScheduledPostInput) {
         }
       : {}),
     scheduledAt: input.scheduledAt,
-    status: PublishStatus.SCHEDULED,
+    status,
   }));
+}
+
+function normalizePlatformCaptions(
+  value:
+    | {
+        YOUTUBE?: string;
+        TIKTOK?: string;
+        INSTAGRAM?: string;
+      }
+    | undefined,
+) {
+  const captions: Partial<Record<Platform, string>> = {};
+
+  for (const platform of supportedPlatforms) {
+    const caption = value?.[platform]?.trim();
+
+    if (caption) {
+      captions[platform] = caption;
+    }
+  }
+
+  return captions;
 }
 
 function normalizeTikTokSettings(
