@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050608;
+  --background: #04100f;
   --foreground: #f5f7fb;
 }
 
@@ -19,15 +19,15 @@ body {
 }
 
 ::selection {
-  background: rgba(34, 211, 238, 0.28);
+  background: rgba(48, 211, 255, 0.28);
   color: #ffffff;
 }
 
 @layer components {
   .studio-panel {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(180deg, rgba(17, 22, 32, 0.92), rgba(8, 10, 15, 0.94));
-    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34);
+    border: 1px solid rgba(77, 199, 77, 0.16);
+    background: linear-gradient(180deg, rgba(9, 30, 33, 0.94), rgba(4, 12, 17, 0.96));
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(48, 211, 255, 0.04);
   }
 
   .studio-panel-subtle {
@@ -42,17 +42,17 @@ body {
     justify-content: center;
     gap: 0.5rem;
     border-radius: 0.375rem;
-    background: #ff3347;
+    background: linear-gradient(135deg, #7ed957, #30d5ff);
     padding-inline: 1rem;
     font-size: 0.875rem;
     font-weight: 650;
-    color: #ffffff;
-    box-shadow: 0 14px 36px rgba(255, 51, 71, 0.2);
-    transition: background-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+    color: #03100f;
+    box-shadow: 0 14px 36px rgba(126, 217, 87, 0.18), 0 8px 24px rgba(48, 213, 255, 0.12);
+    transition: filter 160ms ease, opacity 160ms ease, transform 160ms ease;
   }
 
   .studio-button-primary:hover {
-    background: #ff4f60;
+    filter: brightness(1.08);
   }
 
   .studio-button-secondary {
@@ -72,8 +72,8 @@ body {
   }
 
   .studio-button-secondary:hover {
-    border-color: rgba(34, 211, 238, 0.42);
-    background: rgba(34, 211, 238, 0.08);
+    border-color: rgba(48, 213, 255, 0.42);
+    background: rgba(48, 213, 255, 0.08);
   }
 
   .studio-input {
@@ -90,8 +90,8 @@ body {
   }
 
   .studio-input:focus {
-    border-color: rgba(34, 211, 238, 0.72);
-    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+    border-color: rgba(48, 213, 255, 0.72);
+    box-shadow: 0 0 0 3px rgba(48, 213, 255, 0.12);
   }
 
   .studio-input:disabled,

@@ -108,7 +108,7 @@ const faqs = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#050608] text-white">
+    <main className="min-h-screen bg-[#04100f] text-white">
       <HeroSection />
       <OutcomeSection />
       <WorkflowSection />
@@ -149,7 +149,7 @@ function HeroSection() {
           </div>
           <Link
             href="/sign-in"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-[#ff3347] px-4 text-sm font-semibold text-white shadow-lg shadow-red-950/30 transition-colors hover:bg-[#ff4f60]"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-4 text-sm font-semibold text-[#04100f] shadow-lg shadow-green-950/30 transition hover:brightness-110"
           >
             Start free
           </Link>
@@ -170,9 +170,9 @@ function HeroSection() {
             command center for TikTok, YouTube Shorts, and Instagram Reels.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/sign-in"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#ff3347] px-5 text-sm font-semibold text-white shadow-xl shadow-red-950/30 transition-colors hover:bg-[#ff4f60]"
+          <Link
+            href="/sign-in"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-5 text-sm font-semibold text-[#04100f] shadow-xl shadow-green-950/30 transition hover:brightness-110"
             >
               Start scheduling
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -205,19 +205,19 @@ function HeroSection() {
 function HeroScene() {
   return (
     <div className="absolute inset-0">
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.06)_1px,transparent_1px)] bg-[size:64px_64px]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_12%,rgba(255,51,71,0.28),transparent_30%),radial-gradient(circle_at_15%_18%,rgba(34,211,238,0.2),transparent_32%),linear-gradient(180deg,rgba(5,6,8,0.34),rgba(5,6,8,0.94)_82%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(48,213,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(126,217,87,0.055)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_12%,rgba(126,217,87,0.24),transparent_30%),radial-gradient(circle_at_15%_18%,rgba(48,213,255,0.22),transparent_32%),linear-gradient(180deg,rgba(4,16,15,0.28),rgba(4,16,15,0.96)_82%)]" />
       <div className="absolute right-[-16rem] top-24 hidden w-[44rem] opacity-80 lg:block">
         <ProductStage />
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-[#050608] to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-[#04100f] to-transparent" />
     </div>
   );
 }
 
 function ProductStage() {
   return (
-    <div className="rotate-[-4deg] rounded-md border border-white/10 bg-[#0a1118]/90 p-4 shadow-2xl shadow-black/40">
+    <div className="rotate-[-4deg] rounded-md border border-[#30d5ff]/15 bg-[#07171b]/90 p-4 shadow-2xl shadow-black/40">
       <div className="flex items-center justify-between border-b border-white/10 pb-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
@@ -266,7 +266,7 @@ function ProductStage() {
 
 function OutcomeSection() {
   return (
-    <section className="border-b border-white/10 bg-[#080b10]">
+    <section className="border-b border-white/10 bg-[#061514]">
       <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-end">
           <div>
@@ -308,10 +308,10 @@ function OutcomeSection() {
 
 function WorkflowSection() {
   return (
-    <section id="workflow" className="border-b border-white/10 bg-[#050608]">
+    <section id="workflow" className="border-b border-white/10 bg-[#04100f]">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:py-20">
         <div className="space-y-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#ffb86b]">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#8eea57]">
             How it works
           </p>
           <h2 className="text-3xl font-semibold tracking-normal text-white sm:text-4xl">
@@ -338,7 +338,7 @@ function WorkflowSection() {
                 key={item.title}
                 className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#ff3347]/15 text-[#ff9aa6]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#7ed957]/15 text-[#9cff6d]">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
@@ -359,7 +359,7 @@ function WorkflowSection() {
 
 function PlatformSection() {
   return (
-    <section id="platforms" className="border-b border-white/10 bg-[#081113]">
+    <section id="platforms" className="border-b border-white/10 bg-[#061819]">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:items-start lg:py-20">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
@@ -383,11 +383,11 @@ function PlatformSection() {
           </div>
         </div>
 
-        <div className="rounded-md border border-white/10 bg-[#050608] p-5">
+        <div className="rounded-md border border-[#7ed957]/15 bg-[#04100f] p-5">
           <div className="grid gap-3">
             <PlatformRow name="TikTok" status="Creator settings required" tone="cyan" />
-            <PlatformRow name="YouTube Shorts" status="Auto-publish ready" tone="red" />
-            <PlatformRow name="Instagram Reels" status="Professional account" tone="pink" />
+            <PlatformRow name="YouTube Shorts" status="Auto-publish ready" tone="green" />
+            <PlatformRow name="Instagram Reels" status="Professional account" tone="navy" />
           </div>
           <div className="mt-5 rounded-md border border-emerald-300/25 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">
             <BadgeCheck className="mb-3 h-5 w-5" aria-hidden="true" />
@@ -407,12 +407,12 @@ function PlatformRow({
 }: {
   name: string;
   status: string;
-  tone: "cyan" | "red" | "pink";
+  tone: "cyan" | "green" | "navy";
 }) {
   const tones = {
     cyan: "border-cyan-300/25 bg-cyan-300/[0.06] text-cyan-100",
-    red: "border-red-300/25 bg-red-300/[0.06] text-red-100",
-    pink: "border-fuchsia-300/25 bg-fuchsia-300/[0.06] text-fuchsia-100",
+    green: "border-[#7ed957]/30 bg-[#7ed957]/10 text-[#c9ffb8]",
+    navy: "border-[#30d5ff]/20 bg-[#0b2530] text-cyan-100",
   };
 
   return (
@@ -429,10 +429,10 @@ function PlatformRow({
 
 function PricingSection() {
   return (
-    <section id="pricing" className="border-b border-white/10 bg-[#050608]">
+    <section id="pricing" className="border-b border-white/10 bg-[#04100f]">
       <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#ffb86b]">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#8eea57]">
             Pricing
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
@@ -449,7 +449,7 @@ function PricingSection() {
             <article
               className={
                 plan.featured
-                  ? "rounded-md border border-[#ff3347]/45 bg-[#ff3347]/10 p-6 shadow-2xl shadow-red-950/20"
+                  ? "rounded-md border border-[#7ed957]/45 bg-[#7ed957]/10 p-6 shadow-2xl shadow-green-950/20"
                   : "rounded-md border border-white/10 bg-white/[0.035] p-6"
               }
               key={plan.id}
@@ -459,7 +459,7 @@ function PricingSection() {
                   {plan.eyebrow}
                 </p>
                 {plan.featured ? (
-                  <span className="rounded-md bg-[#ff3347] px-2 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-md bg-[#7ed957] px-2 py-1 text-xs font-semibold text-[#04100f]">
                     Popular
                   </span>
                 ) : null}
@@ -473,7 +473,7 @@ function PricingSection() {
                 {plan.description}
               </p>
               <div className="mt-5 flex items-center gap-2 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-white">
-                <CircleDollarSign className="h-4 w-4 text-[#ffb86b]" aria-hidden="true" />
+                <CircleDollarSign className="h-4 w-4 text-[#8eea57]" aria-hidden="true" />
                 {plan.monthlyScheduledPostLimit} scheduled posts per month
               </div>
               <ul className="mt-5 grid gap-2 text-sm text-slate-200">
@@ -487,7 +487,7 @@ function PricingSection() {
               <Link
                 className={
                   plan.featured
-                    ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-[#ff3347] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#ff4f60]"
+                    ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-4 text-sm font-semibold text-[#04100f] transition hover:brightness-110"
                     : "mt-6 inline-flex h-11 w-full items-center justify-center rounded-md border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
                 }
                 href={plan.id === "beta" ? "/sign-in" : "/billing"}
@@ -504,7 +504,7 @@ function PricingSection() {
 
 function FaqSection() {
   return (
-    <section className="border-b border-white/10 bg-[#080b10]">
+    <section className="border-b border-white/10 bg-[#061514]">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:py-20">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
@@ -529,10 +529,10 @@ function FaqSection() {
 
 function FinalCta() {
   return (
-    <section className="bg-[#050608]">
+    <section className="bg-[#04100f]">
       <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
-        <div className="relative overflow-hidden rounded-md border border-white/10 bg-[#0a1118] p-8 sm:p-10">
-          <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(34,211,238,0.12),transparent_36%,rgba(255,51,71,0.14))]" />
+        <div className="relative overflow-hidden rounded-md border border-[#7ed957]/20 bg-[#07171b] p-8 sm:p-10">
+          <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(48,213,255,0.14),transparent_36%,rgba(126,217,87,0.16))]" />
           <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
@@ -548,7 +548,7 @@ function FinalCta() {
             </div>
             <Link
               href="/sign-in"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#ff3347] px-5 text-sm font-semibold text-white shadow-xl shadow-red-950/30 transition-colors hover:bg-[#ff4f60]"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-5 text-sm font-semibold text-[#04100f] shadow-xl shadow-green-950/30 transition hover:brightness-110"
             >
               Start scheduling
               <Zap className="h-4 w-4" aria-hidden="true" />
@@ -562,7 +562,7 @@ function FinalCta() {
 
 function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-[#080b10]">
+    <footer className="border-t border-white/10 bg-[#061514]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-sm space-y-3">
           <RelaygatorLogo markClassName="h-9 w-9" />

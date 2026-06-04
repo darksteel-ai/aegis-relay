@@ -108,7 +108,7 @@ export default async function DashboardPage() {
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               <Link
-                className="inline-flex h-11 w-fit items-center justify-center gap-2 rounded-md bg-red-500 px-4 text-sm font-semibold text-white shadow-lg shadow-red-950/30 transition-colors hover:bg-red-400"
+                className="inline-flex h-11 w-fit items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-4 text-sm font-semibold text-[#04100f] shadow-lg shadow-green-950/30 transition hover:brightness-110"
                 href="/composer"
               >
                 <CalendarPlus className="h-4 w-4" aria-hidden="true" />
@@ -148,7 +148,7 @@ export default async function DashboardPage() {
             </div>
             <div className="mt-4 h-2 rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-cyan-300"
+                className="h-full rounded-full bg-[#7ed957]"
                 style={{ width: `${usagePercent}%` }}
               />
             </div>
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
           {[
             { label: "Scheduled", value: scheduledCount || posts.length, icon: CalendarPlus, accent: "text-cyan-200", trend: "Ready queue" },
             { label: "Published", value: publishedCount, icon: CheckCircle2, accent: "text-emerald-200", trend: "Across channels" },
-            { label: "Monthly usage", value: `${monthlyUsed}/${monthlyLimit}`, icon: BarChart3, accent: "text-red-300", trend: `${plan.name} limit` },
+            { label: "Monthly usage", value: `${monthlyUsed}/${monthlyLimit}`, icon: BarChart3, accent: "text-[#8eea57]", trend: `${plan.name} limit` },
             { label: "Views", value: "Pending", icon: Eye, accent: "text-slate-200", trend: "After publish" },
           ].map((metric) => (
             <div key={metric.label} className="studio-panel-subtle rounded-md p-4">
@@ -244,9 +244,9 @@ export default async function DashboardPage() {
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             {[
-              { platform: "YOUTUBE", name: "YouTube Shorts", icon: PlaySquare, color: "border-red-400/45 text-red-300" },
+              { platform: "YOUTUBE", name: "YouTube Shorts", icon: PlaySquare, color: "border-[#7ed957]/45 text-[#9cff6d]" },
               { platform: "TIKTOK", name: "TikTok", icon: Music2, color: "border-cyan-300/45 text-cyan-200" },
-              { platform: "INSTAGRAM", name: "Instagram Reels", icon: Camera, color: "border-red-400/35 text-red-300" },
+              { platform: "INSTAGRAM", name: "Instagram Reels", icon: Camera, color: "border-[#7ed957]/35 text-[#9cff6d]" },
             ].map((platform) => {
               const account = connectedAccounts
                 .filter((item) => item.platform === platform.platform)

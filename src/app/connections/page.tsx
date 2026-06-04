@@ -31,7 +31,7 @@ const platformRows = [
     href: "/api/oauth/youtube/start",
     connectable: true,
     icon: PlaySquare,
-    accent: "border-red-400/45 text-red-300",
+    accent: "border-[#7ed957]/45 text-[#9cff6d]",
   },
   {
     platform: "TIKTOK",
@@ -51,7 +51,7 @@ const platformRows = [
     href: "/api/auth/instagram/start",
     connectable: true,
     icon: Camera,
-    accent: "border-red-400/35 text-red-300",
+    accent: "border-[#7ed957]/35 text-[#9cff6d]",
   },
 ] as const;
 

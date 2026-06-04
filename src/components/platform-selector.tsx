@@ -8,7 +8,7 @@ export const composerPlatforms = [
     label: "YouTube Shorts",
     note: "Auto-publish when the scheduled time arrives.",
     icon: PlaySquare,
-    accent: "text-red-300",
+    accent: "text-[#8eea57]",
   },
   {
     id: "TIKTOK",
@@ -22,7 +22,7 @@ export const composerPlatforms = [
     label: "Instagram Reels",
     note: "Auto-publish when the scheduled time arrives.",
     icon: Camera,
-    accent: "text-red-300",
+    accent: "text-[#8eea57]",
   },
 ] as const;
 
@@ -96,7 +96,7 @@ export function PlatformSelector({
           return (
             <label
               key={platform.id}
-              className="grid min-h-32 cursor-pointer gap-3 rounded-md border border-white/10 bg-black/25 p-4 text-sm transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cyan-300 has-[:checked]:border-cyan-300/60 has-[:checked]:bg-cyan-300/10"
+              className="grid min-h-32 cursor-pointer gap-3 rounded-md border border-white/10 bg-black/25 p-4 text-sm transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cyan-300 has-[:checked]:border-[#7ed957]/60 has-[:checked]:bg-[#7ed957]/10"
             >
               <span className="flex items-start justify-between gap-3">
                 <span className="flex items-center gap-2 font-medium text-white">
@@ -105,7 +105,7 @@ export function PlatformSelector({
                 </span>
                 <span className="relative grid h-5 w-5 shrink-0 place-items-center">
                   <input
-                    className="peer absolute inset-0 h-5 w-5 cursor-pointer appearance-none rounded-sm border border-white/20 bg-black/40 transition-colors checked:border-cyan-300 checked:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed"
+                    className="peer absolute inset-0 h-5 w-5 cursor-pointer appearance-none rounded-sm border border-white/20 bg-black/40 transition-colors checked:border-[#7ed957] checked:bg-[#7ed957] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed"
                     checked={checked}
                     disabled={disabled}
                     type="checkbox"
@@ -128,7 +128,7 @@ export function PlatformSelector({
                     >
                       <input
                         checked={selectedAccounts.includes(account.id)}
-                        className="h-4 w-4 rounded border-white/20 bg-black/40 accent-cyan-300"
+                        className="h-4 w-4 rounded border-white/20 bg-black/40 accent-[#7ed957]"
                         disabled={disabled}
                         type="checkbox"
                         onChange={(event) => {

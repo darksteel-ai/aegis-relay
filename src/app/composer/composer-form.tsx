@@ -712,7 +712,7 @@ export function ComposerForm({
               onChange={(event) => setScheduledAt(event.target.value)}
             />
             <button
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-cyan-300/35 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-200/60 hover:bg-cyan-300/15 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#7ed957]/40 bg-[#7ed957]/10 px-3 text-sm font-semibold text-[#c9ffb8] transition-colors hover:border-[#9cff6d]/70 hover:bg-[#7ed957]/15 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isSubmitting}
               type="button"
               onClick={openSchedulePicker}
@@ -747,7 +747,7 @@ export function ComposerForm({
             <label
               className={
                 workflowStatus === value
-                  ? "rounded-md border border-cyan-300/45 bg-cyan-300/10 p-3"
+                  ? "rounded-md border border-[#7ed957]/45 bg-[#7ed957]/10 p-3"
                   : "rounded-md border border-white/10 bg-white/[0.035] p-3"
               }
               key={value}

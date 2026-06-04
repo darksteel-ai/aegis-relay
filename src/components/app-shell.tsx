@@ -24,9 +24,9 @@ const navItems = [
 
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="min-h-screen bg-[#050608] text-slate-100">
-      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(135deg,rgba(255,51,71,0.12)_0,transparent_22%,rgba(34,211,238,0.08)_52%,transparent_78%)] bg-[size:72px_72px,72px_72px,100%_100%]" />
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-white/10 bg-[#080a0f]/95 px-4 py-5 shadow-2xl shadow-black/50 backdrop-blur-xl md:flex md:flex-col">
+    <div className="min-h-screen bg-[#04100f] text-slate-100">
+      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.032)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.022)_1px,transparent_1px),linear-gradient(135deg,rgba(126,217,87,0.12)_0,transparent_22%,rgba(48,213,255,0.09)_52%,transparent_78%)] bg-[size:72px_72px,72px_72px,100%_100%]" />
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-[#7ed957]/15 bg-[#061211]/95 px-4 py-5 shadow-2xl shadow-black/50 backdrop-blur-xl md:flex md:flex-col">
         <Link href="/dashboard" className="rounded-md px-2 py-2">
           <RelaygatorLogo subtitle="Publishing Studio" markClassName="h-10 w-10" />
         </Link>
@@ -35,10 +35,10 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             <Link
               key={href}
               href={href}
-              className="group flex h-11 items-center gap-3 rounded-md border border-transparent px-3 text-sm font-medium text-slate-400 transition-colors hover:border-red-400/20 hover:bg-red-500/10 hover:text-white"
+              className="group flex h-11 items-center gap-3 rounded-md border border-transparent px-3 text-sm font-medium text-slate-400 transition-colors hover:border-[#7ed957]/25 hover:bg-[#7ed957]/10 hover:text-white"
             >
               <Icon
-                className="h-4 w-4 text-slate-500 transition-colors group-hover:text-red-300"
+                className="h-4 w-4 text-slate-500 transition-colors group-hover:text-[#9cff6d]"
                 aria-hidden="true"
               />
               {label}
@@ -61,7 +61,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
         </div>
       </aside>
       <div className="relative z-10 md:pl-72">
-        <header className="flex h-16 items-center justify-between border-b border-white/10 bg-[#090b10]/90 px-4 backdrop-blur-xl md:hidden">
+        <header className="flex h-16 items-center justify-between border-b border-[#7ed957]/15 bg-[#061211]/90 px-4 backdrop-blur-xl md:hidden">
           <Link href="/dashboard" className="text-base font-semibold">
             <RelaygatorLogo markClassName="h-9 w-9" />
           </Link>

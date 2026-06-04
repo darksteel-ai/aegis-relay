@@ -127,7 +127,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               <article
                 className={
                   plan.featured
-                    ? "rounded-md border border-cyan-300/35 bg-cyan-300/[0.055] p-6 shadow-2xl shadow-cyan-950/20"
+                    ? "rounded-md border border-[#7ed957]/40 bg-[#7ed957]/10 p-6 shadow-2xl shadow-green-950/20"
                     : "studio-panel-subtle rounded-md p-6"
                 }
                 key={plan.id}
