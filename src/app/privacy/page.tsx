@@ -33,8 +33,11 @@ export default function PrivacyPage() {
           <PolicySection title="Service Covered by This Policy">
             <p>
               This Privacy Policy applies to Relaygator, available at{" "}
-              <Link href="/" className="font-medium underline underline-offset-2">
-                aegis-relay.vercel.app
+              <Link
+                href="https://relaygator.com"
+                className="font-medium underline underline-offset-2"
+              >
+                relaygator.com
               </Link>
               , and to related Relaygator pages, APIs, account connection flows,
               upload flows, scheduling tools, billing flows, and support
