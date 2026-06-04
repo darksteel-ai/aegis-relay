@@ -97,5 +97,6 @@ function castConnectedAccountSelections(
     YOUTUBE: selections.YOUTUBE as Id<"connectedAccounts">[] | undefined,
     TIKTOK: selections.TIKTOK as Id<"connectedAccounts">[] | undefined,
     INSTAGRAM: selections.INSTAGRAM as Id<"connectedAccounts">[] | undefined,
+    FACEBOOK: selections.FACEBOOK as Id<"connectedAccounts">[] | undefined,
   };
 }

@@ -537,7 +537,7 @@ export function ComposerForm({
             Leave a field blank to use the base caption for that platform.
           </p>
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
           {platforms.map((platform) => (
             <label className="grid gap-2 text-sm font-medium text-white" key={platform}>
               {formatComposerPlatform(platform)} caption
@@ -905,6 +905,7 @@ function formatComposerPlatform(platform: ComposerPlatform) {
     YOUTUBE: "YouTube Shorts",
     TIKTOK: "TikTok",
     INSTAGRAM: "Instagram Reels",
+    FACEBOOK: "Facebook Pages",
   };
 
   return labels[platform];

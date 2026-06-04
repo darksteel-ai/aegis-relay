@@ -2,7 +2,12 @@
 import { v } from "convex/values";
 import { mutationGeneric as mutation, queryGeneric as query } from "convex/server";
 
-const platform = v.union(v.literal("YOUTUBE"), v.literal("TIKTOK"), v.literal("INSTAGRAM"));
+const platform = v.union(
+  v.literal("YOUTUBE"),
+  v.literal("TIKTOK"),
+  v.literal("INSTAGRAM"),
+  v.literal("FACEBOOK"),
+);
 const monthlyScheduledPostLimits: Record<string, number> = {
   beta: 10,
   creator: 150,
@@ -42,6 +47,7 @@ export const createScheduledPost = mutation({
       YOUTUBE: v.optional(v.string()),
       TIKTOK: v.optional(v.string()),
       INSTAGRAM: v.optional(v.string()),
+      FACEBOOK: v.optional(v.string()),
     })),
     workflowStatus: v.optional(
       v.union(v.literal("DRAFT"), v.literal("NEEDS_REVIEW"), v.literal("APPROVED")),
@@ -50,6 +56,7 @@ export const createScheduledPost = mutation({
       YOUTUBE: v.optional(v.array(v.id("connectedAccounts"))),
       TIKTOK: v.optional(v.array(v.id("connectedAccounts"))),
       INSTAGRAM: v.optional(v.array(v.id("connectedAccounts"))),
+      FACEBOOK: v.optional(v.array(v.id("connectedAccounts"))),
     })),
     tiktokSettings: v.optional(v.object({
       title: v.optional(v.string()),

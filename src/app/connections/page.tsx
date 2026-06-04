@@ -4,6 +4,7 @@ import {
   CircleMinus,
   ExternalLink,
   LockKeyhole,
+  Megaphone,
   Music2,
   PlaySquare,
   PlugZap,
@@ -53,6 +54,16 @@ const platformRows = [
     icon: Camera,
     accent: "border-[#7ed957]/35 text-[#9cff6d]",
   },
+  {
+    platform: "FACEBOOK",
+    name: "Facebook Pages",
+    description: "Connect a Facebook Page for scheduled video publishing.",
+    action: "Connect Facebook",
+    href: "/api/auth/facebook/start",
+    connectable: true,
+    icon: Megaphone,
+    accent: "border-[#00bfff]/40 text-[#67dfff]",
+  },
 ] as const;
 
 type ConnectedAccountView = {
@@ -72,6 +83,8 @@ type ConnectionsPageProps = {
     instagram?: string;
     instagram_message?: string;
     connection?: string;
+    facebook?: string;
+    facebook_message?: string;
     tiktok?: string;
     youtube?: string;
   }>;
@@ -168,6 +181,19 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
           </div>
         ) : null}
 
+        {params?.facebook && connectionMessages[params.facebook] ? (
+          <div
+            className={
+              params.facebook === "connected"
+                ? "rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+                : "rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+            }
+            role="status"
+          >
+            Facebook: {params.facebook_message ?? connectionMessages[params.facebook]}
+          </div>
+        ) : null}
+
         {params?.connection && accountMessages[params.connection] ? (
           <div
             className="rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
@@ -193,7 +219,8 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
               const needsDatabase =
                 (row.platform === "YOUTUBE" ||
                   row.platform === "TIKTOK" ||
-                  row.platform === "INSTAGRAM") &&
+                  row.platform === "INSTAGRAM" ||
+                  row.platform === "FACEBOOK") &&
                 !client;
               const canConnect = row.connectable && !needsDatabase;
 

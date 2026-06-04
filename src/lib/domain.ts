@@ -2,11 +2,17 @@ export const Platform = {
   YOUTUBE: "YOUTUBE",
   TIKTOK: "TIKTOK",
   INSTAGRAM: "INSTAGRAM",
+  FACEBOOK: "FACEBOOK",
 } as const;
 
 export type Platform = (typeof Platform)[keyof typeof Platform];
 
-export const platforms = [Platform.YOUTUBE, Platform.TIKTOK, Platform.INSTAGRAM] as const;
+export const platforms = [
+  Platform.YOUTUBE,
+  Platform.TIKTOK,
+  Platform.INSTAGRAM,
+  Platform.FACEBOOK,
+] as const;
 
 export const PublishStatus = {
   DRAFT: "DRAFT",

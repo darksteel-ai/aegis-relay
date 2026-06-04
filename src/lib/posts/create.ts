@@ -15,7 +15,12 @@ export const MAX_YOUTUBE_TITLE_LENGTH = 100;
 export const MAX_HASHTAGS_LENGTH = 500;
 export const MAX_TIKTOK_TITLE_LENGTH = 2_200;
 
-const supportedPlatforms = [Platform.YOUTUBE, Platform.TIKTOK, Platform.INSTAGRAM] as const;
+const supportedPlatforms = [
+  Platform.YOUTUBE,
+  Platform.TIKTOK,
+  Platform.INSTAGRAM,
+  Platform.FACEBOOK,
+] as const;
 const tiktokPrivacyLevels = [
   "PUBLIC_TO_EVERYONE",
   "MUTUAL_FOLLOW_FRIENDS",
@@ -36,6 +41,7 @@ const createScheduledPostPayloadSchema = z
         YOUTUBE: z.array(z.string().trim().min(1)).optional(),
         TIKTOK: z.array(z.string().trim().min(1)).optional(),
         INSTAGRAM: z.array(z.string().trim().min(1)).optional(),
+        FACEBOOK: z.array(z.string().trim().min(1)).optional(),
       })
       .optional(),
     platformCaptions: z
@@ -43,6 +49,7 @@ const createScheduledPostPayloadSchema = z
         YOUTUBE: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
         TIKTOK: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
         INSTAGRAM: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
+        FACEBOOK: z.string().trim().max(MAX_BASE_CAPTION_LENGTH).optional(),
       })
       .optional(),
     workflowStatus: z
@@ -288,6 +295,7 @@ function normalizePlatformCaptions(
         YOUTUBE?: string;
         TIKTOK?: string;
         INSTAGRAM?: string;
+        FACEBOOK?: string;
       }
     | undefined,
 ) {
@@ -392,6 +400,7 @@ function normalizeAccountSelections(
         YOUTUBE?: string[];
         TIKTOK?: string[];
         INSTAGRAM?: string[];
+        FACEBOOK?: string[];
       }
     | undefined,
 ) {

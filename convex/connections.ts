@@ -2,7 +2,12 @@
 import { v } from "convex/values";
 import { mutationGeneric as mutation, queryGeneric as query } from "convex/server";
 
-const platform = v.union(v.literal("YOUTUBE"), v.literal("TIKTOK"), v.literal("INSTAGRAM"));
+const platform = v.union(
+  v.literal("YOUTUBE"),
+  v.literal("TIKTOK"),
+  v.literal("INSTAGRAM"),
+  v.literal("FACEBOOK"),
+);
 const publishStatus = v.union(
   v.literal("DRAFT"),
   v.literal("SCHEDULED"),

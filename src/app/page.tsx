@@ -19,7 +19,7 @@ import { RelaygatorLogo } from "@/components/relaygator-logo";
 import { pricingPlans } from "@/lib/billing/pricing";
 
 const heroStats = [
-  { label: "Connected platforms", value: "3" },
+  { label: "Connected platforms", value: "4" },
   { label: "Creator plan posts", value: "150/mo" },
   { label: "Studio plan posts", value: "750/mo" },
 ];

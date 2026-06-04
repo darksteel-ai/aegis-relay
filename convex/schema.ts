@@ -1,7 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const platform = v.union(v.literal("YOUTUBE"), v.literal("TIKTOK"), v.literal("INSTAGRAM"));
+const platform = v.union(
+  v.literal("YOUTUBE"),
+  v.literal("TIKTOK"),
+  v.literal("INSTAGRAM"),
+  v.literal("FACEBOOK"),
+);
 const publishStatus = v.union(
   v.literal("DRAFT"),
   v.literal("SCHEDULED"),

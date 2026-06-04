@@ -18,6 +18,7 @@ import {
   RadioTower,
   ShieldCheck,
   Sparkles,
+  Megaphone,
   Music2,
   PlaySquare,
   Upload,
@@ -236,17 +237,18 @@ export default async function DashboardPage() {
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-white">Connected platforms</h2>
-              <p className="mt-1 text-sm text-slate-500">Shorts, Reels, and TikTok in one relay path.</p>
+              <p className="mt-1 text-sm text-slate-500">Shorts, Reels, TikTok, and Facebook in one relay path.</p>
             </div>
             <Link className="studio-button-secondary" href="/connections">
               Manage
             </Link>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {[
               { platform: "YOUTUBE", name: "YouTube Shorts", icon: PlaySquare, color: "border-[#7ed957]/45 text-[#9cff6d]" },
               { platform: "TIKTOK", name: "TikTok", icon: Music2, color: "border-cyan-300/45 text-cyan-200" },
               { platform: "INSTAGRAM", name: "Instagram Reels", icon: Camera, color: "border-[#7ed957]/35 text-[#9cff6d]" },
+              { platform: "FACEBOOK", name: "Facebook Pages", icon: Megaphone, color: "border-[#00bfff]/40 text-[#67dfff]" },
             ].map((platform) => {
               const account = connectedAccounts
                 .filter((item) => item.platform === platform.platform)
@@ -342,6 +344,7 @@ function formatPlatform(platform: string) {
     YOUTUBE: "YouTube",
     TIKTOK: "TikTok",
     INSTAGRAM: "Instagram",
+    FACEBOOK: "Facebook",
   };
 
   return labels[platform] ?? platform;

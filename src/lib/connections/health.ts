@@ -25,6 +25,11 @@ const requiredScopes: Record<string, string[]> = {
     "instagram_business_basic",
     "instagram_business_content_publish",
   ],
+  [Platform.FACEBOOK]: [
+    "pages_show_list",
+    "pages_read_engagement",
+    "pages_manage_posts",
+  ],
 };
 
 const expiresSoonMs = 7 * 24 * 60 * 60 * 1000;
@@ -108,6 +113,7 @@ function formatPlatformName(platform: string) {
     [Platform.YOUTUBE]: "YouTube",
     [Platform.TIKTOK]: "TikTok",
     [Platform.INSTAGRAM]: "Instagram",
+    [Platform.FACEBOOK]: "Facebook",
   };
 
   return labels[platform] ?? platform;
