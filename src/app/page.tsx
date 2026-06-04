@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { AegisRelayLogo } from "@/components/aegis-relay-logo";
+import { RelaygatorLogo } from "@/components/relaygator-logo";
 import { pricingPlans } from "@/lib/billing/pricing";
 
 const heroStats = [
@@ -64,7 +64,7 @@ const workflow = [
     eyebrow: "03",
     title: "Schedule once",
     description:
-      "Choose the time zone and schedule time. Aegis Relay queues each selected account automatically.",
+      "Choose the time zone and schedule time. Relaygator queues each selected account automatically.",
     icon: CalendarClock,
   },
   {
@@ -87,7 +87,7 @@ const faqs = [
   {
     question: "Can customers connect their own accounts?",
     answer:
-      "Yes. Aegis Relay is built around customer-connected OAuth accounts, so each workspace can connect and manage its own publishing channels.",
+      "Yes. Relaygator is built around customer-connected OAuth accounts, so each workspace can connect and manage its own publishing channels.",
   },
   {
     question: "Does it publish to TikTok automatically?",
@@ -128,7 +128,7 @@ function HeroSection() {
       <header className="relative z-20">
         <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
           <Link href="/" className="text-sm font-semibold">
-            <AegisRelayLogo markClassName="h-10 w-10" />
+            <RelaygatorLogo markClassName="h-10 w-10" />
           </Link>
           <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
             <a href="#workflow" className="hover:text-white">
@@ -166,7 +166,7 @@ function HeroSection() {
             One upload. One schedule. Every short-form channel.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
-            Aegis Relay turns scattered posting work into one secure publishing
+            Relaygator turns scattered posting work into one secure publishing
             command center for TikTok, YouTube Shorts, and Instagram Reels.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -278,7 +278,7 @@ function OutcomeSection() {
             </h2>
           </div>
           <p className="text-base leading-7 text-slate-300">
-            Aegis Relay is designed for people who publish more than occasional
+            Relaygator is designed for people who publish more than occasional
             clips. Keep uploads, account access, platform readiness, scheduled
             posts, usage limits, and retry history in one quiet workflow.
           </p>
@@ -369,7 +369,7 @@ function PlatformSection() {
             Built around the details platforms actually review.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-            Aegis Relay keeps platform settings visible before posting: TikTok
+            Relaygator keeps platform settings visible before posting: TikTok
             privacy and music usage confirmation, YouTube title and description,
             Instagram professional account publishing, and account health checks.
           </p>
@@ -543,7 +543,7 @@ function FinalCta() {
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
                 Start with free beta access, connect your first account, and
-                schedule your first video through Aegis Relay.
+                schedule your first video through Relaygator.
               </p>
             </div>
             <Link
@@ -565,7 +565,7 @@ function SiteFooter() {
     <footer className="border-t border-white/10 bg-[#080b10]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-sm space-y-3">
-          <AegisRelayLogo markClassName="h-9 w-9" />
+          <RelaygatorLogo markClassName="h-9 w-9" />
           <p className="text-sm leading-6 text-slate-400">
             Secure short-form scheduling for creators, agencies, and customer
             workspaces.

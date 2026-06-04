@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Aegis Relay",
+  title: "Privacy Policy | Relaygator",
   description:
-    "Privacy Policy for Aegis Relay, a short-form video scheduling SaaS for TikTok, YouTube Shorts, and Instagram Reels.",
+    "Privacy Policy for Relaygator, a short-form video scheduling SaaS for TikTok, YouTube Shorts, and Instagram Reels.",
 };
 
 export const privacyStoredData = [
@@ -14,7 +14,7 @@ export const privacyStoredData = [
   "Captions, platform selections, schedule times, timezones, post settings, and per-platform publishing statuses.",
   "Connected-platform authorization data, including external account IDs, account names, scopes, token expiration, and encrypted access or refresh tokens.",
   "Publish attempts, platform response IDs or URLs, status changes, retry history, and error messages returned by platform APIs.",
-  "Support and contact data sent to Aegis Relay while troubleshooting account access, billing, platform connections, uploads, or publishing issues.",
+  "Support and contact data sent to Relaygator while troubleshooting account access, billing, platform connections, uploads, or publishing issues.",
 ];
 
 export const betaPolicyNotice =
@@ -25,24 +25,24 @@ export default function PrivacyPage() {
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
         <DocumentHeader
-          title="Aegis Relay Privacy Policy"
-          description="This Privacy Policy explains how Aegis Relay collects, uses, stores, and protects information when customers use our short-form video scheduling service."
+          title="Relaygator Privacy Policy"
+          description="This Privacy Policy explains how Relaygator collects, uses, stores, and protects information when customers use our short-form video scheduling service."
         />
 
         <div className="mt-8 space-y-6">
           <PolicySection title="Service Covered by This Policy">
             <p>
-              This Privacy Policy applies to Aegis Relay, available at{" "}
+              This Privacy Policy applies to Relaygator, available at{" "}
               <Link href="/" className="font-medium underline underline-offset-2">
                 aegis-relay.vercel.app
               </Link>
-              , and to related Aegis Relay pages, APIs, account connection flows,
+              , and to related Relaygator pages, APIs, account connection flows,
               upload flows, scheduling tools, billing flows, and support
               interactions.
             </p>
           </PolicySection>
 
-          <PolicySection title="Information Aegis Relay Stores">
+          <PolicySection title="Information Relaygator Stores">
             <ul className="list-disc space-y-2 pl-5">
               {privacyStoredData.map((item) => (
                 <li key={item}>{item}</li>
@@ -50,9 +50,9 @@ export default function PrivacyPage() {
             </ul>
           </PolicySection>
 
-          <PolicySection title="How Aegis Relay Uses Information">
+          <PolicySection title="How Relaygator Uses Information">
             <p>
-              Aegis Relay uses information to authenticate users, create and
+              Relaygator uses information to authenticate users, create and
               manage workspaces, process uploads, schedule posts, connect customer
               platform accounts, submit publishing attempts requested by users,
               display publishing status, support retries, manage subscriptions,
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
 
           <PolicySection title="Connected Platform Tokens">
             <p>
-              Aegis Relay stores connected-platform access and refresh tokens only
+              Relaygator stores connected-platform access and refresh tokens only
               so the service can perform requested connection, refresh, upload,
               and publishing operations for the connected customer workspace.
               Tokens are encrypted at the application layer before storage using
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
 
           <PolicySection title="Third-Party Services">
             <p>
-              Aegis Relay uses third-party providers for authentication,
+              Relaygator uses third-party providers for authentication,
               database hosting, object storage, payment processing, and platform
               publishing integrations. These providers may include Convex, Stripe,
               S3-compatible object storage, Google and YouTube APIs, and future
@@ -84,28 +84,28 @@ export default function PrivacyPage() {
 
           <PolicySection title="Data Sharing">
             <p>
-              Aegis Relay does not sell personal information. We share data only
+              Relaygator does not sell personal information. We share data only
               when needed to operate the service, complete user-requested platform
               publishing actions, process payments, comply with legal obligations,
               protect the service, or work with service providers that support
-              Aegis Relay operations.
+              Relaygator operations.
             </p>
           </PolicySection>
 
           <PolicySection title="Data Retention and Deletion">
             <p>
-              Aegis Relay keeps account, workspace, upload, scheduling, billing,
+              Relaygator keeps account, workspace, upload, scheduling, billing,
               and publishing records for as long as needed to provide the service,
               maintain security, comply with legal obligations, resolve disputes,
               and preserve operational history. Customers may request deletion or
-              disconnection of account data by contacting Aegis Relay support.
+              disconnection of account data by contacting Relaygator support.
             </p>
           </PolicySection>
 
           <PolicySection title="Contact">
             <p>
-              For privacy questions or data requests related to Aegis Relay,
-              contact the Aegis Relay operator through the support channel listed
+              For privacy questions or data requests related to Relaygator,
+              contact the Relaygator operator through the support channel listed
               in the app or on the{" "}
               <Link href="/support" className="font-medium underline underline-offset-2">
                 support page
@@ -129,7 +129,7 @@ function DocumentHeader({
   return (
     <header className="space-y-3">
       <Link href="/" className="text-sm font-medium text-neutral-500 hover:text-neutral-950">
-        Aegis Relay
+        Relaygator
       </Link>
       <h1 className="text-3xl font-semibold tracking-normal">{title}</h1>
       <p className="text-base leading-7 text-neutral-600">{description}</p>

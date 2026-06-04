@@ -427,7 +427,7 @@ function getMetadataProvider(overrides: {
       endpoint: "https://openrouter.ai/api/v1/chat/completions",
       headers: {
         "HTTP-Referer": process.env.NEXTAUTH_URL ?? "https://www.aegisrelay.app",
-        "X-Title": "Aegis Relay",
+        "X-Title": "Relaygator",
       },
     };
   }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Support | Aegis Relay",
-  description: "Support and troubleshooting notes for the Aegis Relay beta.",
+  title: "Support | Relaygator",
+  description: "Support and troubleshooting notes for the Relaygator beta.",
 };
 
 export const failedPostChecklist = [

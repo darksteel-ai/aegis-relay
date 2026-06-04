@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aegis Relay",
+  title: "Relaygator",
   description:
     "Schedule one short-form video across TikTok, YouTube Shorts, and Instagram Reels.",
 };

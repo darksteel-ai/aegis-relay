@@ -79,7 +79,7 @@ type ConnectionsPageProps = {
 
 const connectionMessages: Record<string, string> = {
   connected: "Connection saved.",
-  "oauth-failed": "Connection was approved, but Aegis Relay could not save it. Check the platform app secret and try again.",
+  "oauth-failed": "Connection was approved, but Relaygator could not save it. Check the platform app secret and try again.",
   "missing-code": "The platform did not return a connection code. Please try again.",
   "invalid-state": "The connection session expired. Please try again.",
   "missing-state": "The connection session expired. Please try again.",

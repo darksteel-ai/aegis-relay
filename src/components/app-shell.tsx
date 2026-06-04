@@ -10,7 +10,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 
-import { AegisRelayLogo } from "@/components/aegis-relay-logo";
+import { RelaygatorLogo } from "@/components/relaygator-logo";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,7 +28,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
       <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(135deg,rgba(255,51,71,0.12)_0,transparent_22%,rgba(34,211,238,0.08)_52%,transparent_78%)] bg-[size:72px_72px,72px_72px,100%_100%]" />
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-white/10 bg-[#080a0f]/95 px-4 py-5 shadow-2xl shadow-black/50 backdrop-blur-xl md:flex md:flex-col">
         <Link href="/dashboard" className="rounded-md px-2 py-2">
-          <AegisRelayLogo subtitle="Relay Studio" markClassName="h-10 w-10" />
+          <RelaygatorLogo subtitle="Publishing Studio" markClassName="h-10 w-10" />
         </Link>
         <nav className="mt-8 flex flex-col gap-1">
           {navItems.map(({ href, label, icon: Icon }) => (
@@ -63,7 +63,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
       <div className="relative z-10 md:pl-72">
         <header className="flex h-16 items-center justify-between border-b border-white/10 bg-[#090b10]/90 px-4 backdrop-blur-xl md:hidden">
           <Link href="/dashboard" className="text-base font-semibold">
-            <AegisRelayLogo markClassName="h-9 w-9" />
+            <RelaygatorLogo markClassName="h-9 w-9" />
           </Link>
           <UserButton />
         </header>

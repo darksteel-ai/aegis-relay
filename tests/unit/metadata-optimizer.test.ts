@@ -75,7 +75,7 @@ describe("metadata optimizer", () => {
 
     await expect(fetchYouTubePerformanceSignal({
       channelId: "channel_123",
-      accountName: "Aegis Relay",
+      accountName: "Relaygator",
       accessToken: "youtube-token",
     })).resolves.toMatchObject({
       platform: "YouTube",
@@ -95,7 +95,7 @@ describe("metadata optimizer", () => {
 
   test("explains when TikTok video data needs an additional scope", async () => {
     await expect(fetchTikTokPerformanceSignal({
-      accountName: "Aegis TikTok",
+      accountName: "Relaygator TikTok",
       accessToken: "tiktok-token",
       scopes: "user.info.basic,video.upload",
     })).resolves.toMatchObject({
@@ -119,7 +119,7 @@ describe("metadata optimizer", () => {
     })));
 
     await expect(fetchInstagramPerformanceSignal({
-      accountName: "Aegis Instagram",
+      accountName: "Relaygator Instagram",
       accessToken: "instagram-token",
     })).resolves.toMatchObject({
       platform: "Instagram",
@@ -157,7 +157,7 @@ describe("metadata optimizer", () => {
 
     await expect(optimizeMetadataWithOpenAI({
       caption: "Batch short-form clips faster.",
-      channelName: "Aegis Relay",
+      channelName: "Relaygator",
       recentUploads: [{ title: "3 AI Tools That Save Hours", url: "https://youtu.be/1" }],
       apiKey: "sk-test",
     })).resolves.toEqual({
@@ -169,12 +169,12 @@ describe("metadata optimizer", () => {
         },
       ],
       basedOn: {
-        channelName: "Aegis Relay",
+        channelName: "Relaygator",
         recentTitles: ["3 AI Tools That Save Hours"],
         platforms: [
           {
             platform: "YouTube",
-            accountName: "Aegis Relay",
+            accountName: "Relaygator",
             status: "limited",
             recentItems: [{ title: "3 AI Tools That Save Hours", url: "https://youtu.be/1" }],
             notes: ["Using recent public YouTube titles."],
@@ -218,7 +218,7 @@ describe("metadata optimizer", () => {
         headers: expect.objectContaining({
           Authorization: "Bearer or-test",
           "HTTP-Referer": "https://www.aegisrelay.app",
-          "X-Title": "Aegis Relay",
+          "X-Title": "Relaygator",
         }),
       }),
     );
