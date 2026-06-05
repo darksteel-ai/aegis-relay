@@ -82,6 +82,7 @@ export function ComposerForm({
   const [tiktokAllowComments, setTikTokAllowComments] = useState(false);
   const [tiktokAllowDuet, setTikTokAllowDuet] = useState(false);
   const [tiktokAllowStitch, setTikTokAllowStitch] = useState(false);
+  const [tiktokCommercialContentEnabled, setTikTokCommercialContentEnabled] = useState(false);
   const [tiktokBrandContent, setTikTokBrandContent] = useState(false);
   const [tiktokBrandOrganic, setTikTokBrandOrganic] = useState(false);
   const [tiktokMusicUsageConfirmed, setTikTokMusicUsageConfirmed] = useState(false);
@@ -124,7 +125,10 @@ export function ComposerForm({
     timezone,
     platforms,
     tiktokPrivacyLevel,
+    tiktokCommercialContentEnabled,
     tiktokMusicUsageConfirmed,
+    tiktokBrandContent,
+    tiktokBrandOrganic,
   });
   const canSubmit = !submitBlockedReason;
   const scheduleBlockedCopy =
@@ -215,8 +219,8 @@ export function ComposerForm({
                 allowComments: tiktokAllowComments,
                 allowDuet: tiktokAllowDuet,
                 allowStitch: tiktokAllowStitch,
-                brandContent: tiktokBrandContent,
-                brandOrganic: tiktokBrandOrganic,
+                brandContent: tiktokCommercialContentEnabled && tiktokBrandContent,
+                brandOrganic: tiktokCommercialContentEnabled && tiktokBrandOrganic,
                 musicUsageConfirmed: tiktokMusicUsageConfirmed,
               }
             : undefined,
@@ -325,6 +329,23 @@ export function ComposerForm({
 
     input.focus();
     input.showPicker?.();
+  }
+
+  function updateTikTokPrivacyLevel(nextPrivacyLevel: string) {
+    setTikTokPrivacyLevel(nextPrivacyLevel);
+
+    if (nextPrivacyLevel === "SELF_ONLY") {
+      setTikTokBrandContent(false);
+    }
+  }
+
+  function updateTikTokCommercialContentEnabled(enabled: boolean) {
+    setTikTokCommercialContentEnabled(enabled);
+
+    if (!enabled) {
+      setTikTokBrandContent(false);
+      setTikTokBrandOrganic(false);
+    }
   }
 
   return (
@@ -608,8 +629,9 @@ export function ComposerForm({
                 </div>
               </div>
               <p className="text-xs leading-5 text-slate-500">
-                TikTok reviews uploaded videos and may reject, mute, or remove content that
-                violates its posting or music rules.
+                After scheduling, Relaygator sends this video to TikTok for processing. TikTok may
+                take time to finish publishing and may reject, mute, or remove content that
+                violates its posting, music, or branded-content rules.
               </p>
             </div>
 
@@ -635,7 +657,7 @@ export function ComposerForm({
                   id="tiktokPrivacy"
                   required
                   value={tiktokPrivacyLevel}
-                  onChange={(event) => setTikTokPrivacyLevel(event.target.value)}
+                  onChange={(event) => updateTikTokPrivacyLevel(event.target.value)}
                 >
                   <option value="">Choose privacy before posting</option>
                   {getTikTokPrivacyOptions(visibleTikTokCreatorInfo).map((option) => (
@@ -669,26 +691,52 @@ export function ComposerForm({
               </div>
 
               <div className="grid gap-3 border-t border-white/10 pt-4">
-                <p className="text-sm font-medium text-white">Commercial content disclosure</p>
+                <div>
+                  <p className="text-sm font-medium text-white">Commercial content disclosure</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    Turn this on only if the TikTok video promotes a brand, product, or service.
+                    Leaving it off means no commercial disclosure will be sent.
+                  </p>
+                </div>
                 <TikTokCheckbox
-                  checked={tiktokBrandOrganic}
+                  checked={tiktokCommercialContentEnabled}
                   disabled={isSubmitting}
-                  label="This video promotes my own brand, product, or service"
-                  onChange={setTikTokBrandOrganic}
+                  label="Disclose commercial content for this TikTok post"
+                  onChange={updateTikTokCommercialContentEnabled}
                 />
-                <TikTokCheckbox
-                  checked={tiktokBrandContent}
-                  disabled={isSubmitting}
-                  label="This video includes paid partnership or third-party brand content"
-                  onChange={setTikTokBrandContent}
-                />
+                {tiktokCommercialContentEnabled ? (
+                  <div className="grid gap-3 rounded-md border border-cyan-300/20 bg-cyan-300/[0.04] p-3">
+                    <p className="text-xs leading-5 text-slate-300">
+                      Select all that apply. TikTok uses these choices to label commercial
+                      content correctly.
+                    </p>
+                    <TikTokCheckbox
+                      checked={tiktokBrandOrganic}
+                      disabled={isSubmitting}
+                      label="Your Brand: this video promotes my own brand, product, or service"
+                      onChange={setTikTokBrandOrganic}
+                    />
+                    <TikTokCheckbox
+                      checked={tiktokBrandContent}
+                      disabled={isSubmitting || tiktokPrivacyLevel === "SELF_ONLY"}
+                      label="Branded Content: this video includes paid partnership or third-party brand content"
+                      onChange={setTikTokBrandContent}
+                    />
+                    {tiktokPrivacyLevel === "SELF_ONLY" ? (
+                      <p className="text-xs leading-5 text-amber-200">
+                        Branded Content is unavailable for Only me privacy. Choose a public
+                        TikTok privacy option if this is a paid partnership.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               <div className="rounded-md border border-white/10 bg-black/25 p-3">
                 <TikTokCheckbox
                   checked={tiktokMusicUsageConfirmed}
                   disabled={isSubmitting}
-                  label="I confirm this video uses music, sounds, and creative assets that I own or have permission to use on TikTok"
+                  label="By posting, I agree to TikTok's Music Usage Confirmation and confirm this video uses music, sounds, and creative assets that I own or have permission to use on TikTok."
                   onChange={setTikTokMusicUsageConfirmed}
                 />
               </div>
@@ -920,7 +968,10 @@ function getSubmitBlockedReason({
   timezone,
   platforms,
   tiktokPrivacyLevel,
+  tiktokCommercialContentEnabled,
   tiktokMusicUsageConfirmed,
+  tiktokBrandContent,
+  tiktokBrandOrganic,
 }: {
   video: UploadedVideo | null;
   hasRequiredMetadata: boolean;
@@ -929,7 +980,10 @@ function getSubmitBlockedReason({
   timezone: string;
   platforms: ComposerPlatform[];
   tiktokPrivacyLevel: string;
+  tiktokCommercialContentEnabled: boolean;
   tiktokMusicUsageConfirmed: boolean;
+  tiktokBrandContent: boolean;
+  tiktokBrandOrganic: boolean;
 }) {
   if (!video) {
     return "Upload a video before scheduling.";
@@ -949,6 +1003,23 @@ function getSubmitBlockedReason({
 
   if (platforms.includes("TIKTOK") && !tiktokPrivacyLevel) {
     return "Choose TikTok privacy before scheduling.";
+  }
+
+  if (
+    platforms.includes("TIKTOK") &&
+    tiktokCommercialContentEnabled &&
+    !tiktokBrandContent &&
+    !tiktokBrandOrganic
+  ) {
+    return "Choose Your Brand, Branded Content, or turn off TikTok commercial disclosure.";
+  }
+
+  if (
+    platforms.includes("TIKTOK") &&
+    tiktokPrivacyLevel === "SELF_ONLY" &&
+    tiktokBrandContent
+  ) {
+    return "Choose a public TikTok privacy option before using Branded Content disclosure.";
   }
 
   if (platforms.includes("TIKTOK") && !tiktokMusicUsageConfirmed) {
