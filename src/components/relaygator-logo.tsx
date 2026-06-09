@@ -25,6 +25,7 @@ export function RelaygatorLogo({
           aria-hidden="true"
           className={`${markClassName} relative shrink-0 rounded-xl object-cover object-top ring-1 ring-white/10`}
           height={512}
+          priority
           src="/relaygator-mark.png"
           width={512}
         />

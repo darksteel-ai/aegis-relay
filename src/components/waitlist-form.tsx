@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, LoaderCircle } from "lucide-react";
+import { ArrowRight, LoaderCircle } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 
 type FormStatus =
@@ -57,8 +58,15 @@ export function WaitlistForm({
 
   if (status.state === "success") {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-emerald-300/25 bg-emerald-300/[0.08] px-4 py-3.5 text-sm font-semibold text-emerald-100">
-        <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
+      <div className="flex items-center gap-3 rounded-xl border border-emerald-300/25 bg-emerald-300/[0.08] px-4 py-3 text-sm font-semibold text-emerald-100">
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="h-10 w-10 shrink-0 rounded-lg object-cover object-top ring-1 ring-emerald-300/30"
+          height={512}
+          src="/relaygator-mark.png"
+          width={512}
+        />
         {status.alreadyJoined
           ? "You're already on the list — we'll be in touch soon."
           : "You're on the list. We'll email you when your spot opens."}

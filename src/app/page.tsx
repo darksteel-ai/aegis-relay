@@ -13,6 +13,7 @@ import {
   UploadCloud,
   Zap,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { RelaygatorLogo } from "@/components/relaygator-logo";
@@ -597,10 +598,19 @@ function FinalCta() {
                 schedule your first video through Relaygator.
               </p>
             </div>
-            <Link href="/sign-in" className="studio-button-primary !h-13 px-7 text-base">
-              Start scheduling
-              <Zap className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            <div className="flex flex-col items-center gap-7">
+              <Image
+                alt="Relaygator mascot"
+                className="hidden h-28 w-28 -rotate-6 rounded-3xl object-cover object-top shadow-2xl shadow-black/50 ring-1 ring-[#8dff5a]/30 animate-float lg:block"
+                height={512}
+                src="/relaygator-mark.png"
+                width={512}
+              />
+              <Link href="/sign-in" className="studio-button-primary !h-13 px-7 text-base">
+                Start scheduling
+                <Zap className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
