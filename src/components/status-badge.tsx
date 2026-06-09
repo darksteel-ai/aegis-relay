@@ -32,11 +32,11 @@ export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${statusStyles[status] ?? statusStyles.DRAFT} ${className}`}
+      className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-tight ${statusStyles[status] ?? statusStyles.DRAFT} ${className}`}
       aria-label={`Status: ${label}`}
     >
       <span
-        className={`h-1.5 w-1.5 rounded-full ${dotStyles[status] ?? dotStyles.DRAFT}`}
+        className={`h-1.5 w-1.5 rounded-full shadow-[0_0_8px_currentColor] ${dotStyles[status] ?? dotStyles.DRAFT}`}
         aria-hidden="true"
       />
       {label}

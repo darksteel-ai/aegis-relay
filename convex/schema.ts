@@ -130,6 +130,15 @@ export default defineSchema({
     .index("by_workspace_platform", ["workspaceId", "platform"])
     .index("by_workspace_platform_external", ["workspaceId", "platform", "externalId"]),
 
+  waitlistSignups: defineTable({
+    email: v.string(),
+    niche: v.string(),
+    source: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_email_niche", ["email", "niche"])
+    .index("by_niche", ["niche"]),
+
   publishAttempts: defineTable({
     platformPostId: v.id("platformPosts"),
     status: publishStatus,

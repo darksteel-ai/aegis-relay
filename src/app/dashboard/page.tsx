@@ -100,8 +100,9 @@ export default async function DashboardPage() {
       <div className="grid gap-6">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-3">
-            <h1 className="max-w-3xl text-4xl font-semibold tracking-normal text-white sm:text-5xl">
-              Mission control for your content.
+            <span className="eyebrow-chip">Dashboard</span>
+            <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              Mission control for your <span className="text-gradient">content.</span>
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-400">
               {workspace?.name

@@ -27,7 +27,10 @@ export default async function AlertsPage() {
     <AppShell>
       <div className="grid gap-6">
         <div>
-          <h1 className="text-4xl font-semibold tracking-normal text-white">Alerts</h1>
+          <span className="eyebrow-chip">Signals</span>
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            <span className="text-gradient-static">Alerts</span>
+          </h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-slate-400">
             Operational issues that need attention before scheduled content can keep moving.
           </p>

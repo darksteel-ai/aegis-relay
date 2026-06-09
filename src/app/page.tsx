@@ -17,11 +17,23 @@ import Link from "next/link";
 
 import { RelaygatorLogo } from "@/components/relaygator-logo";
 import { pricingPlans } from "@/lib/billing/pricing";
+import { niches } from "@/lib/niches";
 
 const heroStats = [
   { label: "Connected platforms", value: "5" },
   { label: "Creator plan posts", value: "150/mo" },
   { label: "Studio plan posts", value: "750/mo" },
+];
+
+const marqueeItems = [
+  "TikTok",
+  "YouTube Shorts",
+  "Instagram Reels",
+  "Facebook",
+  "LinkedIn",
+  "Encrypted OAuth",
+  "AI captions",
+  "Auto-retry",
 ];
 
 const outcomes = [
@@ -108,11 +120,13 @@ const faqs = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#04100f] text-white">
+    <main className="min-h-screen bg-[#03100f] text-white">
       <HeroSection />
+      <Marquee />
       <OutcomeSection />
       <WorkflowSection />
       <PlatformSection />
+      <NicheSection />
       <PricingSection />
       <FaqSection />
       <FinalCta />
@@ -123,7 +137,7 @@ export default function Home() {
 
 function HeroSection() {
   return (
-    <section className="relative min-h-[92vh] overflow-hidden border-b border-white/10">
+    <section className="relative min-h-[94vh] overflow-hidden border-b border-white/10">
       <HeroScene />
       <header className="relative z-20">
         <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
@@ -131,68 +145,60 @@ function HeroSection() {
             <RelaygatorLogo markClassName="h-10 w-10" />
           </Link>
           <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
-            <a href="#workflow" className="hover:text-white">
+            <a href="#workflow" className="transition-colors hover:text-white">
               Workflow
             </a>
-            <a href="#platforms" className="hover:text-white">
+            <a href="#platforms" className="transition-colors hover:text-white">
               Platforms
             </a>
-            <a href="#pricing" className="hover:text-white">
+            <a href="#pricing" className="transition-colors hover:text-white">
               Pricing
             </a>
-            <Link href="/privacy" className="hover:text-white">
+            <Link href="/privacy" className="transition-colors hover:text-white">
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-white">
+            <Link href="/terms" className="transition-colors hover:text-white">
               Terms
             </Link>
           </div>
-          <Link
-            href="/sign-in"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-4 text-sm font-semibold text-[#04100f] shadow-lg shadow-green-950/30 transition hover:brightness-110"
-          >
+          <Link href="/sign-in" className="studio-button-primary !h-10">
             Start free
           </Link>
         </nav>
       </header>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pb-10 pt-16 sm:px-6 lg:min-h-[calc(92vh-5rem)] lg:pb-16">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pb-12 pt-16 sm:px-6 lg:min-h-[calc(94vh-5rem)] lg:pb-20">
         <div className="max-w-4xl">
-          <div className="mb-5 flex w-fit items-center gap-2 rounded-md border border-white/10 bg-black/35 px-3 py-1.5 text-sm font-medium text-cyan-100 backdrop-blur">
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-            Built for short-form operators, creators, and agencies
+          <div className="animate-fade-up eyebrow-chip mb-6">
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            Built for short-form operators, creators &amp; agencies
           </div>
-          <h1 className="max-w-[43rem] text-5xl font-semibold leading-[1.02] tracking-normal text-white sm:text-6xl lg:text-6xl">
-            One upload. One schedule. Every short-form channel.
+          <h1 className="animate-fade-up delay-100 max-w-[46rem] text-5xl font-bold leading-[1.0] tracking-tight text-white sm:text-6xl lg:text-7xl">
+            One upload.
+            <br />
+            One schedule.
+            <br />
+            <span className="text-gradient">Every channel.</span>
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
+          <p className="animate-fade-up delay-200 mt-7 max-w-2xl text-lg leading-8 text-slate-300">
             Relaygator turns scattered posting work into one secure publishing
             command center for TikTok, YouTube Shorts, and Instagram Reels.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/sign-in"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-5 text-sm font-semibold text-[#04100f] shadow-xl shadow-green-950/30 transition hover:brightness-110"
-            >
+          <div className="animate-fade-up delay-300 mt-9 flex flex-col gap-3 sm:flex-row">
+            <Link href="/sign-in" className="studio-button-primary !h-12 px-6 text-base">
               Start scheduling
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <a
-              href="#pricing"
-              className="inline-flex h-12 items-center justify-center rounded-md border border-white/15 bg-white/[0.06] px-5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
-            >
+            <a href="#pricing" className="studio-button-secondary !h-12 px-6 text-base">
               View pricing
             </a>
           </div>
         </div>
 
-        <div className="mt-10 grid max-w-3xl gap-3 sm:grid-cols-3">
+        <div className="animate-fade-up delay-500 mt-12 grid max-w-3xl gap-3 sm:grid-cols-3">
           {heroStats.map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-md border border-white/10 bg-black/35 p-4 backdrop-blur"
-            >
-              <p className="text-2xl font-semibold text-white">{stat.value}</p>
+            <div key={stat.label} className="glass rounded-2xl p-5">
+              <p className="text-3xl font-bold text-gradient-static">{stat.value}</p>
               <p className="mt-1 text-sm text-slate-300">{stat.label}</p>
             </div>
           ))}
@@ -204,32 +210,34 @@ function HeroSection() {
 
 function HeroScene() {
   return (
-    <div className="absolute inset-0">
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(48,213,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(126,217,87,0.055)_1px,transparent_1px)] bg-[size:64px_64px]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_12%,rgba(126,217,87,0.24),transparent_30%),radial-gradient(circle_at_15%_18%,rgba(48,213,255,0.22),transparent_32%),linear-gradient(180deg,rgba(4,16,15,0.28),rgba(4,16,15,0.96)_82%)]" />
-      <div className="absolute right-[-16rem] top-24 hidden w-[44rem] opacity-80 lg:block">
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="aurora-bg" />
+      <div className="absolute inset-0 grid-overlay" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_12%,rgba(141,255,90,0.18),transparent_34%),radial-gradient(circle_at_12%_22%,rgba(43,214,255,0.16),transparent_36%),linear-gradient(180deg,rgba(3,16,15,0.2),rgba(3,16,15,0.96)_84%)]" />
+      <div className="absolute right-[-15rem] top-28 hidden w-[44rem] animate-float opacity-90 lg:block">
         <ProductStage />
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-[#04100f] to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-[#03100f] to-transparent" />
     </div>
   );
 }
 
 function ProductStage() {
   return (
-    <div className="rotate-[-4deg] rounded-md border border-[#30d5ff]/15 bg-[#07171b]/90 p-4 shadow-2xl shadow-black/40">
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+    <div className="rotate-[-4deg] gradient-border glow-cyan p-5 shadow-2xl shadow-black/50">
+      <div className="relative flex items-center justify-between border-b border-white/10 pb-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
             Studio command
           </p>
-          <p className="mt-1 text-xl font-semibold text-white">Publishing queue</p>
+          <p className="mt-1 text-xl font-bold text-white">Publishing queue</p>
         </div>
-        <div className="rounded-md border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-sm font-semibold text-emerald-100">
+        <div className="flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-sm font-semibold text-emerald-100">
+          <span className="live-dot" />
           Live
         </div>
       </div>
-      <div className="grid gap-4 pt-4">
+      <div className="relative grid gap-3 pt-4">
         {[
           ["Commander drop", "TikTok, Shorts, Reels", "Scheduled", "10:30 AM"],
           ["Studio walkthrough", "Shorts, Reels", "Ready", "1:00 PM"],
@@ -237,7 +245,7 @@ function ProductStage() {
         ].map(([title, channels, status, time]) => (
           <div
             key={title}
-            className="grid grid-cols-[1fr_auto] gap-4 rounded-md border border-white/10 bg-black/25 p-4"
+            className="grid grid-cols-[1fr_auto] gap-4 rounded-xl border border-white/10 bg-black/30 p-4 transition-colors hover:border-cyan-300/30"
           >
             <div>
               <p className="font-semibold text-white">{title}</p>
@@ -250,11 +258,11 @@ function ProductStage() {
           </div>
         ))}
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="relative mt-4 grid grid-cols-3 gap-3">
         {["TikTok", "YouTube", "Instagram"].map((platform) => (
           <div
             key={platform}
-            className="rounded-md border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-sm font-semibold text-cyan-100"
+            className="rounded-xl border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-center text-sm font-semibold text-cyan-100"
           >
             {platform}
           </div>
@@ -264,17 +272,36 @@ function ProductStage() {
   );
 }
 
+function Marquee() {
+  const items = [...marqueeItems, ...marqueeItems];
+  return (
+    <div className="relative overflow-hidden border-b border-white/10 bg-[#04130f] py-5">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-[#04130f] to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-[#04130f] to-transparent" />
+      <div className="flex w-max animate-marquee items-center gap-10">
+        {items.map((item, i) => (
+          <div key={`${item}-${i}`} className="flex items-center gap-10">
+            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+              {item}
+            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#8dff5a] to-[#2bd6ff]" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function OutcomeSection() {
   return (
-    <section className="border-b border-white/10 bg-[#061514]">
-      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+    <section className="relative border-b border-white/10 bg-[#05140f]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-24">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
-              The operator advantage
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
-              Replace tab-hopping with a repeatable publishing system.
+            <span className="eyebrow-chip">The operator advantage</span>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Replace tab-hopping with a repeatable{" "}
+              <span className="text-gradient-static">publishing system.</span>
             </h2>
           </div>
           <p className="text-base leading-7 text-slate-300">
@@ -284,18 +311,18 @@ function OutcomeSection() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
           {outcomes.map((outcome) => {
             const Icon = outcome.icon;
             return (
               <article
                 key={outcome.title}
-                className="rounded-md border border-white/10 bg-white/[0.035] p-6"
+                className="group studio-panel p-7"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-md border border-cyan-300/25 bg-cyan-300/10 text-cyan-100">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#8dff5a]/20 to-[#2bd6ff]/20 text-cyan-100 ring-1 ring-cyan-300/20 transition-transform duration-300 group-hover:scale-110">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <h3 className="mt-5 text-lg font-semibold text-white">{outcome.title}</h3>
+                <h3 className="mt-6 text-lg font-bold text-white">{outcome.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-300">{outcome.description}</p>
               </article>
             );
@@ -308,23 +335,19 @@ function OutcomeSection() {
 
 function WorkflowSection() {
   return (
-    <section id="workflow" className="border-b border-white/10 bg-[#04100f]">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:py-20">
-        <div className="space-y-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#8eea57]">
-            How it works
-          </p>
-          <h2 className="text-3xl font-semibold tracking-normal text-white sm:text-4xl">
-            A scheduler that acts like an operations desk.
+    <section id="workflow" className="border-b border-white/10 bg-[#03100f]">
+      <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:py-24">
+        <div className="space-y-5 lg:sticky lg:top-16 lg:self-start">
+          <span className="eyebrow-chip">How it works</span>
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            A scheduler that acts like an{" "}
+            <span className="text-gradient-static">operations desk.</span>
           </h2>
           <p className="max-w-xl text-base leading-7 text-slate-300">
             Every scheduled post is broken into platform-specific jobs, so your
             team can see exactly where each account stands.
           </p>
-          <Link
-            href="/sign-in"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-white/15 bg-white/[0.06] px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-          >
+          <Link href="/sign-in" className="studio-button-secondary">
             Open the app
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
@@ -336,16 +359,16 @@ function WorkflowSection() {
             return (
               <article
                 key={item.title}
-                className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 rounded-md border border-white/10 bg-white/[0.035] p-5"
+                className="group grid grid-cols-[3.25rem_minmax(0,1fr)] gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 transition-all hover:border-[#8dff5a]/30 hover:bg-[#8dff5a]/[0.04]"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#7ed957]/15 text-[#9cff6d]">
+                <div className="flex h-13 w-13 items-center justify-center rounded-xl bg-gradient-to-br from-[#8dff5a]/20 to-[#2bd6ff]/15 p-3 text-[#9cff6d] ring-1 ring-[#8dff5a]/15 transition-transform group-hover:scale-110">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#8eea57]">
                     {item.eyebrow}
                   </p>
-                  <h3 className="mt-1 text-base font-semibold text-white">{item.title}</h3>
+                  <h3 className="mt-1 text-base font-bold text-white">{item.title}</h3>
                   <p className="mt-1 text-sm leading-6 text-slate-300">{item.description}</p>
                 </div>
               </article>
@@ -359,38 +382,37 @@ function WorkflowSection() {
 
 function PlatformSection() {
   return (
-    <section id="platforms" className="border-b border-white/10 bg-[#061819]">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:items-start lg:py-20">
+    <section id="platforms" className="border-b border-white/10 bg-[#05140f]">
+      <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:items-start lg:py-24">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
-            Platform-ready
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
-            Built around the details platforms actually review.
+          <span className="eyebrow-chip">Platform-ready</span>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Built around the details platforms{" "}
+            <span className="text-gradient-static">actually review.</span>
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
             Relaygator keeps platform settings visible before posting: TikTok
             privacy and music usage confirmation, YouTube title and description,
             Instagram professional account publishing, and account health checks.
           </p>
-          <div className="mt-7 grid gap-3">
+          <div className="mt-8 grid gap-3">
             {platformFeatures.map((feature) => (
               <div className="flex items-start gap-3 text-sm leading-6 text-slate-200" key={feature}>
-                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-300" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
                 <span>{feature}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-md border border-[#7ed957]/15 bg-[#04100f] p-5">
-          <div className="grid gap-3">
+        <div className="gradient-border p-6">
+          <div className="relative grid gap-3">
             <PlatformRow name="TikTok" status="Creator settings required" tone="cyan" />
             <PlatformRow name="YouTube Shorts" status="Auto-publish ready" tone="green" />
             <PlatformRow name="Instagram Reels" status="Professional account" tone="navy" />
           </div>
-          <div className="mt-5 rounded-md border border-emerald-300/25 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">
-            <BadgeCheck className="mb-3 h-5 w-5" aria-hidden="true" />
+          <div className="relative mt-5 flex gap-3 rounded-xl border border-emerald-300/25 bg-emerald-300/[0.08] p-4 text-sm leading-6 text-emerald-100">
+            <BadgeCheck className="h-5 w-5 shrink-0" aria-hidden="true" />
             Tokens are encrypted, workspace-scoped, and removable from the
             connection manager.
           </div>
@@ -410,16 +432,16 @@ function PlatformRow({
   tone: "cyan" | "green" | "navy";
 }) {
   const tones = {
-    cyan: "border-cyan-300/25 bg-cyan-300/[0.06] text-cyan-100",
-    green: "border-[#7ed957]/30 bg-[#7ed957]/10 text-[#c9ffb8]",
-    navy: "border-[#30d5ff]/20 bg-[#0b2530] text-cyan-100",
+    cyan: "border-cyan-300/25 bg-cyan-300/[0.06]",
+    green: "border-[#7ed957]/30 bg-[#7ed957]/[0.08]",
+    navy: "border-[#30d5ff]/20 bg-[#0b2530]",
   };
 
   return (
-    <div className={`rounded-md border p-4 ${tones[tone]}`}>
+    <div className={`rounded-xl border p-4 transition-transform hover:-translate-y-0.5 ${tones[tone]}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="font-semibold text-white">{name}</p>
-        <span className="rounded-md border border-white/10 bg-black/25 px-2 py-1 text-xs">
+        <p className="font-bold text-white">{name}</p>
+        <span className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-xs text-slate-200">
           {status}
         </span>
       </div>
@@ -427,16 +449,47 @@ function PlatformRow({
   );
 }
 
+function NicheSection() {
+  return (
+    <section className="border-b border-white/10 bg-[#03100f]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-24">
+        <div className="max-w-3xl">
+          <span className="eyebrow-chip">Built for your niche</span>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            See how Relaygator fits{" "}
+            <span className="text-gradient-static">your kind of content.</span>
+          </h2>
+        </div>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {niches.map((niche) => (
+            <Link
+              key={niche.slug}
+              href={`/for/${niche.slug}`}
+              className="group studio-panel p-6 transition-all hover:border-[#8dff5a]/30"
+            >
+              <h3 className="text-base font-bold text-white">{niche.name}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{niche.audience}</p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-200 transition-colors group-hover:text-white">
+                See the workflow
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PricingSection() {
   return (
-    <section id="pricing" className="border-b border-white/10 bg-[#04100f]">
-      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+    <section id="pricing" className="border-b border-white/10 bg-[#03100f]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-24">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#8eea57]">
-            Pricing
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
-            Start lean. Scale when posting volume grows.
+          <span className="eyebrow-chip">Pricing</span>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Start lean. Scale when posting{" "}
+            <span className="text-gradient-static">volume grows.</span>
           </h2>
           <p className="mt-4 text-base leading-7 text-slate-300">
             Plans are tied to scheduled post volume so customers can match cost
@@ -444,39 +497,39 @@ function PricingSection() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+        <div className="mt-12 grid gap-5 lg:grid-cols-3">
           {pricingPlans.map((plan) => (
             <article
               className={
                 plan.featured
-                  ? "rounded-md border border-[#7ed957]/45 bg-[#7ed957]/10 p-6 shadow-2xl shadow-green-950/20"
-                  : "rounded-md border border-white/10 bg-white/[0.035] p-6"
+                  ? "group relative gradient-border glow-lime p-7 lg:-translate-y-3"
+                  : "group studio-panel p-7"
               }
               key={plan.id}
             >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
+              <div className="relative flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
                   {plan.eyebrow}
                 </p>
                 {plan.featured ? (
-                  <span className="rounded-md bg-[#7ed957] px-2 py-1 text-xs font-semibold text-[#04100f]">
+                  <span className="rounded-full bg-gradient-to-r from-[#8dff5a] to-[#2bd6ff] px-2.5 py-1 text-xs font-bold text-[#04130f]">
                     Popular
                   </span>
                 ) : null}
               </div>
-              <h3 className="mt-3 text-2xl font-semibold text-white">{plan.name}</h3>
-              <div className="mt-5 flex items-end gap-2">
-                <span className="text-4xl font-semibold text-white">{plan.price}</span>
-                <span className="pb-1 text-sm text-slate-400">{plan.period}</span>
+              <h3 className="relative mt-3 text-2xl font-bold text-white">{plan.name}</h3>
+              <div className="relative mt-5 flex items-end gap-2">
+                <span className="text-5xl font-bold text-white">{plan.price}</span>
+                <span className="pb-1.5 text-sm text-slate-400">{plan.period}</span>
               </div>
-              <p className="mt-4 min-h-16 text-sm leading-6 text-slate-300">
+              <p className="relative mt-4 min-h-16 text-sm leading-6 text-slate-300">
                 {plan.description}
               </p>
-              <div className="mt-5 flex items-center gap-2 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-white">
+              <div className="relative mt-5 flex items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 text-sm text-white">
                 <CircleDollarSign className="h-4 w-4 text-[#8eea57]" aria-hidden="true" />
                 {plan.monthlyScheduledPostLimit} scheduled posts per month
               </div>
-              <ul className="mt-5 grid gap-2 text-sm text-slate-200">
+              <ul className="relative mt-5 grid gap-2.5 text-sm text-slate-200">
                 {plan.features.map((feature) => (
                   <li className="flex gap-2" key={feature}>
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" />
@@ -487,8 +540,8 @@ function PricingSection() {
               <Link
                 className={
                   plan.featured
-                    ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-4 text-sm font-semibold text-[#04100f] transition hover:brightness-110"
-                    : "mt-6 inline-flex h-11 w-full items-center justify-center rounded-md border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                    ? "studio-button-primary relative mt-7 w-full"
+                    : "studio-button-secondary relative mt-7 w-full"
                 }
                 href={plan.id === "beta" ? "/sign-in" : "/billing"}
               >
@@ -504,20 +557,21 @@ function PricingSection() {
 
 function FaqSection() {
   return (
-    <section className="border-b border-white/10 bg-[#061514]">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:py-20">
+    <section className="border-b border-white/10 bg-[#05140f]">
+      <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:py-24">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
-            Questions
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white">
+          <span className="eyebrow-chip">Questions</span>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-white">
             Built for the practical parts of publishing.
           </h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {faqs.map((faq) => (
-            <article key={faq.question} className="rounded-md border border-white/10 bg-white/[0.035] p-5">
-              <h3 className="text-base font-semibold text-white">{faq.question}</h3>
+            <article
+              key={faq.question}
+              className="rounded-2xl border border-white/10 bg-white/[0.035] p-6 transition-all hover:border-cyan-300/25 hover:bg-white/[0.05]"
+            >
+              <h3 className="text-base font-bold text-white">{faq.question}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-300">{faq.answer}</p>
             </article>
           ))}
@@ -529,27 +583,24 @@ function FaqSection() {
 
 function FinalCta() {
   return (
-    <section className="bg-[#04100f]">
-      <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
-        <div className="relative overflow-hidden rounded-md border border-[#7ed957]/20 bg-[#07171b] p-8 sm:p-10">
-          <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(48,213,255,0.14),transparent_36%,rgba(126,217,87,0.16))]" />
+    <section className="bg-[#03100f]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-24">
+        <div className="relative overflow-hidden rounded-3xl border border-[#8dff5a]/20 bg-[#06181a] p-8 sm:p-12">
+          <div className="aurora-bg opacity-80" />
+          <div className="absolute inset-0 grid-overlay opacity-50" />
           <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                Ready when the queue is
-              </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">
-                Build your short-form publishing command center.
+              <span className="eyebrow-chip">Ready when the queue is</span>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Build your short-form{" "}
+                <span className="text-gradient">publishing command center.</span>
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
                 Start with free beta access, connect your first account, and
                 schedule your first video through Relaygator.
               </p>
             </div>
-            <Link
-              href="/sign-in"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#7ed957] to-[#30d5ff] px-5 text-sm font-semibold text-[#04100f] shadow-xl shadow-green-950/30 transition hover:brightness-110"
-            >
+            <Link href="/sign-in" className="studio-button-primary !h-13 px-7 text-base">
               Start scheduling
               <Zap className="h-4 w-4" aria-hidden="true" />
             </Link>
@@ -562,8 +613,8 @@ function FinalCta() {
 
 function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-[#061514]">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
+    <footer className="border-t border-white/10 bg-[#05140f]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-sm space-y-3">
           <RelaygatorLogo markClassName="h-9 w-9" />
           <p className="text-sm leading-6 text-slate-400">
@@ -573,32 +624,32 @@ function SiteFooter() {
         </div>
         <div className="grid gap-8 text-sm sm:grid-cols-3">
           <div className="space-y-3">
-            <p className="font-semibold text-white">Product</p>
-            <a href="#workflow" className="block text-slate-400 hover:text-white">
+            <p className="font-bold text-white">Product</p>
+            <a href="#workflow" className="block text-slate-400 transition-colors hover:text-white">
               Workflow
             </a>
-            <a href="#platforms" className="block text-slate-400 hover:text-white">
+            <a href="#platforms" className="block text-slate-400 transition-colors hover:text-white">
               Platforms
             </a>
-            <a href="#pricing" className="block text-slate-400 hover:text-white">
+            <a href="#pricing" className="block text-slate-400 transition-colors hover:text-white">
               Pricing
             </a>
           </div>
           <div className="space-y-3">
-            <p className="font-semibold text-white">Legal</p>
-            <Link href="/privacy" className="block text-slate-400 hover:text-white">
+            <p className="font-bold text-white">Legal</p>
+            <Link href="/privacy" className="block text-slate-400 transition-colors hover:text-white">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="block text-slate-400 hover:text-white">
+            <Link href="/terms" className="block text-slate-400 transition-colors hover:text-white">
               Terms of Service
             </Link>
           </div>
           <div className="space-y-3">
-            <p className="font-semibold text-white">Access</p>
-            <Link href="/sign-in" className="block text-slate-400 hover:text-white">
+            <p className="font-bold text-white">Access</p>
+            <Link href="/sign-in" className="block text-slate-400 transition-colors hover:text-white">
               Sign in
             </Link>
-            <Link href="/support" className="block text-slate-400 hover:text-white">
+            <Link href="/support" className="block text-slate-400 transition-colors hover:text-white">
               Support
             </Link>
           </div>

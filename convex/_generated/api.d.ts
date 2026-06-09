@@ -13,6 +13,7 @@ import type * as connections from "../connections.js";
 import type * as posts from "../posts.js";
 import type * as publishing from "../publishing.js";
 import type * as uploads from "../uploads.js";
+import type * as waitlist from "../waitlist.js";
 import type * as workspaces from "../workspaces.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   posts: typeof posts;
   publishing: typeof publishing;
   uploads: typeof uploads;
+  waitlist: typeof waitlist;
   workspaces: typeof workspaces;
 }>;
 

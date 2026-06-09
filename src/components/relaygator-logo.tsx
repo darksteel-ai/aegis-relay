@@ -14,20 +14,28 @@ export function RelaygatorLogo({
   textClassName = "",
 }: RelaygatorLogoProps) {
   return (
-    <span className="flex items-center gap-3">
-      <Image
-        alt=""
-        aria-hidden="true"
-        className={`${markClassName} shrink-0 rounded-md object-cover object-top`}
-        height={512}
-        src="/relaygator-mark.png"
-        width={512}
-      />
+    <span className="group flex items-center gap-3">
+      <span className="relative shrink-0">
+        <span
+          aria-hidden="true"
+          className="absolute -inset-1 rounded-xl bg-gradient-to-br from-[#8dff5a]/40 to-[#2bd6ff]/40 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100"
+        />
+        <Image
+          alt=""
+          aria-hidden="true"
+          className={`${markClassName} relative shrink-0 rounded-xl object-cover object-top ring-1 ring-white/10`}
+          height={512}
+          src="/relaygator-mark.png"
+          width={512}
+        />
+      </span>
       {!compact ? (
         <span className={textClassName}>
-          <span className="block text-sm font-semibold leading-none text-white">Relaygator</span>
+          <span className="block text-base font-bold leading-none tracking-tight text-white">
+            Relaygator
+          </span>
           {subtitle ? (
-            <span className="mt-1 block text-xs font-medium leading-none text-slate-500">
+            <span className="mt-1.5 block text-xs font-medium leading-none text-slate-500">
               {subtitle}
             </span>
           ) : null}

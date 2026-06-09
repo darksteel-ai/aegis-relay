@@ -28,7 +28,10 @@ export default async function MediaPage() {
       <div className="grid gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-4xl font-semibold tracking-normal text-white">Media library</h1>
+            <span className="eyebrow-chip">Library</span>
+            <h1 className="text-4xl font-bold tracking-tight text-white">
+              Media <span className="text-gradient-static">library</span>
+            </h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-400">
               Reuse uploaded short-form videos without sending the same file to storage again.
             </p>

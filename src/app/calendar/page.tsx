@@ -54,8 +54,9 @@ export default async function CalendarPage() {
       <div className="grid gap-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
-            <h1 className="text-4xl font-semibold tracking-normal text-white">
-              Scheduled posts
+            <span className="eyebrow-chip">Calendar</span>
+            <h1 className="text-4xl font-bold tracking-tight text-white">
+              Scheduled <span className="text-gradient-static">posts</span>
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-400">
               {workspace?.name

@@ -161,8 +161,9 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
     <AppShell>
       <div className="grid gap-6">
         <div className="space-y-3">
-          <h1 className="text-4xl font-semibold tracking-normal text-white">
-            Platform connections
+          <span className="eyebrow-chip">Connections</span>
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            Platform <span className="text-gradient-static">connections</span>
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-400">
             {workspace?.name

@@ -41,8 +41,9 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     <AppShell>
       <div className="max-w-4xl space-y-6">
         <div className="space-y-3">
-          <h1 className="text-4xl font-semibold tracking-normal text-white">
-            Subscription management
+          <span className="eyebrow-chip">Billing</span>
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            Subscription <span className="text-gradient-static">management</span>
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-400">
             Choose the plan that fits your publishing volume, or manage the

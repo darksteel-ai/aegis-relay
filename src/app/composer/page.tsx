@@ -36,14 +36,17 @@ export default async function ComposerPage({
     <AppShell>
       <div className="grid gap-6">
         <div className="space-y-3">
-          <h1 className="text-4xl font-semibold tracking-normal text-white">Create a scheduled post</h1>
+          <span className="eyebrow-chip">Composer</span>
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            Create a <span className="text-gradient-static">scheduled post</span>
+          </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-400">
             Upload one short-form video, choose the channels, and schedule it for
             the current workspace.
           </p>
         </div>
 
-        <section className="studio-panel max-w-5xl rounded-md p-5">
+        <section className="studio-panel max-w-5xl p-6">
           <ComposerForm
             connectedAccounts={connectedAccounts}
             initialMediaId={selectedMediaId}
