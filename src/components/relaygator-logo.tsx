@@ -31,7 +31,7 @@ export function RelaygatorLogo({
       </span>
       {!compact ? (
         <span className={textClassName}>
-          <span className="block text-base font-bold leading-none tracking-tight text-white">
+          <span className="block text-lg font-bold leading-none tracking-tight text-white">
             Relaygator
           </span>
           {subtitle ? (

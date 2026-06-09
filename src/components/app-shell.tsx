@@ -41,7 +41,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 flex-col border-r border-white/10 bg-[#05130f]/85 px-4 py-5 shadow-2xl shadow-black/50 backdrop-blur-2xl md:flex">
         <Link href="/dashboard" className="rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.04]">
-          <RelaygatorLogo subtitle="Publishing Studio" markClassName="h-10 w-10" />
+          <RelaygatorLogo subtitle="Publishing Studio" markClassName="h-12 w-12" />
         </Link>
 
         <nav className="mt-8 flex flex-col gap-1.5">
@@ -99,7 +99,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
       <div className="relative z-10 md:pl-72">
         <header className="flex h-16 items-center justify-between border-b border-white/10 bg-[#05130f]/85 px-4 backdrop-blur-2xl md:hidden">
           <Link href="/dashboard" className="text-base font-semibold">
-            <RelaygatorLogo markClassName="h-9 w-9" />
+            <RelaygatorLogo markClassName="h-10 w-10" />
           </Link>
           <UserButton />
         </header>

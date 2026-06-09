@@ -142,7 +142,7 @@ function HeroSection() {
       <header className="relative z-20">
         <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
           <Link href="/" className="text-sm font-semibold">
-            <RelaygatorLogo markClassName="h-10 w-10" />
+            <RelaygatorLogo markClassName="h-12 w-12" />
           </Link>
           <div className="flex items-center gap-5 text-sm font-medium text-slate-300 md:gap-7">
             <a href="#workflow" className="hidden transition-colors hover:text-white md:inline">
@@ -613,7 +613,7 @@ function SiteFooter() {
     <footer className="border-t border-white/10 bg-[#05140f]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-sm space-y-3">
-          <RelaygatorLogo markClassName="h-9 w-9" />
+          <RelaygatorLogo markClassName="h-10 w-10" />
           <p className="text-sm leading-6 text-slate-400">
             Secure short-form scheduling for creators, agencies, and customer
             workspaces.
