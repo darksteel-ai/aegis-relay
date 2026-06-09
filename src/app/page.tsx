@@ -144,22 +144,19 @@ function HeroSection() {
           <Link href="/" className="text-sm font-semibold">
             <RelaygatorLogo markClassName="h-10 w-10" />
           </Link>
-          <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
-            <a href="#workflow" className="transition-colors hover:text-white">
+          <div className="flex items-center gap-5 text-sm font-medium text-slate-300 md:gap-7">
+            <a href="#workflow" className="hidden transition-colors hover:text-white md:inline">
               Workflow
             </a>
-            <a href="#platforms" className="transition-colors hover:text-white">
+            <a href="#platforms" className="hidden transition-colors hover:text-white md:inline">
               Platforms
+            </a>
+            <a href="#niches" className="hidden transition-colors hover:text-white md:inline">
+              Niches
             </a>
             <a href="#pricing" className="transition-colors hover:text-white">
               Pricing
             </a>
-            <Link href="/privacy" className="transition-colors hover:text-white">
-              Privacy
-            </Link>
-            <Link href="/terms" className="transition-colors hover:text-white">
-              Terms
-            </Link>
           </div>
           <Link href="/sign-in" className="studio-button-primary !h-10">
             Start free
@@ -451,7 +448,7 @@ function PlatformRow({
 
 function NicheSection() {
   return (
-    <section className="border-b border-white/10 bg-[#03100f]">
+    <section id="niches" className="border-b border-white/10 bg-[#03100f]">
       <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-24">
         <div className="max-w-3xl">
           <span className="eyebrow-chip">Built for your niche</span>
@@ -622,7 +619,7 @@ function SiteFooter() {
             workspaces.
           </p>
         </div>
-        <div className="grid gap-8 text-sm sm:grid-cols-3">
+        <div className="grid gap-8 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
             <p className="font-bold text-white">Product</p>
             <a href="#workflow" className="block text-slate-400 transition-colors hover:text-white">
@@ -634,6 +631,18 @@ function SiteFooter() {
             <a href="#pricing" className="block text-slate-400 transition-colors hover:text-white">
               Pricing
             </a>
+          </div>
+          <div className="space-y-3">
+            <p className="font-bold text-white">Who it&apos;s for</p>
+            {niches.map((niche) => (
+              <Link
+                key={niche.slug}
+                href={`/for/${niche.slug}`}
+                className="block text-slate-400 transition-colors hover:text-white"
+              >
+                {niche.name}
+              </Link>
+            ))}
           </div>
           <div className="space-y-3">
             <p className="font-bold text-white">Legal</p>

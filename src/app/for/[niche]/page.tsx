@@ -55,15 +55,12 @@ export default async function NicheLandingPage({ params }: NichePageProps) {
             <Link href="/" className="text-sm font-semibold">
               <RelaygatorLogo markClassName="h-10 w-10" />
             </Link>
-            <div className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
+            <div className="flex items-center gap-5 text-sm font-medium text-slate-300 md:gap-7">
+              <Link href="/#workflow" className="hidden transition-colors hover:text-white md:inline">
+                How it works
+              </Link>
               <Link href="/#pricing" className="transition-colors hover:text-white">
                 Pricing
-              </Link>
-              <Link href="/privacy" className="transition-colors hover:text-white">
-                Privacy
-              </Link>
-              <Link href="/terms" className="transition-colors hover:text-white">
-                Terms
               </Link>
             </div>
             <Link href="/sign-in" className="studio-button-secondary !h-10">
@@ -181,20 +178,33 @@ export default async function NicheLandingPage({ params }: NichePageProps) {
       </section>
 
       <footer className="border-t border-white/10 bg-[#05140f]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <RelaygatorLogo markClassName="h-9 w-9" />
-          <div className="flex flex-wrap gap-6 text-sm text-slate-400">
-            {niches
-              .filter((other) => other.slug !== niche.slug)
-              .map((other) => (
-                <Link
-                  key={other.slug}
-                  href={`/for/${other.slug}`}
-                  className="transition-colors hover:text-white"
-                >
-                  For {other.name.toLowerCase()}
-                </Link>
-              ))}
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <RelaygatorLogo markClassName="h-9 w-9" />
+            <div className="flex flex-wrap gap-6 text-sm text-slate-400">
+              {niches
+                .filter((other) => other.slug !== niche.slug)
+                .map((other) => (
+                  <Link
+                    key={other.slug}
+                    href={`/for/${other.slug}`}
+                    className="transition-colors hover:text-white"
+                  >
+                    For {other.name.toLowerCase()}
+                  </Link>
+                ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-6 border-t border-white/10 pt-6 text-sm text-slate-500">
+            <Link href="/privacy" className="transition-colors hover:text-white">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-white">
+              Terms of Service
+            </Link>
+            <Link href="/support" className="transition-colors hover:text-white">
+              Support
+            </Link>
           </div>
         </div>
       </footer>

@@ -76,7 +76,7 @@ export function WaitlistForm({
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
           aria-label="Email address"
-          className="h-12 flex-1 rounded-md border border-white/15 bg-black/30 px-4 text-base text-white placeholder:text-slate-500 outline-none transition-colors focus:border-[#8dff5a]/50"
+          className="studio-input h-12 flex-1 px-4 text-base"
         />
         <input
           type="text"

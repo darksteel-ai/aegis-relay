@@ -115,7 +115,7 @@ body {
   .delay-500 { animation-delay: 0.5s; }
 
   .text-gradient {
-    background: linear-gradient(100deg, var(--brand-lime), var(--brand-cyan), var(--brand-violet), var(--brand-lime));
+    background: linear-gradient(100deg, var(--brand-lime), var(--brand-green), var(--brand-cyan), var(--brand-lime));
     background-size: 220% auto;
     -webkit-background-clip: text;
     background-clip: text;
@@ -293,6 +293,12 @@ body {
   .studio-button-secondary:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+  }
+
+  .studio-button-primary:focus-visible,
+  .studio-button-secondary:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   .eyebrow-chip {
