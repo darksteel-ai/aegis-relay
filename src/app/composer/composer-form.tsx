@@ -4,6 +4,7 @@ import { AlertCircle, Calendar, CalendarPlus, CheckCircle2, Sparkles } from "luc
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  composerPlatforms,
   PlatformSelector,
   type ComposerPlatform,
 } from "@/components/platform-selector";
@@ -69,7 +70,9 @@ export function ComposerForm({
   const [video, setVideo] = useState<UploadedVideo | null>(() =>
     initialMediaId ? mediaItemToUploadedVideo(mediaLibrary.find((item) => item.id === initialMediaId)) : null,
   );
-  const [platforms, setPlatforms] = useState<ComposerPlatform[]>(["YOUTUBE"]);
+  const [platforms, setPlatforms] = useState<ComposerPlatform[]>(() =>
+    getInitialPlatformSelection(connectedAccounts),
+  );
   const [accountIdsByPlatform, setAccountIdsByPlatform] = useState<
     Partial<Record<ComposerPlatform, string[]>>
   >(() => getInitialAccountSelections(connectedAccounts));
@@ -132,7 +135,9 @@ export function ComposerForm({
   });
   const canSubmit = !submitBlockedReason;
   const scheduleBlockedCopy =
-    submitState.type === "success" ? "Ready for the next post." : submitBlockedReason;
+    submitState.type === "success" && !submitBlockedReason
+      ? "Ready for the next post."
+      : submitBlockedReason;
 
   useEffect(() => {
     if (!isTikTokSelected || !selectedTikTokAccountId) {
@@ -209,7 +214,11 @@ export function ComposerForm({
           scheduledAt: scheduleDate.toISOString(),
           timezone,
           platforms,
-          accountIdsByPlatform,
+          accountIdsByPlatform: Object.fromEntries(
+            Object.entries(accountIdsByPlatform).filter(([platform]) =>
+              platforms.includes(platform as ComposerPlatform),
+            ),
+          ),
           platformCaptions,
           workflowStatus,
           tiktokSettings: isTikTokSelected
@@ -260,8 +269,6 @@ export function ComposerForm({
       setTikTokBrandOrganic(false);
       setTikTokMusicUsageConfirmed(false);
       setScheduledAt("");
-      setPlatforms(["YOUTUBE"]);
-      setAccountIdsByPlatform(getInitialAccountSelections(connectedAccounts));
       setVideo(null);
     } catch (error) {
       setSubmitState({
@@ -866,6 +873,14 @@ async function readErrorMessage(response: Response) {
 
 function getDefaultTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+function getInitialPlatformSelection(accounts: ComposerConnectedAccount[]): ComposerPlatform[] {
+  const connected = composerPlatforms
+    .map((platform) => platform.id)
+    .filter((id) => accounts.some((account) => account.platform === id));
+
+  return connected.length ? connected : ["YOUTUBE"];
 }
 
 function getInitialAccountSelections(accounts: ComposerConnectedAccount[]) {

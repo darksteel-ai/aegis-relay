@@ -184,7 +184,7 @@ export async function publishPlatformPost(
       data: {
         platformPostId: platformPost.id,
         status: PublishStatus.PUBLISHED,
-        message: "Published successfully.",
+        message: result.message ?? "Published successfully.",
       },
     });
 
@@ -283,10 +283,15 @@ async function publishPlatformPostFromConvex(
   }
 
   try {
-    await markConvexPublishAttempt(platformPost.id, PublishStatus.PUBLISHED, "Published successfully.", {
-      platformPostId: result.platformPostId,
-      platformPostUrl: result.url,
-    });
+    await markConvexPublishAttempt(
+      platformPost.id,
+      PublishStatus.PUBLISHED,
+      result.message ?? "Published successfully.",
+      {
+        platformPostId: result.platformPostId,
+        platformPostUrl: result.url,
+      },
+    );
     return { status: PublishStatus.PUBLISHED };
   } catch (error) {
     const message =

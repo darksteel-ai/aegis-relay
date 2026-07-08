@@ -26,6 +26,7 @@ const platformPost = {
   privacy: "public",
   status: PublishStatus.SCHEDULED,
   platformPostId: null,
+  connectedAccountId: null as string | null,
   lastError: null,
   scheduledPost: {
     id: "scheduled_post_1",

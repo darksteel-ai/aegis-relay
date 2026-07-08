@@ -26,6 +26,7 @@ type FacebookTokenResponse = {
   access_token?: string;
   token_type?: string;
   expires_in?: number;
+  longLived?: boolean;
   error?: {
     message?: string;
     type?: string;
@@ -308,7 +309,9 @@ export async function completeFacebookOAuthCallback({
       externalId: page.pageId,
       accessToken: encryptConnectedAccountToken(page.accessToken, env),
       refreshToken: undefined,
-      expiresAt: token.expires_in ? Date.now() + token.expires_in * 1000 : null,
+      // Page tokens issued off a long-lived user token do not expire on their own.
+      expiresAt:
+        !token.longLived && token.expires_in ? Date.now() + token.expires_in * 1000 : null,
       scopes: facebookDefaultScope,
       status: PublishStatus.SCHEDULED,
     };
@@ -361,9 +364,50 @@ async function exchangeFacebookCodeForToken(
       type: token.error?.type,
       code: token.error?.code,
     });
+    return token;
   }
 
-  return token;
+  return exchangeFacebookLongLivedToken(token, credentials, logger);
+}
+
+// Page tokens fetched with a long-lived user token do not expire; with a short-lived
+// one they die within hours, which breaks every scheduled publish after connect.
+async function exchangeFacebookLongLivedToken(
+  token: FacebookTokenResponse,
+  credentials: FacebookOAuthCredentials,
+  logger: ConsoleLike = console,
+) {
+  if (!token.access_token || !credentials.clientId || !credentials.clientSecret) {
+    return token;
+  }
+
+  const url = new URL(`https://graph.facebook.com/${graphApiVersion}/oauth/access_token`);
+  url.searchParams.set("grant_type", "fb_exchange_token");
+  url.searchParams.set("client_id", credentials.clientId);
+  url.searchParams.set("client_secret", credentials.clientSecret);
+  url.searchParams.set("fb_exchange_token", token.access_token);
+
+  try {
+    const response = await fetch(url);
+    const longLivedToken = (await response.json()) as FacebookTokenResponse;
+
+    if (!longLivedToken.access_token) {
+      logger.error("Facebook long-lived token exchange failed.", {
+        status: response.status,
+        message: longLivedToken.error?.message,
+        type: longLivedToken.error?.type,
+        code: longLivedToken.error?.code,
+      });
+      return token;
+    }
+
+    return { ...longLivedToken, longLived: true };
+  } catch (error) {
+    logger.error("Facebook long-lived token exchange threw; keeping the short-lived token.", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return token;
+  }
 }
 
 async function fetchFacebookPagesForToken(accessToken: string) {

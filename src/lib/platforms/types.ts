@@ -28,6 +28,7 @@ export type PlatformPublishInput = {
 export type PlatformPublishResult = {
   platformPostId: string;
   url?: string;
+  message?: string;
 };
 
 export type PublishInput = PlatformPublishInput;

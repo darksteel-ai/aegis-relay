@@ -72,10 +72,24 @@ export function PlatformSelector({
 
     if (selected.includes(platform)) {
       onChange(selected.filter((item) => item !== platform));
+
+      // Keep account selections in sync with the platform checkbox so a
+      // deselected platform never holds hidden account picks.
+      if (onAccountChange && accountIdsByPlatform[platform]?.length) {
+        onAccountChange({ ...accountIdsByPlatform, [platform]: [] });
+      }
       return;
     }
 
     onChange([...selected, platform]);
+
+    if (onAccountChange && !accountIdsByPlatform[platform]?.length) {
+      const defaultAccount = accounts.find((account) => account.platform === platform);
+
+      if (defaultAccount) {
+        onAccountChange({ ...accountIdsByPlatform, [platform]: [defaultAccount.id] });
+      }
+    }
   }
 
   function toggleAccount(platform: ComposerPlatform, accountId: string) {

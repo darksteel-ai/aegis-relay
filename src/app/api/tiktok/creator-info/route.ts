@@ -4,8 +4,7 @@ import { getAuthSession } from "@/lib/auth";
 import { convexApi } from "@/lib/convex-api";
 import { getConvexClient } from "@/lib/convex-server";
 import { Platform } from "@/lib/domain";
-import { fetchTikTokCreatorInfo } from "@/lib/platforms/tiktok";
-import { decryptConnectedAccountToken } from "@/lib/platforms/token-crypto";
+import { fetchTikTokCreatorInfo, resolveTikTokAccessToken } from "@/lib/platforms/tiktok";
 
 export const runtime = "nodejs";
 
@@ -34,9 +33,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const creatorInfo = await fetchTikTokCreatorInfo(
-      decryptConnectedAccountToken(account.accessToken),
-    );
+    const accessToken = await resolveTikTokAccessToken({
+      id: account.id,
+      accessToken: account.accessToken,
+      refreshToken: account.refreshToken,
+      expiresAt: account.expiresAt ? new Date(account.expiresAt) : null,
+    });
+    const creatorInfo = await fetchTikTokCreatorInfo(accessToken);
 
     return NextResponse.json({
       accountName: account.accountName,

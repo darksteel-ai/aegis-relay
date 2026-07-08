@@ -139,6 +139,7 @@ export const updateTokens = mutation({
     accessToken: v.optional(v.string()),
     refreshToken: v.optional(v.string()),
     expiresAt: v.optional(v.number()),
+    scopes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db.get(args.id);
@@ -149,6 +150,7 @@ export const updateTokens = mutation({
       accessToken?: string;
       refreshToken?: string;
       expiresAt?: number;
+      scopes?: string;
       updatedAt: number;
     } = { updatedAt: Date.now() };
     if (args.accessToken) {
@@ -159,6 +161,9 @@ export const updateTokens = mutation({
     }
     if (args.expiresAt !== undefined) {
       patch.expiresAt = args.expiresAt;
+    }
+    if (args.scopes) {
+      patch.scopes = args.scopes;
     }
     await ctx.db.patch(args.id, {
       ...patch,
