@@ -52,6 +52,78 @@ const tiktokDefaultScope = tiktokOAuthScopes.join(",");
 export const tiktokOAuthStateCookieName = "tiktok_oauth_state";
 const tiktokOAuthStateTtlMs = 10 * 60 * 1000;
 
+// Neutral callback path: TikTok Login Kit historically rejected redirect URIs
+// whose path contained "tiktok". Keep /api/auth/tiktok/callback as an alias.
+export const TIKTOK_OAUTH_CALLBACK_PATH = "/api/auth/relay/callback";
+export const PRODUCTION_TIKTOK_REDIRECT_URI = `https://www.relaygator.com${TIKTOK_OAUTH_CALLBACK_PATH}`;
+const relaygatorHosts = new Set(["www.relaygator.com", "relaygator.com"]);
+
+export function normalizeTikTokRedirectUri(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    url.hash = "";
+    url.search = "";
+    url.pathname = url.pathname.replace(/\/+$/, "") || "/";
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+export function resolveTikTokRedirectUri(source: EnvSource = process.env) {
+  const configured = normalizeTikTokRedirectUri(source.TIKTOK_REDIRECT_URI);
+  const appOrigin = originOf(source.NEXTAUTH_URL);
+
+  if (configured && isRelaygatorHost(configured)) {
+    return PRODUCTION_TIKTOK_REDIRECT_URI;
+  }
+
+  if (appOrigin && isRelaygatorHost(appOrigin)) {
+    return PRODUCTION_TIKTOK_REDIRECT_URI;
+  }
+
+  if (configured) {
+    return configured;
+  }
+
+  if (appOrigin) {
+    return `${appOrigin}${TIKTOK_OAUTH_CALLBACK_PATH}`;
+  }
+
+  return PRODUCTION_TIKTOK_REDIRECT_URI;
+}
+
+function originOf(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(value.trim());
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function isRelaygatorHost(value: string) {
+  try {
+    return relaygatorHosts.has(new URL(value).host);
+  } catch {
+    return false;
+  }
+}
+
 export function buildTikTokOAuthStartUrl(
   source: EnvSource = process.env,
   options: { state?: string } = {},
@@ -71,11 +143,9 @@ export function buildTikTokOAuthStartUrl(
     throw error;
   }
 
-  if (
-    !tiktokEnv.TIKTOK_CLIENT_KEY ||
-    !tiktokEnv.TIKTOK_CLIENT_SECRET ||
-    !tiktokEnv.TIKTOK_REDIRECT_URI
-  ) {
+  const redirectUri = resolveTikTokRedirectUri(source);
+
+  if (!tiktokEnv.TIKTOK_CLIENT_KEY || !tiktokEnv.TIKTOK_CLIENT_SECRET) {
     return {
       success: false,
       reason: "config-error",
@@ -86,7 +156,7 @@ export function buildTikTokOAuthStartUrl(
   url.searchParams.set("client_key", tiktokEnv.TIKTOK_CLIENT_KEY);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", tiktokDefaultScope);
-  url.searchParams.set("redirect_uri", tiktokEnv.TIKTOK_REDIRECT_URI);
+  url.searchParams.set("redirect_uri", redirectUri);
 
   if (options.state) {
     url.searchParams.set("state", options.state);
@@ -280,11 +350,7 @@ export async function completeTikTokOAuthCallback({
 async function exchangeTikTokCodeForTokens(code: string, env: EnvSource) {
   const tiktokEnv = getTikTokEnv(env);
 
-  if (
-    !tiktokEnv.TIKTOK_CLIENT_KEY ||
-    !tiktokEnv.TIKTOK_CLIENT_SECRET ||
-    !tiktokEnv.TIKTOK_REDIRECT_URI
-  ) {
+  if (!tiktokEnv.TIKTOK_CLIENT_KEY || !tiktokEnv.TIKTOK_CLIENT_SECRET) {
     throw new Error("TikTok OAuth is not configured.");
   }
 
@@ -293,7 +359,7 @@ async function exchangeTikTokCodeForTokens(code: string, env: EnvSource) {
     client_secret: tiktokEnv.TIKTOK_CLIENT_SECRET,
     code,
     grant_type: "authorization_code",
-    redirect_uri: tiktokEnv.TIKTOK_REDIRECT_URI,
+    redirect_uri: resolveTikTokRedirectUri(env),
   });
   const response = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
     method: "POST",

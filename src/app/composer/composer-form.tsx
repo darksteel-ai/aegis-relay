@@ -9,6 +9,16 @@ import {
   type ComposerPlatform,
 } from "@/components/platform-selector";
 import { VideoUpload, type UploadedVideo } from "@/components/video-upload";
+import {
+  TIKTOK_BRANDED_PRIVATE_HINT,
+  TIKTOK_COMMERCIAL_SELECTION_HINT,
+  TIKTOK_PROCESSING_NOTICE,
+  formatTikTokPrivacy,
+  getTikTokCommercialLabel,
+  getTikTokComposerBlockReason,
+  getTikTokConsentText,
+  getTikTokPrivacyOptions,
+} from "@/lib/platforms/tiktok-ux";
 
 type SubmitState =
   | { type: "idle" }
@@ -50,12 +60,17 @@ type ComposerMediaItem = {
 
 type TikTokCreatorInfo = {
   accountName: string;
+  creatorNickname?: string;
+  creatorUsername?: string | null;
+  creatorAvatarUrl?: string | null;
   externalId: string;
   privacyLevelOptions: string[];
   commentDisabled: boolean;
   duetDisabled: boolean;
   stitchDisabled: boolean;
   maxVideoPostDurationSec: number | null;
+  canPost?: boolean;
+  cannotPostReason?: string;
 };
 
 export function ComposerForm({
@@ -120,19 +135,32 @@ export function ComposerForm({
       ? tiktokCreatorInfo
       : null;
   const hasRequiredMetadata = Boolean(video?.width && video.height && video.durationSeconds);
-  const submitBlockedReason = getSubmitBlockedReason({
-    video,
-    hasRequiredMetadata,
-    baseCaption,
-    scheduledAt,
-    timezone,
-    platforms,
-    tiktokPrivacyLevel,
-    tiktokCommercialContentEnabled,
-    tiktokMusicUsageConfirmed,
-    tiktokBrandContent,
-    tiktokBrandOrganic,
-  });
+  const tiktokComposerBlockReason = isTikTokSelected
+    ? getTikTokComposerBlockReason({
+        creatorInfoLoaded: Boolean(visibleTikTokCreatorInfo),
+        creatorInfoError:
+          tiktokCreatorInfoState.type === "error" ? tiktokCreatorInfoState.message : undefined,
+        canPost: visibleTikTokCreatorInfo?.canPost !== false,
+        cannotPostMessage: visibleTikTokCreatorInfo?.cannotPostReason,
+        privacyLevel: tiktokPrivacyLevel,
+        privacyLevelOptions: visibleTikTokCreatorInfo?.privacyLevelOptions ?? [],
+        commercialContentEnabled: tiktokCommercialContentEnabled,
+        brandContent: tiktokBrandContent,
+        brandOrganic: tiktokBrandOrganic,
+        musicUsageConfirmed: tiktokMusicUsageConfirmed,
+        videoDurationSeconds: video?.durationSeconds,
+        maxVideoPostDurationSec: visibleTikTokCreatorInfo?.maxVideoPostDurationSec,
+      })
+    : "";
+  const submitBlockedReason =
+    getSubmitBlockedReason({
+      video,
+      hasRequiredMetadata,
+      baseCaption,
+      scheduledAt,
+      timezone,
+      platforms,
+    }) || tiktokComposerBlockReason;
   const canSubmit = !submitBlockedReason;
   const scheduleBlockedCopy =
     submitState.type === "success" && !submitBlockedReason
@@ -339,12 +367,33 @@ export function ComposerForm({
   }
 
   function updateTikTokPrivacyLevel(nextPrivacyLevel: string) {
+    if (tiktokBrandContent && nextPrivacyLevel === "SELF_ONLY") {
+      return;
+    }
+
     setTikTokPrivacyLevel(nextPrivacyLevel);
 
     if (nextPrivacyLevel === "SELF_ONLY") {
       setTikTokBrandContent(false);
     }
   }
+
+  const tiktokConsentText = getTikTokConsentText(tiktokCommercialContentEnabled && tiktokBrandContent);
+  const tiktokCommercialLabel = getTikTokCommercialLabel({
+    brandOrganic: tiktokBrandOrganic,
+    brandContent: tiktokBrandContent,
+  });
+  const tiktokPrivacyOptions = getTikTokPrivacyOptions(visibleTikTokCreatorInfo?.privacyLevelOptions);
+  const tiktokNickname =
+    visibleTikTokCreatorInfo?.creatorNickname ??
+    visibleTikTokCreatorInfo?.accountName ??
+    selectedTikTokAccount?.accountName ??
+    "No TikTok account selected";
+  const submitButtonTitle = !canSubmit
+    ? tiktokComposerBlockReason === TIKTOK_COMMERCIAL_SELECTION_HINT
+      ? TIKTOK_COMMERCIAL_SELECTION_HINT
+      : scheduleBlockedCopy
+    : undefined;
 
   function updateTikTokCommercialContentEnabled(enabled: boolean) {
     setTikTokCommercialContentEnabled(enabled);
@@ -597,9 +646,22 @@ export function ComposerForm({
                 sent to TikTok.
               </p>
             </div>
-            <span className="w-fit rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
-              {selectedTikTokAccount?.accountName ?? "No TikTok account selected"}
-            </span>
+            <div className="flex w-fit items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1">
+              {visibleTikTokCreatorInfo?.creatorAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt=""
+                  className="h-5 w-5 rounded-full object-cover"
+                  src={visibleTikTokCreatorInfo.creatorAvatarUrl}
+                />
+              ) : null}
+              <span className="text-xs font-semibold text-cyan-100">
+                {tiktokNickname}
+                {visibleTikTokCreatorInfo?.creatorUsername
+                  ? ` (@${visibleTikTokCreatorInfo.creatorUsername})`
+                  : ""}
+              </span>
+            </div>
           </div>
 
           {tiktokCreatorInfoState.type !== "idle" ? (
@@ -623,23 +685,29 @@ export function ComposerForm({
           <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
             <div className="grid gap-3 rounded-md border border-white/10 bg-black/25 p-4">
               <p className="text-sm font-semibold text-white">Preview</p>
-              <div className="grid aspect-[9/16] max-h-80 place-items-center rounded-md border border-white/10 bg-black/35 px-4 text-center">
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    {video?.fileName ?? "Upload a vertical video"}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-slate-400">
-                    {video?.width && video.height && video.durationSeconds
-                      ? `${video.width}x${video.height} - ${Math.round(video.durationSeconds)} seconds`
-                      : "TikTok preview appears after upload metadata is read."}
-                  </p>
-                </div>
+              <div className="grid aspect-[9/16] max-h-80 place-items-center overflow-hidden rounded-md border border-white/10 bg-black/35">
+                {video?.previewUrl ? (
+                  <video
+                    className="h-full w-full object-contain"
+                    controls
+                    muted
+                    playsInline
+                    src={video.previewUrl}
+                  />
+                ) : (
+                  <div className="px-4 text-center">
+                    <p className="text-sm font-semibold text-white">
+                      {video?.fileName ?? "Upload a vertical video"}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                      {video?.width && video.height && video.durationSeconds
+                        ? `${video.width}x${video.height} - ${Math.round(video.durationSeconds)} seconds`
+                        : "TikTok preview appears after the video is uploaded."}
+                    </p>
+                  </div>
+                )}
               </div>
-              <p className="text-xs leading-5 text-slate-500">
-                After scheduling, Relaygator sends this video to TikTok for processing. TikTok may
-                take time to finish publishing and may reject, mute, or remove content that
-                violates its posting, music, or branded-content rules.
-              </p>
+              <p className="text-xs leading-5 text-slate-500">{TIKTOK_PROCESSING_NOTICE}</p>
             </div>
 
             <div className="grid gap-4">
@@ -660,16 +728,28 @@ export function ComposerForm({
                 TikTok privacy
                 <select
                   className="studio-input h-10 px-3 text-sm font-normal disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !tiktokPrivacyOptions.length}
                   id="tiktokPrivacy"
                   required
                   value={tiktokPrivacyLevel}
                   onChange={(event) => updateTikTokPrivacyLevel(event.target.value)}
                 >
                   <option value="">Choose privacy before posting</option>
-                  {getTikTokPrivacyOptions(visibleTikTokCreatorInfo).map((option) => (
-                    <option key={option} value={option}>
+                  {tiktokPrivacyOptions.map((option) => (
+                    <option
+                      disabled={tiktokBrandContent && option === "SELF_ONLY"}
+                      key={option}
+                      title={
+                        tiktokBrandContent && option === "SELF_ONLY"
+                          ? TIKTOK_BRANDED_PRIVATE_HINT
+                          : undefined
+                      }
+                      value={option}
+                    >
                       {formatTikTokPrivacy(option)}
+                      {tiktokBrandContent && option === "SELF_ONLY"
+                        ? ` — ${TIKTOK_BRANDED_PRIVATE_HINT}`
+                        : ""}
                     </option>
                   ))}
                 </select>
@@ -727,14 +807,23 @@ export function ComposerForm({
                       checked={tiktokBrandContent}
                       disabled={isSubmitting || tiktokPrivacyLevel === "SELF_ONLY"}
                       label="Branded Content: this video includes paid partnership or third-party brand content"
+                      title={
+                        tiktokPrivacyLevel === "SELF_ONLY" ? TIKTOK_BRANDED_PRIVATE_HINT : undefined
+                      }
                       onChange={setTikTokBrandContent}
                     />
                     {tiktokPrivacyLevel === "SELF_ONLY" ? (
                       <p className="text-xs leading-5 text-amber-200">
-                        Branded Content is unavailable for Only me privacy. Choose a public
-                        TikTok privacy option if this is a paid partnership.
+                        {TIKTOK_BRANDED_PRIVATE_HINT}
                       </p>
                     ) : null}
+                    {tiktokCommercialLabel ? (
+                      <p className="text-xs leading-5 text-cyan-100">{tiktokCommercialLabel}</p>
+                    ) : (
+                      <p className="text-xs leading-5 text-amber-200">
+                        {TIKTOK_COMMERCIAL_SELECTION_HINT}
+                      </p>
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -743,7 +832,7 @@ export function ComposerForm({
                 <TikTokCheckbox
                   checked={tiktokMusicUsageConfirmed}
                   disabled={isSubmitting}
-                  label="By posting, I agree to TikTok's Music Usage Confirmation and confirm this video uses music, sounds, and creative assets that I own or have permission to use on TikTok."
+                  label={tiktokConsentText}
                   onChange={setTikTokMusicUsageConfirmed}
                 />
               </div>
@@ -844,7 +933,7 @@ export function ComposerForm({
         className="studio-button-primary w-fit disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!canSubmit || isSubmitting}
         type="submit"
-        title={!canSubmit ? scheduleBlockedCopy : undefined}
+        title={submitButtonTitle}
       >
         <CalendarPlus className="h-4 w-4" aria-hidden="true" />
         {isSubmitting
@@ -916,51 +1005,34 @@ function TikTokCheckbox({
   checked,
   disabled,
   label,
+  title,
   onChange,
 }: {
   checked: boolean;
   disabled?: boolean;
   label: string;
+  title?: string;
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-start gap-3 text-sm leading-6 text-slate-300">
+    <label
+      className={
+        disabled
+          ? "flex items-start gap-3 text-sm leading-6 text-slate-500"
+          : "flex items-start gap-3 text-sm leading-6 text-slate-300"
+      }
+      title={title}
+    >
       <input
-        className="mt-1 h-4 w-4 accent-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-1 h-4 w-4 accent-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
         checked={checked}
         disabled={disabled}
         type="checkbox"
         onChange={(event) => onChange(event.target.checked)}
       />
-      <span>{label}</span>
+      <span className={disabled ? "opacity-50" : undefined}>{label}</span>
     </label>
   );
-}
-
-function getTikTokPrivacyOptions(creatorInfo: TikTokCreatorInfo | null) {
-  const options = creatorInfo?.privacyLevelOptions?.filter(Boolean);
-
-  if (options?.length) {
-    return options;
-  }
-
-  return [
-    "SELF_ONLY",
-    "MUTUAL_FOLLOW_FRIENDS",
-    "FOLLOWER_OF_CREATOR",
-    "PUBLIC_TO_EVERYONE",
-  ];
-}
-
-function formatTikTokPrivacy(option: string) {
-  const labels: Record<string, string> = {
-    SELF_ONLY: "Only me",
-    MUTUAL_FOLLOW_FRIENDS: "Friends",
-    FOLLOWER_OF_CREATOR: "Followers",
-    PUBLIC_TO_EVERYONE: "Everyone",
-  };
-
-  return labels[option] ?? option;
 }
 
 function formatComposerPlatform(platform: ComposerPlatform) {
@@ -982,11 +1054,6 @@ function getSubmitBlockedReason({
   scheduledAt,
   timezone,
   platforms,
-  tiktokPrivacyLevel,
-  tiktokCommercialContentEnabled,
-  tiktokMusicUsageConfirmed,
-  tiktokBrandContent,
-  tiktokBrandOrganic,
 }: {
   video: UploadedVideo | null;
   hasRequiredMetadata: boolean;
@@ -994,11 +1061,6 @@ function getSubmitBlockedReason({
   scheduledAt: string;
   timezone: string;
   platforms: ComposerPlatform[];
-  tiktokPrivacyLevel: string;
-  tiktokCommercialContentEnabled: boolean;
-  tiktokMusicUsageConfirmed: boolean;
-  tiktokBrandContent: boolean;
-  tiktokBrandOrganic: boolean;
 }) {
   if (!video) {
     return "Upload a video before scheduling.";
@@ -1014,31 +1076,6 @@ function getSubmitBlockedReason({
 
   if (!platforms.length) {
     return "Select at least one platform.";
-  }
-
-  if (platforms.includes("TIKTOK") && !tiktokPrivacyLevel) {
-    return "Choose TikTok privacy before scheduling.";
-  }
-
-  if (
-    platforms.includes("TIKTOK") &&
-    tiktokCommercialContentEnabled &&
-    !tiktokBrandContent &&
-    !tiktokBrandOrganic
-  ) {
-    return "Choose Your Brand, Branded Content, or turn off TikTok commercial disclosure.";
-  }
-
-  if (
-    platforms.includes("TIKTOK") &&
-    tiktokPrivacyLevel === "SELF_ONLY" &&
-    tiktokBrandContent
-  ) {
-    return "Choose a public TikTok privacy option before using Branded Content disclosure.";
-  }
-
-  if (platforms.includes("TIKTOK") && !tiktokMusicUsageConfirmed) {
-    return "Confirm TikTok music usage rights before scheduling.";
   }
 
   if (!scheduledAt) {

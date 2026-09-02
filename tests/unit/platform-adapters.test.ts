@@ -256,7 +256,8 @@ describe("platform adapters", () => {
 
     const result = await adapter.publish(tiktokPublishInput);
 
-    expect(result).toEqual({ platformPostId: "v_pub_file~demo", message: undefined });
+    expect(result.platformPostId).toBe("v_pub_file~demo");
+    expect(result.message).toContain("few minutes");
     expect(fetchFn).toHaveBeenNthCalledWith(
       1,
       "https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
@@ -299,6 +300,45 @@ describe("platform adapters", () => {
     );
   });
 
+  test("TikTok adapter stops when the creator cannot post", async () => {
+    const fetchFn = vi.fn().mockResolvedValueOnce({
+      json: vi.fn(async () => ({
+        error: {
+          code: "spam_risk_too_many_posts",
+          message: "The daily post cap from the API is reached for the current user.",
+        },
+      })),
+    });
+    const adapter = createTikTokAdapter({ fetchFn });
+
+    await expect(adapter.publish(tiktokPublishInput)).rejects.toThrow(
+      "This TikTok account cannot make more posts right now. Try again later.",
+    );
+  });
+
+  test("TikTok adapter rejects videos longer than max_video_post_duration_sec", async () => {
+    const fetchFn = vi.fn().mockResolvedValueOnce({
+      json: vi.fn(async () => ({
+        data: {
+          privacy_level_options: ["SELF_ONLY"],
+          max_video_post_duration_sec: 15,
+        },
+        error: { code: "ok", message: "" },
+      })),
+    });
+    const adapter = createTikTokAdapter({ fetchFn });
+
+    await expect(
+      adapter.publish({
+        ...tiktokPublishInput,
+        video: {
+          ...tiktokPublishInput.video,
+          durationSeconds: 30,
+        },
+      }),
+    ).rejects.toThrow("15-second limit");
+  });
+
   test("TikTok adapter surfaces missing publish scope errors", async () => {
     const fetchFn = vi.fn().mockResolvedValueOnce({
       json: vi.fn(async () => ({
@@ -313,7 +353,7 @@ describe("platform adapters", () => {
     await expect(adapter.publish(tiktokPublishInput)).rejects.toThrow("video.publish scope");
   });
 
-  test("TikTok adapter defaults public requests to private while direct post audit is pending", async () => {
+  test("TikTok adapter honors an explicit creator privacy choice", async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValueOnce({
@@ -349,6 +389,54 @@ describe("platform adapters", () => {
       platformPost: {
         ...tiktokPublishInput.platformPost,
         privacy: "PUBLIC_TO_EVERYONE",
+      },
+    });
+
+    expect(fetchFn).toHaveBeenNthCalledWith(
+      2,
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.stringContaining('"privacy_level":"PUBLIC_TO_EVERYONE"'),
+      }),
+    );
+  });
+
+  test("TikTok adapter maps generic public privacy to private while Direct Post is unaudited", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({
+          data: {
+            privacy_level_options: ["PUBLIC_TO_EVERYONE", "SELF_ONLY"],
+          },
+          error: { code: "ok", message: "" },
+        })),
+      })
+      .mockResolvedValueOnce({
+        json: vi.fn(async () => ({
+          data: {
+            publish_id: "v_pub_file~private",
+            upload_url: "https://open-upload.tiktokapis.com/video/upload",
+          },
+          error: { code: "ok", message: "" },
+        })),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+      });
+    const stream = new PassThrough();
+    stream.end("hello world");
+    const adapter = createTikTokAdapter({
+      fetchFn,
+      getVideoReadStream: vi.fn(async () => stream),
+    });
+
+    await adapter.publish({
+      ...tiktokPublishInput,
+      platformPost: {
+        ...tiktokPublishInput.platformPost,
+        privacy: "public",
       },
     });
 

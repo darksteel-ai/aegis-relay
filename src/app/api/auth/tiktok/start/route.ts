@@ -7,6 +7,7 @@ import {
   buildTikTokOAuthStartUrl,
   createTikTokOAuthNonce,
   createTikTokOAuthState,
+  resolveTikTokRedirectUri,
   tiktokOAuthStateCookieName,
 } from "@/lib/platforms/tiktok-oauth";
 
@@ -60,6 +61,8 @@ export async function GET(request: Request) {
       { status: 503 },
     );
   }
+
+  console.info("Starting TikTok OAuth with redirect_uri", resolveTikTokRedirectUri(process.env));
 
   const response = NextResponse.redirect(oauthUrl.url);
   response.cookies.set(tiktokOAuthStateCookieName, nonce, {

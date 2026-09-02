@@ -109,6 +109,9 @@ const connectionMessages: Record<string, string> = {
   "missing-code": "The platform did not return a connection code. Please try again.",
   "invalid-state": "The connection session expired. Please try again.",
   "missing-state": "The connection session expired. Please try again.",
+  "storage-not-configured": "Account storage is not configured yet.",
+  "workspace-unavailable": "The workspace could not be loaded. Try again.",
+  "no-workspace": "Create or open a workspace before connecting TikTok.",
 };
 
 const accountMessages: Record<string, string> = {
@@ -218,6 +221,19 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
             role="status"
           >
             LinkedIn: {params.linkedin_message ?? connectionMessages[params.linkedin]}
+          </div>
+        ) : null}
+
+        {params?.tiktok && connectionMessages[params.tiktok] ? (
+          <div
+            className={
+              params.tiktok === "connected"
+                ? "rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+                : "rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+            }
+            role="status"
+          >
+            TikTok: {connectionMessages[params.tiktok]}
           </div>
         ) : null}
 
