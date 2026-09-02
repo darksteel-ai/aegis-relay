@@ -269,6 +269,28 @@ describe("scheduled post creation rules", () => {
     ]);
   });
 
+  test("rejects branded content with Only me privacy", () => {
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      tiktokSettings: {
+        ...validPayload.tiktokSettings,
+        privacyLevel: "SELF_ONLY",
+        brandContent: true,
+      },
+    }, {
+      workspaceId: "workspace_123",
+      userId: "user_123",
+      now: new Date("2026-05-12T12:00:00.000Z"),
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+
+    expect(result.errors).toContain("Branded content cannot use Only me privacy.");
+  });
+
   test("requires TikTok privacy and music usage confirmation", () => {
     const result = parseCreateScheduledPostInput({
       ...validPayload,

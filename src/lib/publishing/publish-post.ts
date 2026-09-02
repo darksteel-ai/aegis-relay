@@ -32,6 +32,7 @@ type LoadedPlatformPost = {
       storageKey: string;
       mimeType: string;
       sizeBytes?: number | null;
+      durationSeconds?: number | null;
     };
     workspace: {
       connectedAccounts: Array<{
@@ -162,6 +163,7 @@ export async function publishPlatformPost(
         storageKey: platformPost.scheduledPost.video.storageKey,
         mimeType: platformPost.scheduledPost.video.mimeType,
         sizeBytes: platformPost.scheduledPost.video.sizeBytes,
+        durationSeconds: platformPost.scheduledPost.video.durationSeconds,
       },
     });
   } catch (error) {
@@ -274,6 +276,7 @@ async function publishPlatformPostFromConvex(
         storageKey: platformPost.scheduledPost.video.storageKey,
         mimeType: platformPost.scheduledPost.video.mimeType,
         sizeBytes: platformPost.scheduledPost.video.sizeBytes,
+        durationSeconds: platformPost.scheduledPost.video.durationSeconds,
       },
     });
   } catch (error) {
