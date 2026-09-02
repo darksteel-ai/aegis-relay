@@ -193,6 +193,10 @@ export function parseCreateScheduledPostInput(
       if (!tiktokSettings.musicUsageConfirmed) {
         errors.push("Confirm TikTok music usage rights before scheduling.");
       }
+
+      if (tiktokSettings.brandContent && tiktokSettings.privacyLevel === "SELF_ONLY") {
+        errors.push("Branded content cannot use Only me privacy.");
+      }
     }
   }
 

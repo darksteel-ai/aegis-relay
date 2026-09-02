@@ -22,6 +22,7 @@ export type PlatformPublishInput = {
     storageKey: string;
     mimeType: string;
     sizeBytes?: number | null;
+    durationSeconds?: number | null;
   };
 };
 

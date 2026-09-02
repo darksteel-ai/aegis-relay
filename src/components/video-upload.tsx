@@ -25,6 +25,7 @@ export type UploadedVideo = {
   width?: number;
   height?: number;
   durationSeconds?: number;
+  previewUrl?: string;
 };
 
 type VideoMetadata = {
@@ -50,6 +51,7 @@ export function VideoUpload({
 }: VideoUploadProps) {
   const inputId = useId();
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>();
   const [metadata, setMetadata] = useState<VideoMetadata>({});
   const [status, setStatus] = useState<"idle" | "reading" | "ready" | "uploading" | "uploaded">(
     "idle",
@@ -102,8 +104,6 @@ export function VideoUpload({
 
       setMetadata(nextMetadata);
       updateValidationState(file, nextMetadata);
-      URL.revokeObjectURL(objectUrl);
-      revoked = true;
     };
     video.onerror = () => {
       if (revoked) {
@@ -112,15 +112,12 @@ export function VideoUpload({
 
       setMetadata({});
       updateValidationState(file, {});
-      URL.revokeObjectURL(objectUrl);
-      revoked = true;
     };
     video.src = objectUrl;
 
     return () => {
-      if (!revoked) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      revoked = true;
+      URL.revokeObjectURL(objectUrl);
     };
   }, [file, updateValidationState]);
 
@@ -183,6 +180,7 @@ export function VideoUpload({
         fileName: file.name,
         contentType,
         sizeBytes: file.size,
+        previewUrl,
         ...metadata,
       });
     } catch (error) {
@@ -194,6 +192,13 @@ export function VideoUpload({
   function selectFile(nextFile: File | null) {
     setFile(nextFile);
     setMetadata({});
+    setPreviewUrl((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+
+      return nextFile ? URL.createObjectURL(nextFile) : undefined;
+    });
 
     if (!nextFile) {
       setStatus("idle");
