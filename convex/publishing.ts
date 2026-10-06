@@ -86,6 +86,7 @@ export const loadForPublish = query({
           storageKey: video.storageKey,
           mimeType: video.mimeType,
           sizeBytes: video.sizeBytes,
+          durationSeconds: video.durationSec ?? null,
         },
         workspace: {
           connectedAccounts: accounts.map((account) => ({

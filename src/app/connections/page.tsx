@@ -82,6 +82,7 @@ type ConnectedAccountView = {
   platform: string;
   status: string;
   accountName: string;
+  avatarUrl?: string | null;
   externalId: string;
   scopes?: string | null;
   hasRefreshToken?: boolean | null;
@@ -109,6 +110,9 @@ const connectionMessages: Record<string, string> = {
   "missing-code": "The platform did not return a connection code. Please try again.",
   "invalid-state": "The connection session expired. Please try again.",
   "missing-state": "The connection session expired. Please try again.",
+  "storage-not-configured": "Account storage is not configured yet.",
+  "workspace-unavailable": "The workspace could not be loaded. Try again.",
+  "no-workspace": "Create or open a workspace before connecting TikTok.",
 };
 
 const accountMessages: Record<string, string> = {
@@ -140,6 +144,7 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
       platform: string;
       status: string;
       accountName: string;
+      avatarUrl?: string | null;
       externalId: string;
       scopes?: string | null;
       hasRefreshToken?: boolean | null;
@@ -221,6 +226,19 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
           </div>
         ) : null}
 
+        {params?.tiktok && connectionMessages[params.tiktok] ? (
+          <div
+            className={
+              params.tiktok === "connected"
+                ? "rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
+                : "rounded-md border border-red-300/40 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+            }
+            role="status"
+          >
+            TikTok: {connectionMessages[params.tiktok]}
+          </div>
+        ) : null}
+
         {params?.connection && accountMessages[params.connection] ? (
           <div
             className="rounded-md border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100"
@@ -284,6 +302,14 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
                             >
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
+                                  {account.avatarUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      alt=""
+                                      className="h-8 w-8 rounded-full object-cover"
+                                      src={account.avatarUrl}
+                                    />
+                                  ) : null}
                                   <span className="font-medium text-white">{account.accountName}</span>
                                   <span className="text-xs text-slate-500">ID {account.externalId}</span>
                                   <span className="text-xs text-cyan-100">{health.label}</span>
@@ -291,6 +317,11 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
                                 <p className="mt-1 text-xs leading-5 text-slate-500">
                                   {health.message}
                                 </p>
+                                {account.platform === "TIKTOK" && account.scopes ? (
+                                  <p className="mt-1 text-xs leading-5 text-slate-300">
+                                    Granted TikTok permissions: {account.scopes}
+                                  </p>
+                                ) : null}
                               </div>
                               <form action={`/api/connections/${account.id}/disconnect`} method="post">
                                 <button

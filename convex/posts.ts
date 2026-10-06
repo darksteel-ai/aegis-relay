@@ -488,6 +488,33 @@ async function getPostById(ctx: any, postId: any) {
   }
   const video = await ctx.db.get(post.videoId);
   const platformPosts = await platformPostsFor(ctx, postId);
+  const platformPostViews = [];
+
+  for (const item of platformPosts) {
+    const latestAttempt = await ctx.db
+      .query("publishAttempts")
+      .withIndex("by_platform_post_created", (q: any) => q.eq("platformPostId", item._id))
+      .order("desc")
+      .first();
+
+    platformPostViews.push({
+      id: item._id,
+      platform: item.platform,
+      connectedAccountId: item.connectedAccountId ?? null,
+      title: item.title ?? null,
+      caption: item.caption,
+      privacy: item.privacy,
+      scheduledAt: item.scheduledAt,
+      status: item.status,
+      platformPostId: item.platformPostId ?? null,
+      platformPostUrl: item.platformPostUrl ?? null,
+      lastError: item.lastError ?? null,
+      statusMessage: latestAttempt?.message ?? null,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    });
+  }
+
   return {
     id: post._id,
     workspaceId: post.workspaceId,
@@ -507,20 +534,6 @@ async function getPostById(ctx: any, postId: any) {
       height: video.height ?? null,
       durationSec: video.durationSec ?? null,
     },
-    platformPosts: platformPosts.map((item: any) => ({
-      id: item._id,
-      platform: item.platform,
-      connectedAccountId: item.connectedAccountId ?? null,
-      title: item.title ?? null,
-      caption: item.caption,
-      privacy: item.privacy,
-      scheduledAt: item.scheduledAt,
-      status: item.status,
-      platformPostId: item.platformPostId ?? null,
-      platformPostUrl: item.platformPostUrl ?? null,
-      lastError: item.lastError ?? null,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-    })),
+    platformPosts: platformPostViews,
   };
 }

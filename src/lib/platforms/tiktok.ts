@@ -16,17 +16,34 @@ import {
   decryptConnectedAccountToken,
   encryptConnectedAccountToken,
 } from "@/lib/platforms/token-crypto";
+import {
+  getTikTokCreatorBlockMessage,
+  isTikTokCreatorBlockedFromPosting,
+} from "@/lib/platforms/tiktok-ux";
 import { getObjectReadStream } from "@/lib/storage";
 
 type EnvSource = Record<string, string | undefined>;
 
 type TikTokCreatorInfoResponse = {
   data?: {
+    creator_avatar_url?: string;
+    creator_username?: string;
+    creator_nickname?: string;
     privacy_level_options?: string[];
     comment_disabled?: boolean;
     duet_disabled?: boolean;
     stitch_disabled?: boolean;
     max_video_post_duration_sec?: number;
+  };
+  error?: TikTokApiError;
+};
+
+type TikTokPublishStatusResponse = {
+  data?: {
+    status?: string;
+    publicly_available_post_id?: string[];
+    uploaded_bytes?: number;
+    fail_reason?: string;
   };
   error?: TikTokApiError;
 };
@@ -114,13 +131,33 @@ async function publishTikTokVideo(
   }
 
   const creatorInfo = await fetchTikTokCreatorInfo(accessToken, deps.fetchFn);
+
+  if (isTikTokCreatorBlockedFromPosting(creatorInfo.error?.code)) {
+    throw new TikTokApiPublishError(
+      creatorInfo.error?.code,
+      getTikTokCreatorBlockMessage(creatorInfo.error?.code),
+    );
+  }
+
+  const maxDurationSec = creatorInfo.data?.max_video_post_duration_sec;
+  const videoDurationSec = input.video.durationSeconds;
+
+  if (
+    typeof maxDurationSec === "number" &&
+    typeof videoDurationSec === "number" &&
+    videoDurationSec > maxDurationSec
+  ) {
+    throw new Error(
+      `This video is longer than the ${maxDurationSec}-second limit TikTok returned for this account.`,
+    );
+  }
+
   const privacyLevel = normalizePrivacyLevel(
     getRequestedPrivacyLevel(input.platformPost.privacy, deps.env),
     creatorInfo.data?.privacy_level_options ?? [],
   );
 
   let initResponse: TikTokInitResponse;
-  let sentToInbox = false;
 
   try {
     initResponse = await initializeDirectPost({
@@ -132,19 +169,14 @@ async function publishTikTokVideo(
       creatorInfo,
     });
   } catch (error) {
-    if (!isUnauditedClientError(error)) {
-      throw error;
+    if (isUnauditedClientError(error)) {
+      throw new TikTokApiPublishError(
+        unauditedClientErrorCode,
+        "TikTok only allows Only me posts until this app passes the Content Posting audit. Choose Only me and post again.",
+      );
     }
 
-    // TikTok blocks direct posts from apps that have not passed the Content Posting
-    // API audit unless the account is private. The inbox flow has no such block:
-    // the video lands in the creator's TikTok inbox and they finish the post in-app.
-    initResponse = await initializeInboxUpload({
-      accessToken,
-      fetchFn: deps.fetchFn,
-      videoSize,
-    });
-    sentToInbox = true;
+    throw error;
   }
 
   const publishId = initResponse.data?.publish_id;
@@ -162,12 +194,11 @@ async function publishTikTokVideo(
     mimeType: input.video.mimeType,
   });
 
+  const publishStatus = await fetchTikTokPublishStatus(accessToken, publishId, deps.fetchFn);
+
   return {
     platformPostId: publishId,
-    message: sentToInbox
-      ? "Video sent to the TikTok inbox because this app has not passed TikTok's Content Posting audit yet. " +
-        "Open the TikTok app notification to review and finish posting."
-      : undefined,
+    message: publishStatus.message,
   };
 }
 
@@ -278,6 +309,10 @@ export async function fetchTikTokCreatorInfo(accessToken: string, fetchFn: typeo
   });
   const body = (await response.json()) as TikTokCreatorInfoResponse;
 
+  if (isTikTokCreatorBlockedFromPosting(body.error?.code)) {
+    return body;
+  }
+
   assertTikTokOk(body.error, "TikTok creator info request failed.");
   return body;
 }
@@ -350,37 +385,6 @@ async function initializeDirectPost({
   return body;
 }
 
-async function initializeInboxUpload({
-  accessToken,
-  fetchFn,
-  videoSize,
-}: {
-  accessToken: string;
-  fetchFn: typeof fetch;
-  videoSize: number;
-}) {
-  const { chunkSize, totalChunkCount } = planTikTokUpload(videoSize);
-  const response = await fetchFn(`${tiktokApiBaseUrl}/v2/post/publish/inbox/video/init/`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json; charset=UTF-8",
-    },
-    body: JSON.stringify({
-      source_info: {
-        source: "FILE_UPLOAD",
-        video_size: videoSize,
-        chunk_size: chunkSize,
-        total_chunk_count: totalChunkCount,
-      },
-    }),
-  });
-  const body = (await response.json()) as TikTokInitResponse;
-
-  assertTikTokOk(body.error, "TikTok inbox upload request failed.");
-  return body;
-}
-
 async function uploadVideoToTikTok({
   fetchFn,
   uploadUrl,
@@ -448,6 +452,15 @@ function mapPrivacyToTikTokLevel(privacy: string | null | undefined) {
 }
 
 function getRequestedPrivacyLevel(privacy: string | null | undefined, env: EnvSource) {
+  if (
+    privacy === "PUBLIC_TO_EVERYONE" ||
+    privacy === "MUTUAL_FOLLOW_FRIENDS" ||
+    privacy === "FOLLOWER_OF_CREATOR" ||
+    privacy === "SELF_ONLY"
+  ) {
+    return privacy;
+  }
+
   const configuredPrivacy = env.TIKTOK_DIRECT_POST_PRIVACY_LEVEL;
 
   if (configuredPrivacy) {
@@ -455,6 +468,58 @@ function getRequestedPrivacyLevel(privacy: string | null | undefined, env: EnvSo
   }
 
   return env.TIKTOK_ALLOW_PUBLIC_DIRECT_POSTS === "true" ? privacy : "private";
+}
+
+async function fetchTikTokPublishStatus(
+  accessToken: string,
+  publishId: string,
+  fetchFn: typeof fetch,
+) {
+  try {
+    const response = await fetchFn(`${tiktokApiBaseUrl}/v2/post/publish/status/fetch/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json; charset=UTF-8",
+      },
+      body: JSON.stringify({ publish_id: publishId }),
+    });
+    const body = (await response.json()) as TikTokPublishStatusResponse;
+    const status = body.data?.status;
+    const publicPostId = body.data?.publicly_available_post_id?.[0];
+
+    if (body.error && body.error.code && body.error.code !== "ok") {
+      return {
+        message:
+          "TikTok accepted the upload. It may take a few minutes for the content to process and be visible on the TikTok profile.",
+      };
+    }
+
+    if (status === "FAILED") {
+      throw new TikTokApiPublishError(
+        "publish_failed",
+        body.data?.fail_reason ?? "TikTok failed while processing this post.",
+      );
+    }
+
+    return {
+      message:
+        status === "PUBLISH_COMPLETE"
+          ? publicPostId
+            ? `Published to TikTok (${publicPostId}).`
+            : "Published to TikTok."
+          : "TikTok is still processing this post. It may take a few minutes to appear on the profile.",
+    };
+  } catch (error) {
+    if (error instanceof TikTokApiPublishError) {
+      throw error;
+    }
+
+    return {
+      message:
+        "TikTok accepted the upload. It may take a few minutes for the content to process and be visible on the TikTok profile.",
+    };
+  }
 }
 
 function normalizeCaption(caption: string) {
@@ -488,6 +553,10 @@ function isUnauditedClientError(error: unknown) {
 function assertTikTokOk(error: TikTokApiError | undefined, fallbackMessage: string) {
   if (!error || error.code === "ok") {
     return;
+  }
+
+  if (isTikTokCreatorBlockedFromPosting(error.code)) {
+    throw new TikTokApiPublishError(error.code, getTikTokCreatorBlockMessage(error.code));
   }
 
   const details = [error.message, error.code ? `Code: ${error.code}.` : null]

@@ -5,6 +5,7 @@ import { convexApi } from "@/lib/convex-api";
 import { getConvexClient } from "@/lib/convex-server";
 import { Platform } from "@/lib/domain";
 import { parseCreateScheduledPostInput } from "@/lib/posts/create";
+import { publishPlatformPost } from "@/lib/publishing/publish-post";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 export const runtime = "nodejs";
@@ -87,7 +88,32 @@ export async function POST(request: Request) {
     throw error;
   }
 
-  return NextResponse.json({ post }, { status: 201 });
+  if (!post || !input.publishNow || input.workflowStatus !== "APPROVED") {
+    return NextResponse.json({ post }, { status: 201 });
+  }
+
+  const publishResults = [];
+
+  for (const platformPost of post.platformPosts ?? []) {
+    try {
+      const result = await publishPlatformPost(platformPost.id);
+      publishResults.push({
+        id: platformPost.id,
+        platform: platformPost.platform,
+        status: result.status,
+        message: result.message,
+      });
+    } catch (error) {
+      publishResults.push({
+        id: platformPost.id,
+        platform: platformPost.platform,
+        status: "FAILED",
+        message: error instanceof Error ? error.message : "Publishing failed.",
+      });
+    }
+  }
+
+  return NextResponse.json({ post, publishResults }, { status: 201 });
 }
 
 function castConnectedAccountSelections(

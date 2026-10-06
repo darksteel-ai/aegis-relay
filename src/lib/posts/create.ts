@@ -70,6 +70,7 @@ const createScheduledPostPayloadSchema = z
         musicUsageConfirmed: z.boolean().optional(),
       })
       .optional(),
+    publishNow: z.boolean().optional(),
     video: z
       .object({
         existingVideoId: z.string().trim().min(1).optional(),
@@ -106,6 +107,7 @@ export type CreateScheduledPostInput = {
     brandOrganic: boolean;
     musicUsageConfirmed: boolean;
   };
+  publishNow?: boolean;
   video: {
     existingVideoId?: string;
     storageKey: string;
@@ -151,6 +153,7 @@ export function parseCreateScheduledPostInput(
   const platformCaptions = normalizePlatformCaptions(data.platformCaptions);
   const workflowStatus = data.workflowStatus ?? "APPROVED";
   const tiktokSettings = normalizeTikTokSettings(data.tiktokSettings);
+  const publishNow = data.publishNow === true;
 
   if (!baseCaption) {
     errors.push("Caption is required.");
@@ -170,10 +173,15 @@ export function parseCreateScheduledPostInput(
     errors.push(`Caption and hashtags must be ${MAX_BASE_CAPTION_LENGTH} characters or fewer.`);
   }
 
-  if (!data.scheduledAt || !scheduledAt) {
+  const now = options.now ?? new Date();
+  const effectiveScheduledAt = publishNow ? (scheduledAt && scheduledAt > now ? scheduledAt : now) : scheduledAt;
+
+  if (!publishNow && (!data.scheduledAt || !scheduledAt)) {
     errors.push("Schedule time must be a valid datetime.");
-  } else if (scheduledAt <= (options.now ?? new Date())) {
+  } else if (!publishNow && scheduledAt && scheduledAt <= now) {
     errors.push("Schedule time must be in the future.");
+  } else if (publishNow && data.scheduledAt && !scheduledAt) {
+    errors.push("Schedule time must be a valid datetime.");
   }
 
   if (!timezone) {
@@ -192,6 +200,10 @@ export function parseCreateScheduledPostInput(
 
       if (!tiktokSettings.musicUsageConfirmed) {
         errors.push("Confirm TikTok music usage rights before scheduling.");
+      }
+
+      if (tiktokSettings.brandContent && tiktokSettings.privacyLevel === "SELF_ONLY") {
+        errors.push("Branded content cannot use Only me privacy.");
       }
     }
   }
@@ -232,7 +244,7 @@ export function parseCreateScheduledPostInput(
     }
   }
 
-  if (errors.length > 0 || !scheduledAt || !data.video) {
+  if (errors.length > 0 || !effectiveScheduledAt || !data.video) {
     return { success: false, errors: uniqueMessages(errors) };
   }
 
@@ -242,7 +254,8 @@ export function parseCreateScheduledPostInput(
       baseCaption,
       youtubeTitle: youtubeTitle || undefined,
       hashtags,
-      scheduledAt,
+      scheduledAt: effectiveScheduledAt,
+      publishNow,
       timezone,
       platforms,
       accountIdsByPlatform,

@@ -8,10 +8,13 @@ export const metadata: Metadata = {
 
 export const reviewerDemoSteps = [
   "Sign in with the reviewer account or magic-link email provided for the beta review.",
+  "Open Connections and connect TikTok with a sandbox account. The consent screen should list user.info.basic and video.publish. After redirect, the TikTok row shows the display name, avatar, and granted permissions.",
+  "Open Composer, select TikTok, and confirm the creator nickname and avatar loaded from TikTok.",
+  "Then upload a short vertical video that meets the beta file rules and is within the duration TikTok returned for the account.",
+  "Enter a caption and TikTok title. Open the privacy dropdown and choose Only me. Leave comment, Duet, and Stitch off unless you turn one on. Leave commercial disclosure off, then check the music usage confirmation.",
+  "Choose Post to TikTok now and click Post to TikTok. Open the post detail page and confirm the publish status.",
   "Open Connections and connect a YouTube channel so the workspace has YouTube upload permission.",
-  "Open Composer and upload a short vertical video that meets the beta file rules.",
   "Enter a caption, select YouTube Shorts as the platform, choose a future schedule time, and create the scheduled post.",
-  "Open Calendar or Dashboard to find the scheduled post and then open the post detail page.",
   "Inspect each platform post status, any last error, the platform ID or URL when available, and the retry control for failed or blocked attempts.",
 ];
 
@@ -27,10 +30,9 @@ export default function ReviewerDemoPage() {
             Reviewer Demo
           </h1>
           <p className="text-base leading-7 text-neutral-600">
-            Follow these steps to review the beta scheduler without needing
-            private product context. TikTok and Instagram Reels are approval
-            pending in this beta; YouTube Shorts is the active connection and
-            publishing flow.
+            Follow these steps to review Relaygator with a TikTok sandbox account.
+            The TikTok path is Login Kit plus Content Posting API Direct Post.
+            YouTube Shorts can be reviewed in the same workspace.
           </p>
         </header>
 

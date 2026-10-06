@@ -269,6 +269,28 @@ describe("scheduled post creation rules", () => {
     ]);
   });
 
+  test("rejects branded content with Only me privacy", () => {
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      tiktokSettings: {
+        ...validPayload.tiktokSettings,
+        privacyLevel: "SELF_ONLY",
+        brandContent: true,
+      },
+    }, {
+      workspaceId: "workspace_123",
+      userId: "user_123",
+      now: new Date("2026-05-12T12:00:00.000Z"),
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+
+    expect(result.errors).toContain("Branded content cannot use Only me privacy.");
+  });
+
   test("requires TikTok privacy and music usage confirmation", () => {
     const result = parseCreateScheduledPostInput({
       ...validPayload,
@@ -392,5 +414,26 @@ describe("scheduled post creation rules", () => {
         "Timezone must be a valid IANA timezone.",
       ]),
     );
+  });
+
+  test("allows posting now without a future schedule time", () => {
+    const now = new Date("2026-05-12T12:00:00.000Z");
+    const result = parseCreateScheduledPostInput({
+      ...validPayload,
+      publishNow: true,
+      scheduledAt: "2026-05-12T11:59:59.000Z",
+    }, {
+      workspaceId: "workspace_123",
+      userId: "user_123",
+      now,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.publishNow).toBe(true);
+    expect(result.data.scheduledAt).toEqual(now);
   });
 });

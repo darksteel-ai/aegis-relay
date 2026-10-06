@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { LegalDocumentHeader } from "@/components/legal-document-header";
+
 export const metadata: Metadata = {
   title: "Terms of Service | Relaygator",
   description:
@@ -23,20 +25,11 @@ export default function TermsPage() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
-        <header className="space-y-3">
-          <Link href="/" className="text-sm font-medium text-neutral-500 hover:text-neutral-950">
-            Relaygator
-          </Link>
-          <h1 className="text-3xl font-semibold tracking-normal">
-            Relaygator Terms of Service
-          </h1>
-          <p className="text-base leading-7 text-neutral-600">
-            These Terms of Service explain the rules for using Relaygator, a
-            short-form video scheduling service for customer workspaces and
-            connected social platform accounts.
-          </p>
-          <p className="text-sm text-neutral-500">Last updated: May 13, 2026</p>
-        </header>
+        <LegalDocumentHeader
+          description="These Terms of Service explain the rules for using Relaygator, a short-form video scheduling service for customer workspaces and connected social platform accounts."
+          title="Relaygator Terms of Service"
+          updated="October 6, 2026"
+        />
 
         <section className="mt-8 rounded-md border border-neutral-200 bg-white p-6 shadow-sm">
           <h2 className="text-base font-semibold text-neutral-950">
@@ -62,10 +55,10 @@ export default function TermsPage() {
         <PolicySection title="Platform Dependencies">
           <p>
             Relaygator supports workflows for TikTok, YouTube Shorts, and
-            Instagram Reels. YouTube Shorts publishing is the first
-            auto-publishing path in the beta service. TikTok and Instagram Reels
-            publishing may be unavailable or limited until each platform approves
-            the Relaygator application and required permissions.
+            Instagram Reels. TikTok publishing uses Login Kit and Content Posting
+            API Direct Post. A post is sent only after you choose privacy,
+            interaction, and disclosure settings and click to post. Platform
+            approval can still limit which privacy levels TikTok accepts.
           </p>
         </PolicySection>
 
