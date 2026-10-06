@@ -11,6 +11,16 @@ export const TIKTOK_PAID_PARTNERSHIP_LABEL =
   "Your photo/video will be labeled as 'Paid partnership'";
 export const TIKTOK_PROCESSING_NOTICE =
   "After you finish publishing, it may take a few minutes for the content to process and be visible on your TikTok profile.";
+export const TIKTOK_MUSIC_USAGE_URL =
+  "https://www.tiktok.com/legal/page/global/music-usage-confirmation/en";
+export const TIKTOK_BRANDED_CONTENT_POLICY_URL =
+  "https://www.tiktok.com/legal/page/global/bc-policy/en";
+export const TIKTOK_YOUR_BRAND_OPTION =
+  "Your brand: You are promoting yourself or your own business. This content will be classified as Brand Organic.";
+export const TIKTOK_BRANDED_CONTENT_OPTION =
+  "Branded content: You are promoting another brand or a third party. This content will be classified as Branded Content.";
+export const TIKTOK_UNAUDITED_PRIVACY_NOTE =
+  "Until TikTok approves public Direct Post, only Only me will publish. Leave the privacy choice blank until you pick one. Public options stay listed for after approval.";
 
 export const tiktokCreatorCannotPostCodes = [
   "spam_risk_too_many_posts",

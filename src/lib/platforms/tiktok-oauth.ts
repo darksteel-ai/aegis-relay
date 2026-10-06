@@ -47,7 +47,7 @@ type TikTokUserInfoResponse = {
   };
 };
 
-const tiktokOAuthScopes = ["user.info.basic", "user.info.stats", "video.publish", "video.upload"] as const;
+export const tiktokOAuthScopes = ["user.info.basic", "video.publish"] as const;
 const tiktokDefaultScope = tiktokOAuthScopes.join(",");
 export const tiktokOAuthStateCookieName = "tiktok_oauth_state";
 const tiktokOAuthStateTtlMs = 10 * 60 * 1000;
@@ -331,6 +331,7 @@ export async function completeTikTokOAuthCallback({
     workspaceId: workspaceId as Id<"workspaces">,
     platform: Platform.TIKTOK,
     accountName: user?.display_name ?? "TikTok account",
+    avatarUrl: user?.avatar_url,
     externalId,
     accessToken: encryptConnectedAccountToken(tokens.access_token, env),
     refreshToken: tokens.refresh_token

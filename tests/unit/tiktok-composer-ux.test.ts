@@ -2,11 +2,13 @@ import { describe, expect, test } from "vitest";
 
 import {
   TIKTOK_BRANDED_CONTENT_CONSENT,
+  TIKTOK_BRANDED_CONTENT_OPTION,
   TIKTOK_BRANDED_PRIVATE_HINT,
   TIKTOK_COMMERCIAL_SELECTION_HINT,
   TIKTOK_MUSIC_USAGE_CONSENT,
   TIKTOK_PAID_PARTNERSHIP_LABEL,
   TIKTOK_YOUR_BRAND_LABEL,
+  TIKTOK_YOUR_BRAND_OPTION,
   getTikTokCommercialLabel,
   getTikTokComposerBlockReason,
   getTikTokConsentText,
@@ -38,6 +40,8 @@ describe("TikTok composer UX guidelines", () => {
     expect(TIKTOK_BRANDED_CONTENT_CONSENT).toBe(
       "By posting, you agree to TikTok's Branded Content Policy and Music Usage Confirmation",
     );
+    expect(TIKTOK_YOUR_BRAND_OPTION).toContain("Brand Organic");
+    expect(TIKTOK_BRANDED_CONTENT_OPTION).toContain("third party");
   });
 
   test("labels commercial disclosure with TikTok's required copy", () => {

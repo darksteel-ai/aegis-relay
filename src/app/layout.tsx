@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   title: "Relaygator",
   description:
     "Schedule one short-form video across TikTok, YouTube Shorts, and Instagram Reels.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/relaygator-icon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({

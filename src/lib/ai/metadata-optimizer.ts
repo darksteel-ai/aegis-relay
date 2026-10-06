@@ -179,7 +179,9 @@ export async function fetchTikTokPerformanceSignal({
       accountName,
       status: "limited",
       recentItems: [],
-      notes: ["Reconnect TikTok after video.list is approved to use recent TikTok video data."],
+      notes: [
+        "Recent TikTok videos are not requested. This connection uses Login Kit profile info and Direct Post only.",
+      ],
     };
   }
 
@@ -426,7 +428,7 @@ function getMetadataProvider(overrides: {
       model: process.env.OPENROUTER_METADATA_MODEL ?? "openai/gpt-4.1-mini",
       endpoint: "https://openrouter.ai/api/v1/chat/completions",
       headers: {
-        "HTTP-Referer": process.env.NEXTAUTH_URL ?? "https://www.aegisrelay.app",
+        "HTTP-Referer": process.env.NEXTAUTH_URL ?? "https://www.relaygator.com",
         "X-Title": "Relaygator",
       },
     };

@@ -158,7 +158,6 @@ async function publishTikTokVideo(
   );
 
   let initResponse: TikTokInitResponse;
-  let sentToInbox = false;
 
   try {
     initResponse = await initializeDirectPost({
@@ -170,19 +169,14 @@ async function publishTikTokVideo(
       creatorInfo,
     });
   } catch (error) {
-    if (!isUnauditedClientError(error)) {
-      throw error;
+    if (isUnauditedClientError(error)) {
+      throw new TikTokApiPublishError(
+        unauditedClientErrorCode,
+        "TikTok only allows Only me posts until this app passes the Content Posting audit. Choose Only me and post again.",
+      );
     }
 
-    // TikTok blocks direct posts from apps that have not passed the Content Posting
-    // API audit unless the account is private. The inbox flow has no such block:
-    // the video lands in the creator's TikTok inbox and they finish the post in-app.
-    initResponse = await initializeInboxUpload({
-      accessToken,
-      fetchFn: deps.fetchFn,
-      videoSize,
-    });
-    sentToInbox = true;
+    throw error;
   }
 
   const publishId = initResponse.data?.publish_id;
@@ -204,10 +198,7 @@ async function publishTikTokVideo(
 
   return {
     platformPostId: publishId,
-    message: sentToInbox
-      ? "Video sent to the TikTok inbox because this app has not passed TikTok's Content Posting audit yet. " +
-        "Open the TikTok app notification to review and finish posting."
-      : publishStatus.message,
+    message: publishStatus.message,
   };
 }
 
@@ -391,37 +382,6 @@ async function initializeDirectPost({
   const body = (await response.json()) as TikTokInitResponse;
 
   assertTikTokOk(body.error, "TikTok direct post request failed.");
-  return body;
-}
-
-async function initializeInboxUpload({
-  accessToken,
-  fetchFn,
-  videoSize,
-}: {
-  accessToken: string;
-  fetchFn: typeof fetch;
-  videoSize: number;
-}) {
-  const { chunkSize, totalChunkCount } = planTikTokUpload(videoSize);
-  const response = await fetchFn(`${tiktokApiBaseUrl}/v2/post/publish/inbox/video/init/`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json; charset=UTF-8",
-    },
-    body: JSON.stringify({
-      source_info: {
-        source: "FILE_UPLOAD",
-        video_size: videoSize,
-        chunk_size: chunkSize,
-        total_chunk_count: totalChunkCount,
-      },
-    }),
-  });
-  const body = (await response.json()) as TikTokInitResponse;
-
-  assertTikTokOk(body.error, "TikTok inbox upload request failed.");
   return body;
 }
 

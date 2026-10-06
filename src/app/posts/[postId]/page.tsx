@@ -26,6 +26,7 @@ type PostPlatformPost = {
   platformPostId?: string | null;
   platformPostUrl?: string | null;
   lastError?: string | null;
+  statusMessage?: string | null;
 };
 
 type PostDetailPageProps = {
@@ -231,6 +232,12 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                         ) : (
                           "Not published yet"
                         )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Publish status</dt>
+                      <dd className="mt-1 text-slate-200">
+                        {platformPost.statusMessage ?? "Waiting to publish"}
                       </dd>
                     </div>
                     <div>

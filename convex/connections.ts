@@ -44,6 +44,7 @@ export const listForUser = query({
       id: account._id,
       platform: account.platform,
       accountName: account.accountName,
+      avatarUrl: account.avatarUrl ?? null,
       externalId: account.externalId,
       scopes: account.scopes,
       hasRefreshToken: Boolean(account.refreshToken),
@@ -83,6 +84,7 @@ export const upsert = mutation({
     workspaceId: v.id("workspaces"),
     platform,
     accountName: v.string(),
+    avatarUrl: v.optional(v.string()),
     externalId: v.string(),
     accessToken: v.string(),
     refreshToken: v.optional(v.string()),
@@ -106,6 +108,7 @@ export const upsert = mutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         accountName: args.accountName,
+        ...(args.avatarUrl ? { avatarUrl: args.avatarUrl } : {}),
         accessToken: args.accessToken,
         refreshToken:
           args.refreshToken ?? (args.preserveRefreshToken ? existing.refreshToken : undefined),
@@ -121,6 +124,7 @@ export const upsert = mutation({
       workspaceId: args.workspaceId,
       platform: args.platform,
       accountName: args.accountName,
+      ...(args.avatarUrl ? { avatarUrl: args.avatarUrl } : {}),
       externalId: args.externalId,
       accessToken: args.accessToken,
       refreshToken: args.refreshToken,

@@ -101,7 +101,9 @@ describe("metadata optimizer", () => {
     })).resolves.toMatchObject({
       platform: "TikTok",
       status: "limited",
-      notes: ["Reconnect TikTok after video.list is approved to use recent TikTok video data."],
+      notes: [
+        "Recent TikTok videos are not requested. This connection uses Login Kit profile info and Direct Post only.",
+      ],
     });
   });
 
@@ -187,7 +189,7 @@ describe("metadata optimizer", () => {
   test("uses OpenRouter when an OpenRouter key is configured", async () => {
     vi.stubEnv("OPENROUTER_API_KEY", "or-test");
     vi.stubEnv("OPENROUTER_METADATA_MODEL", "openai/gpt-4.1-mini");
-    vi.stubEnv("NEXTAUTH_URL", "https://www.aegisrelay.app");
+    vi.stubEnv("NEXTAUTH_URL", "https://www.relaygator.com");
     const fetchMock = vi.fn(async () => Response.json({
       choices: [
         {
@@ -217,7 +219,7 @@ describe("metadata optimizer", () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer or-test",
-          "HTTP-Referer": "https://www.aegisrelay.app",
+          "HTTP-Referer": "https://www.relaygator.com",
           "X-Title": "Relaygator",
         }),
       }),

@@ -169,7 +169,7 @@ export async function publishPlatformPost(
   } catch (error) {
     const message = toPublishErrorMessage(error, platformPost.platform);
     await markPublishAttempt(db, platformPost.id, PublishStatus.FAILED, message);
-    return { status: PublishStatus.FAILED };
+    return { status: PublishStatus.FAILED, message };
   }
 
   try {
@@ -190,7 +190,10 @@ export async function publishPlatformPost(
       },
     });
 
-    return { status: PublishStatus.PUBLISHED };
+    return {
+      status: PublishStatus.PUBLISHED,
+      message: result.message ?? "Published successfully.",
+    };
   } catch (error) {
     const message =
       `Published on ${formatPlatformName(platformPost.platform)}, but local confirmation failed. ` +
@@ -282,7 +285,7 @@ async function publishPlatformPostFromConvex(
   } catch (error) {
     const message = toPublishErrorMessage(error, platformPost.platform);
     await markConvexPublishAttempt(platformPost.id, PublishStatus.FAILED, message);
-    return { status: PublishStatus.FAILED };
+    return { status: PublishStatus.FAILED, message };
   }
 
   try {
@@ -295,7 +298,10 @@ async function publishPlatformPostFromConvex(
         platformPostUrl: result.url,
       },
     );
-    return { status: PublishStatus.PUBLISHED };
+    return {
+      status: PublishStatus.PUBLISHED,
+      message: result.message ?? "Published successfully.",
+    };
   } catch (error) {
     const message =
       `Published on ${formatPlatformName(platformPost.platform)}, but local confirmation failed. ` +

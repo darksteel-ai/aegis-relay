@@ -118,6 +118,7 @@ export default defineSchema({
     workspaceId: v.id("workspaces"),
     platform,
     accountName: v.string(),
+    avatarUrl: v.optional(v.string()),
     externalId: v.string(),
     accessToken: v.string(),
     refreshToken: v.optional(v.string()),

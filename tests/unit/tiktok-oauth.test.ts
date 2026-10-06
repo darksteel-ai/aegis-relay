@@ -64,9 +64,7 @@ describe("TikTok OAuth redirect URI", () => {
     expect(url.searchParams.get("client_key")).toBe("tiktok-client-key");
     expect(url.searchParams.get("response_type")).toBe("code");
     expect(url.searchParams.get("redirect_uri")).toBe(PRODUCTION_TIKTOK_REDIRECT_URI);
-    expect(url.searchParams.get("scope")).toBe(
-      "user.info.basic,user.info.stats,video.publish,video.upload",
-    );
+    expect(url.searchParams.get("scope")).toBe("user.info.basic,video.publish");
     expect(url.searchParams.get("state")).toBe("signed-state");
     expect(url.search).not.toContain("tiktok-client-secret");
   });

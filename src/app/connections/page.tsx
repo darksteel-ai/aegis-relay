@@ -82,6 +82,7 @@ type ConnectedAccountView = {
   platform: string;
   status: string;
   accountName: string;
+  avatarUrl?: string | null;
   externalId: string;
   scopes?: string | null;
   hasRefreshToken?: boolean | null;
@@ -143,6 +144,7 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
       platform: string;
       status: string;
       accountName: string;
+      avatarUrl?: string | null;
       externalId: string;
       scopes?: string | null;
       hasRefreshToken?: boolean | null;
@@ -300,6 +302,14 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
                             >
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
+                                  {account.avatarUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      alt=""
+                                      className="h-8 w-8 rounded-full object-cover"
+                                      src={account.avatarUrl}
+                                    />
+                                  ) : null}
                                   <span className="font-medium text-white">{account.accountName}</span>
                                   <span className="text-xs text-slate-500">ID {account.externalId}</span>
                                   <span className="text-xs text-cyan-100">{health.label}</span>
@@ -307,6 +317,11 @@ export default async function ConnectionsPage({ searchParams }: ConnectionsPageP
                                 <p className="mt-1 text-xs leading-5 text-slate-500">
                                   {health.message}
                                 </p>
+                                {account.platform === "TIKTOK" && account.scopes ? (
+                                  <p className="mt-1 text-xs leading-5 text-slate-300">
+                                    Granted TikTok permissions: {account.scopes}
+                                  </p>
+                                ) : null}
                               </div>
                               <form action={`/api/connections/${account.id}/disconnect`} method="post">
                                 <button

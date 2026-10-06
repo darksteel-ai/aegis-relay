@@ -106,6 +106,20 @@ describe("public launch readiness page copy", () => {
     expect(copy).toContain("Use retry");
   });
 
+  test("privacy and terms show the Relaygator app icon without Aegis branding", () => {
+    const privacy = publicReadinessFiles.find((file) => file.filePath.endsWith("privacy/page.tsx"));
+    const terms = publicReadinessFiles.find((file) => file.filePath.endsWith("terms/page.tsx"));
+    const layout = readFileSync(path.join(root, "src/app/layout.tsx"), "utf8");
+
+    expect(privacy?.contents).toContain("LegalDocumentHeader");
+    expect(terms?.contents).toContain("LegalDocumentHeader");
+    expect(readFileSync(path.join(root, "src/components/legal-document-header.tsx"), "utf8")).toContain(
+      "/relaygator-mark.png",
+    );
+    expect(`${privacy?.contents}\n${terms?.contents}\n${layout}`).not.toMatch(/Aegis/i);
+    expect(layout).toContain("/relaygator-icon.png");
+  });
+
   test("reviewer demo copy walks through the expected review flow", () => {
     const copy = reviewerDemoSteps.join(" ");
 

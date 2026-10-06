@@ -571,7 +571,7 @@ describe("platform adapters", () => {
     });
   });
 
-  test("TikTok adapter falls back to inbox upload while the direct post audit is pending", async () => {
+  test("TikTok adapter keeps unaudited public posts on Direct Post instead of the inbox", async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValueOnce({
@@ -588,19 +588,6 @@ describe("platform adapters", () => {
               "Please review our integration guidelines at https://developers.tiktok.com/doc/content-sharing-guidelines/",
           },
         })),
-      })
-      .mockResolvedValueOnce({
-        json: vi.fn(async () => ({
-          data: {
-            publish_id: "v_inbox_file~demo",
-            upload_url: "https://open-upload.tiktokapis.com/video/upload",
-          },
-          error: { code: "ok", message: "" },
-        })),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
       });
     const stream = new PassThrough();
     stream.end("hello world");
@@ -609,24 +596,10 @@ describe("platform adapters", () => {
       getVideoReadStream: vi.fn(async () => stream),
     });
 
-    const result = await adapter.publish(tiktokPublishInput);
-
-    expect(result.platformPostId).toBe("v_inbox_file~demo");
-    expect(result.message).toContain("TikTok inbox");
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      3,
+    await expect(adapter.publish(tiktokPublishInput)).rejects.toThrow("Choose Only me");
+    expect(fetchFn).not.toHaveBeenCalledWith(
       "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining('"source":"FILE_UPLOAD"'),
-      }),
-    );
-    const inboxBody = JSON.parse(fetchFn.mock.calls[2]?.[1]?.body as string);
-    expect(inboxBody.post_info).toBeUndefined();
-    expect(fetchFn).toHaveBeenNthCalledWith(
-      4,
-      "https://open-upload.tiktokapis.com/video/upload",
-      expect.objectContaining({ method: "PUT" }),
+      expect.anything(),
     );
   });
 

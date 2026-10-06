@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { LegalDocumentHeader } from "@/components/legal-document-header";
+
 export const metadata: Metadata = {
   title: "Privacy Policy | Relaygator",
   description:
@@ -24,9 +26,10 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:py-14">
-        <DocumentHeader
-          title="Relaygator Privacy Policy"
+        <LegalDocumentHeader
           description="This Privacy Policy explains how Relaygator collects, uses, stores, and protects information when customers use our short-form video scheduling service."
+          title="Relaygator Privacy Policy"
+          updated="October 6, 2026"
         />
 
         <div className="mt-8 space-y-6">
@@ -79,8 +82,8 @@ export default function PrivacyPage() {
               Relaygator uses third-party providers for authentication,
               database hosting, object storage, payment processing, and platform
               publishing integrations. These providers may include Convex, Stripe,
-              S3-compatible object storage, Google and YouTube APIs, and future
-              approved TikTok or Meta platform APIs. Those providers process data
+              S3-compatible object storage, Google and YouTube APIs, TikTok, and
+              Meta platform APIs. Those providers process data
               under their own terms and privacy practices.
             </p>
           </PolicySection>
@@ -119,25 +122,6 @@ export default function PrivacyPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-function DocumentHeader({
-  title,
-  description,
-}: Readonly<{
-  title: string;
-  description: string;
-}>) {
-  return (
-    <header className="space-y-3">
-      <Link href="/" className="text-sm font-medium text-neutral-500 hover:text-neutral-950">
-        Relaygator
-      </Link>
-      <h1 className="text-3xl font-semibold tracking-normal">{title}</h1>
-      <p className="text-base leading-7 text-neutral-600">{description}</p>
-      <p className="text-sm text-neutral-500">Last updated: May 13, 2026</p>
-    </header>
   );
 }
 
